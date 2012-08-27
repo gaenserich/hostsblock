@@ -1,6 +1,8 @@
 post_install() {
-    echo "If you will be running hostsblock on your main /etc/hosts file, copy"
-    echo "your original to /etc/hostsblock/hosts.head to preserve your entries."
-    echo -e "\n A documented configuration file is available under"
-    echo "/etc/hostsblock/rc.conf"
+  cat << EOF
+If you will be running hostsblock on your main '/etc/hosts' file, copy your
+original to '/etc/hostsblock/hosts.head' to preserve your entries.
+
+A documented configuration file is available under '/etc/hostsblock/rc.conf'.
+EOF
 }
