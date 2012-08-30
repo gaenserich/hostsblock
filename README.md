@@ -42,4 +42,3 @@ A pseudo-server that serves blank pages in order to remove the boilerplate page 
 
 Todo
 ----
-* Make compatable with POSIX /bin/sh (will break rc.conf)
