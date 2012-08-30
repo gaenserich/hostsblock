@@ -49,11 +49,11 @@ check(){
 # MAIN ROUTINE
 if [[ "$@" == "-h" || "$@" == "--help" ]]; then
     cat << EOF
-    usage: $0 http[s]://[url]
+usage: $0 http[s]://[url]
 
-    $0 will first verify that [url] is blocked or unblocked,
-    and then scan that url for further contained subdomains.
-    EOF
+$0 will first verify that [url] is blocked or unblocked,
+and then scan that url for further contained subdomains.
+EOF
 else
     changed=0
     echo "Verifying that the given page is blocked or unblocked"
