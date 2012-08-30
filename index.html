@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Hostsblock by gaenserich</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Hostsblock</h1>
+        <h2>an ad- and malware-blocking cronscript for Linux</h2>
+        <a href="https://github.com/gaenserich/hostsblock" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>News</h1>
+
+<p>To participate in the ongoing discussion on <code>hostsblock</code>, check out its <a href="https://bbs.archlinux.org/viewtopic.php?id=139784">Arch Linux forum</a> or its <a href="https://aur.archlinux.org/packages.php?ID=58976">Arch User Repository page</a>.</p>
+
+<h5>New Webpage (30.08.2012)</h5>
+
+<p>In order to centralize resources, I'm migrating all of <code>hostsblock</code>'s web presence to github.com.</p>
+
+<h1>Description</h1>
+
+<p><strong><code>Hostsblock</code></strong> is a bash script for Linux designed to take advantage of the <a href="https://en.wikipedia.org/wiki/Hosts_file">HOSTS file</a> available in all operating systems to provide <a href="http://winhelp2002.mvps.org/hosts.htm">system-wide blocking</a> of internet advertisements, malicious domains, trackers, and other undesirable content. To do so, it downloads a configurable set of blocklists and processes and their entries into a singular HOSTS file.</p>
+
+<p><code>Hostsblock</code> also includes <code>hostsblock-urlcheck</code>, a command-line utility that allows you to block and unblock certain websites and any other domains contained in that website, in the event that the included blocklists don't block enough or block too little on a specific site.</p>
+
+<h1>Feature</h1>
+
+<ul>
+<li>
+<strong>System-wide blocking</strong> (all non-proxied connections use the HOSTS file)</li>
+<li>
+<strong>Zip- and 7zip-capable</strong> (can download and process zip- and 7zip-compressed files)</li>
+<li>
+<strong>Non-interactive</strong> (can be run as a periodic cronjob without needing user interaction)</li>
+<li>
+<strong>Extensive configurability</strong> (allows for custom black and white listing, redirection, post-processing scripting, target HOSTS file, etc.)</li>
+<li>
+<strong>Bandwith-efficient</strong> (only downloads blocklists that have been changed, uses compression when available)</li>
+<li>
+<strong>Resource-efficient</strong> (only processes blocklists when changes are registered, uses minimal pipes)</li>
+<li>
+<strong>High performance blocking</strong> (when using dns caching and pseudo-server daemons)</li>
+<li>
+<strong>Extensive choice of blocklists included</strong> (allows user to customize how much or how little is blocked)</li>
+<li>
+<strong>Redirection capability</strong> (combats <a href="https://en.wikipedia.org/wiki/DNS_cache_poisoning">DNS cache poisoning</a>)</li>
+</ul><h1>Dependencies</h1>
+
+<p><code>Hostsblock</code> only requires a few utilities that are standard on most Linux distros, including <a href="https://www.gnu.org/software/bash/">GNU <code>bash</code></a>, <a href="http://curl.haxx.se/"><code>curl</code></a>, <a href="https://www.gnu.org/software/grep/grep.html">GNU <code>grep</code></a>, <a href="https://www.gnu.org/software/sed/">GNU <code>sed</code></a>, and <a href="https://www.gnu.org/software/coreutils/">GNU <code>coreutils</code></a>.</p>
+
+<h4>Optional dependencies</h4>
+
+<p><code>Hostsblock</code> allows for additional features if the following utilities are installed and in the path:</p>
+
+<p>Unarchivers, so that archive blocklists can be used instead of just plaintext, e.g.:</p>
+
+<ul>
+<li>
+<a href="http://www.info-zip.org/"><code>unzip</code></a> for zip archives, AND</li>
+<li>
+<a href="http://p7zip.sourceforge.net/"><code>p7zip</code></a> for 7z archives</li>
+</ul><p>A DNS caching daemon to help speed up DNS resolutions, such as:</p>
+
+<ul>
+<li>
+<a href="http://www.thekelleys.org.uk/dnsmasq/doc.html"><code>dnsmasq</code></a> (recommended), OR</li>
+<li>
+<a href="http://members.home.nl/p.a.rombouts/pdnsd/index.html"><code>pdnsd</code></a> (untested)</li>
+</ul><p>A pseudo-server that serves blank pages in order to remove the boilerplate page and speed up page resolution on blocked domains. Examples include:</p>
+
+<ul>
+<li>
+<a href="https://code.google.com/p/kwakd/"><code>kwakd</code></a> (recommended), OR</li>
+<li><a href="http://proxytunnel.sourceforge.net/pixelserv.php"><code>pixelserv</code></a></li>
+</ul><h1>Installation</h1>
+
+<p>On an Arch Linux system, you can install hostsblock through AUR utilities such as <a href="https://aur.archlinux.org/packages.php?ID=5863"><code>yaourt</code></a>. If you are not running an Arch Linux system (which you should), follow these steps:</p>
+
+<ol>
+<li><p>Make sure you have all of the <em>required dependencies</em> above, and that they are in your path.</p></li>
+<li><p>Download the latest source file here or from the <a href="https://aur.archlinux.org/packages/ho/hostsblock/hostsblock.tar.gz">AUR</a>.</p></li>
+<li><p>Extract the source files from the archive, and then enter the extracted hostsblock directory in a terminal.</p></li>
+<li>
+<p>Execute the following <strong>as root</strong> or with <code>sudo</code>:</p>
+
+<pre><code>install -Dm755 hostsblock.sh /usr/sbin/hostsblock
+install -Dm755 hostsblock-urlcheck.sh /usr/sbin/hostsblock-urlcheck
+install -Dm644 rc.conf /etc/hostsblock/rc.conf
+install -Dm644 black.list /etc/hostsblock/black.list
+install -Dm644 white.list /etc/hostsblock/white.list
+install -Dm644 hosts.head /etc/hostsblock/hosts.head
+</code></pre>
+</li>
+<li><p>If you will be using <code>hostsblock</code> without a dns caching daemon, make sure to copy your existing <code>/etc/hosts</code> file to <code>/etc/hostsblock/hosts.head</code> and enable this destination file in <code>rc.conf</code>.</p></li>
+<li>
+<p>If you want to use <code>hostsblock-urlcheck</code> as a regular user (without having to change to root each time you use it), enter the following via <code>visudo</code> <strong>as root</strong>:</p>
+
+<pre><code>[yourusername] ALL=NOPASSWD: /usr/sbin/hostsblock-urlcheck
+</code></pre>
+
+<p>Where <code>[yourusername]</code> is the regular user you allow to use <code>hostsblock-urlcheck</code>.</p>
+</li>
+<li>
+<p>Once enabled, you can use this utility by entering:</p>
+
+<pre><code>$ sudo hostsblock-urlcheck "http://www.example.org"
+</code></pre>
+
+<p>to check if "<a href="http://www.example.org">http://www.example.org</a>" and any domains present on this page are blocked or unblocked and to change them accordingly.</p>
+</li>
+</ol><h1>Configuration</h1>
+
+<p>Extensive documentation is found in the <code>rc.conf</code> file (installed by default under <code>/etc/hostsblock/rc.conf</code>). Follow the directions therein before running <code>hostsblock</code>. For more details on specific configurations, follow these instructions:</p>
+
+<h4>If you want to run <code>hostsblock</code> with a dns caching server, e.g. dnsmasq:</h4>
+
+<ol>
+<li><p>Install <code>dnsmasq</code> (e.g. via <code>pacman -S dnsmasq</code>).</p></li>
+<li><p><a href="https://wiki.archlinux.org/index.php/Dnsmasq#DNS_Cache_Setup">Configure dnsmasq as a local caching server.</a></p></li>
+<li>
+<p>Add the following to <code>/etc/dnsmasq.conf</code>:</p>
+
+<pre><code>hostsfile="/etc/hosts.block" 
+</code></pre>
+
+<pre><code>postprocess(){ 
+systemctl restart dnsmasq.service 
+}
+</code></pre>
+
+<p>Where "systemctl restart dnsmasq.server" is your system's command to restart <code>dnsmasq</code>.</p>
+</li>
+</ol><p>From now on, whenever <code>hostsblock</code> runs, or if <code>hostsblock-urlcheck</code> makes changes, <code>dnsmasq</code> will automatically be restarted.</p>
+
+<h4>If you want to run <code>hostsblock</code> without a dns caching server:</h4>
+
+<ol>
+<li>
+<p>Make sure you back up your existing <code>/etc/hosts</code> file to <code>/etc/hostsblock/hosts.head</code>:</p>
+
+<pre><code>$ cp /etc/hosts /etc/hostsblock/hosts.head
+</code></pre>
+</li>
+<li>
+<p>In <code>/etc/hostsblock/rc.conf</code>, make sure the following variables are entered as shown here:</p>
+
+<pre><code>hostsfile="/etc/hosts" 
+</code></pre>
+
+<pre><code>postprocess(){ 
+/bin/true 
+} 
+</code></pre>
+
+<pre><code>hostshead="/etc/hostsblock/hosts.head"
+</code></pre>
+</li>
+</ol><h1>Todo</h1>
+
+<p>Drop me any suggestions in the <a href="https://bbs.archlinux.org/viewtopic.php?id=139784">Arch Linux Forum</a> that you might have, or feel free to fork via github.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/gaenserich/hostsblock/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/gaenserich/hostsblock/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/gaenserich/hostsblock"></a> is maintained by <a href="https://github.com/gaenserich">gaenserich</a>.</p>
+
+          <p>This page was generated by <a href="pages.github.com">GitHub Pages</a> using the Architect theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
