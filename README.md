@@ -1,5 +1,6 @@
-hostsblock: An ad- and malware-blocking cronscript for Linux
+hostsblock
 ==========
+An ad- and malware-blocking cronscript for Linux
 
 News & Bugs
 -----------
@@ -38,3 +39,7 @@ A DNS caching daemon to help speed up DNS resolutions, such as:
 A pseudo-server that serves blank pages in order to remove the boilerplate page and speed up page resolution on blocked domains. Examples include:
 * kwakd (recommended), OR
 * pixelserv
+
+Todo
+----
+* Make compatable with POSIX /bin/sh (will break rc.conf)
