@@ -49,6 +49,7 @@ check(){
 # MAIN ROUTINE
 if [[ "$@" == "-h" || "$@" == "--help" ]]; then
     cat << EOF
+
 usage: $0 http[s]://[url]
 
 $0 will first verify that [url] is blocked or unblocked,
