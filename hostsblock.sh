@@ -13,7 +13,11 @@ for dep in curl grep sed tr cut; do
     if which "$dep" &>/dev/null; then
         true
     else
-        echo "Utility $dep not found. Please install. Exiting."
+        if [ "$dep" == "tr" ]; then
+            echo "coreutils is not installed or not in your PATH. Please remedy. Exiting."
+        else
+            echo "Utility $dep not installed or not in your PATH. Please remedy. Exiting."
+        fi
         exit 1
     fi
 done
