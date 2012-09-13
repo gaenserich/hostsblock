@@ -58,12 +58,12 @@ EOF
 else
     changed=0
     echo "Verifying that the given page is blocked or unblocked"
-    check `echo "$@" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" <>\(\)].*//g"`
+    check `echo "$@" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g"`
     [ "$changed" == "1" ] && postprocess &>/dev/null
     printf "Page domain verified. Scan the whole page for other domains for (un)blocking? [y/N] "
     read a
     if [[ $a == "y" || $a == "Y" ]]; then
-        for LINE in `curl -s "$@" | tr ' ' '\n' | grep -- "http" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\"<>\(\)].*//g" |\
+        for LINE in `curl -s "$@" | tr ' ' '\n' | grep -- "http" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g" |\
         sort -u | grep -- "\."`; do
             check "$LINE"
         done

@@ -1,3 +1,7 @@
+Version 0.11.1 (13.09.2012)
+*accumulated fixes with feedback (thanks tlvince)
+*fixed hostsblock-urlcheck's misidentification of colons in urls
+
 Version 0.11 (18.08.2012)
 *fixed typo in hostsblock-urlcheck
 *added integrated logging
