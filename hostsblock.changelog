@@ -1,3 +1,6 @@
+Version 0.11.2 (09.12.2012)
+*swapped out use of md5sums for ls mod times to improve performance
+
 Version 0.11.1 (13.09.2012)
 *accumulated fixes with feedback (thanks tlvince)
 *fixed hostsblock-urlcheck's misidentification of colons in urls

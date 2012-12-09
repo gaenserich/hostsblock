@@ -73,10 +73,10 @@ printf "\nChecking blocklists for updates..."
 for url in ${blocklists[*]}; do
     printf "\n   `echo $url | tr -d '%'`..."
     outfile=`echo $url | sed "s|http:\/\/||g" | tr '/%&+?=' '.'`
-    [ -f "$cachedir"/"$outfile" ] && old_md5sum=`md5sum "$cachedir"/"$outfile"`
+    [ -f "$cachedir"/"$outfile" ] && old_ls=`ls -l "$cachedir"/"$outfile"`
     if curl --compressed --connect-timeout 60 -sz "$cachedir"/"$outfile" "$url" -o "$cachedir"/"$outfile"; then
-        new_md5sum=`md5sum "$cachedir"/"$outfile"`
-        if [ "$old_md5sum" != "$new_md5sum" ]; then
+        new_ls=`ls -l "$cachedir"/"$outfile"`
+        if [ "$old_ls" != "$new_ls" ]; then
             changed=1
             printf "UPDATED"
         else
