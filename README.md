@@ -4,7 +4,7 @@ An ad- and malware-blocking cronscript for Linux
 
 News & Bugs
 -----------
-For the latest news about hostsblock, and to submit questions, bugs, patches, and feedback in general, go to the [Arch Linux forum on this script](https://bbs.archlinux.org/viewtopic.php?id=139784) or make use of this Github page.
+For the latest news about hostsblock, and to submit questions, bugs, patches, and feedback in general, go to the [its homepage](http://gaenserich.github.com/hostsblock/) or make use of this Github page.
 
 Description
 -----------
@@ -42,3 +42,4 @@ A pseudo-server that serves blank pages in order to remove the boilerplate page 
 
 Todo
 ----
+* Port to Perl or Python for better performance
