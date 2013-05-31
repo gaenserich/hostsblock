@@ -143,17 +143,11 @@ if [ "$changed" != "0" ]; then
         let "n+=1"
     done
 
-    # INCLUDE LOCAL BLACKLIST FILE
-    printf "\n    Local blacklist..."
-    cat "$blacklist" |\
-    sed "s|^|$redirecturl |g" >> "$tmpdir"/hostsblock/hosts.block.d/hosts.block.0 && printf "prepared" || printf "FAILED"
-
     # GENERATE WHITELIST SED SCRIPT
     printf "\n    Local whitelist..."
     cat "$whitelist" |\
     sed -e 's/.*/\/&\/d/' -e 's/\./\\./g' >> "$tmpdir"/hostsblock/whitelist.sed && printf "prepared" || printf "FAILED"
 
-    printf "\nDONE.\n\nProcessing files..."
     # DETERMINE THE REDIRECT URL NOT BEING USED
     if [ "$redirecturl" == "127.0.0.1" ]; then
         notredirect="0.0.0.0"
@@ -168,6 +162,14 @@ if [ "$changed" != "0" ]; then
         cp -f "$hostshead" "$hostsfile"
     fi
 
+    sed -if "$tmpdir"/hostsblock/whitelist.sed "$tmpdir"/hostsblock/hosts.block.d/*
+        
+    # INCLUDE LOCAL BLACKLIST FILE
+    printf "\n    Local blacklist..."
+    cat "$blacklist" |\
+    sed "s|^|$redirecturl |g" >> "$tmpdir"/hostsblock/hosts.block.d/hosts.block.0 && printf "prepared" || printf "FAILED"
+
+    printf "\nDONE.\n\nProcessing files..."
     # DETERMINE WHETHER TO INCLUDE REDIRECTIONS
     if [ "$redirects" == "1" ]; then
         grep_eval='grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$tmpdir"/hostsblock/hosts.block.d/*'
@@ -177,7 +179,7 @@ if [ "$changed" != "0" ]; then
 
     # PROCESS AND WRITE TO FILE
     eval $grep_eval | sed -e 's/[[:space:]][[:space:]]*/ /g' -e "s/\#.*//g" -e "s/[[:space:]]$//g" -e \
-    "s/$notredirect/$redirecturl/g" | sort -u | sed -f "$tmpdir"/hostsblock/whitelist.sed >> "$hostsfile" && printf "done\n"
+    "s/$notredirect/$redirecturl/g" | sort -u >> "$hostsfile" && printf "done\n"
 
     # REPORT COUNT OF MODIFIED OR BLOCKED URLS
     for addr in `grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$hostsfile" | cut -d" " -f1 | sort -u |\
