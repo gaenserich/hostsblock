@@ -39,34 +39,46 @@
         <ul></ul>
       </nav>
       <section>
-        <h1>News</h1>
+        <h1>
+<a name="news" class="anchor" href="#news"><span class="octicon octicon-link"></span></a>News</h1>
 
 <p>To participate in the ongoing discussion on <code>hostsblock</code>, check out its <a href="https://bbs.archlinux.org/viewtopic.php?id=139784">Arch Linux forum</a> or its <a href="https://aur.archlinux.org/packages.php?ID=58976">Arch User Repository page</a>.</p>
 
-<h5>Debian Package Now Available! (19.02.2013)</h5>
+<h5>
+<a name="debian-package-now-available-19022013" class="anchor" href="#debian-package-now-available-19022013"><span class="octicon octicon-link"></span></a>Debian Package Now Available! (19.02.2013)</h5>
 
 <p>Sadi Yumuşak has been so kind as to create a debian package of this util, available in one of the downloads above (zip or tar).</p>
 
-<h5>Version 0.11.2 (09.12.2012)</h5>
+<h5>
+<a name="version-0113-31052013" class="anchor" href="#version-0113-31052013"><span class="octicon octicon-link"></span></a>Version 0.11.3 (31.05.2013)</h5>
+
+<ul>
+<li>Changed installation path according to new Arch Linux practicies.</li>
+</ul><h5>
+<a name="version-0112-09122012" class="anchor" href="#version-0112-09122012"><span class="octicon octicon-link"></span></a>Version 0.11.2 (09.12.2012)</h5>
 
 <ul>
 <li>swapped out use of md5sums for ls mod times to improve performance</li>
-</ul><h5>Version 0.11.1 (13.09.2012)</h5>
+</ul><h5>
+<a name="version-0111-13092012" class="anchor" href="#version-0111-13092012"><span class="octicon octicon-link"></span></a>Version 0.11.1 (13.09.2012)</h5>
 
 <ul>
 <li>accumulated fixes with feedback (thanks tlvince)</li>
 <li>fixed hostsblock-urlcheck's misidentification of colons in urls</li>
-</ul><h5>New Webpage (30.08.2012)</h5>
+</ul><h5>
+<a name="new-webpage-30082012" class="anchor" href="#new-webpage-30082012"><span class="octicon octicon-link"></span></a>New Webpage (30.08.2012)</h5>
 
 <p>In order to centralize resources, I'm migrating all of <code>hostsblock</code>'s web presence to github.com.</p>
 
-<h1>Description</h1>
+<h1>
+<a name="description" class="anchor" href="#description"><span class="octicon octicon-link"></span></a>Description</h1>
 
 <p><strong><code>Hostsblock</code></strong> is a bash script for Linux designed to take advantage of the <a href="https://en.wikipedia.org/wiki/Hosts_file">HOSTS file</a> available in all operating systems to provide <a href="http://winhelp2002.mvps.org/hosts.htm">system-wide blocking</a> of internet advertisements, malicious domains, trackers, and other undesirable content. To do so, it downloads a configurable set of blocklists and processes and their entries into a singular HOSTS file.</p>
 
 <p><code>Hostsblock</code> also includes <code>hostsblock-urlcheck</code>, a command-line utility that allows you to block and unblock certain websites and any other domains contained in that website, in the event that the included blocklists don't block enough or block too little on a specific site.</p>
 
-<h1>Features</h1>
+<h1>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h1>
 
 <ul>
 <li>
@@ -87,17 +99,20 @@
 <strong>Extensive choice of blocklists included</strong> (allows user to customize how much or how little is blocked)</li>
 <li>
 <strong>Redirection capability</strong> (combats <a href="https://en.wikipedia.org/wiki/DNS_cache_poisoning">DNS cache poisoning</a>)</li>
-</ul><h1>Screenshots</h1>
+</ul><h1>
+<a name="screenshots" class="anchor" href="#screenshots"><span class="octicon octicon-link"></span></a>Screenshots</h1>
 
 <p><a href="http://www.personal.psu.edu/jav209/hostsblock-start.png"><img src="http://www.personal.psu.edu/jav209/thumb-hostsblock-start.png" alt="Beginning output of hostsblock. Click to enlarge."></a>
 <a href="http://www.personal.psu.edu/jav209/hostsblock-end.png"><img src="http://www.personal.psu.edu/jav209/thumb-hostsblock-end.png" alt="End output of hostsblock. Click to enlarge."></a>
 <a href="http://www.personal.psu.edu/jav209/hostsblock-urlcheck.png"><img src="http://www.personal.psu.edu/jav209/thumb-hostsblock-urlcheck.png" alt="Output of hostsblock-urlcheck. Click to enlarge."></a></p>
 
-<h1>Dependencies</h1>
+<h1>
+<a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>Dependencies</h1>
 
 <p><code>Hostsblock</code> only requires a few utilities that are standard on most Linux distros, including <a href="https://www.gnu.org/software/bash/">GNU <code>bash</code></a>, <a href="http://curl.haxx.se/"><code>curl</code></a>, <a href="https://www.gnu.org/software/grep/grep.html">GNU <code>grep</code></a>, <a href="https://www.gnu.org/software/sed/">GNU <code>sed</code></a>, and <a href="https://www.gnu.org/software/coreutils/">GNU <code>coreutils</code></a>.</p>
 
-<h4>Optional dependencies</h4>
+<h4>
+<a name="optional-dependencies" class="anchor" href="#optional-dependencies"><span class="octicon octicon-link"></span></a>Optional dependencies</h4>
 
 <p><code>Hostsblock</code> allows for additional features if the following utilities are installed and in the path:</p>
 
@@ -121,7 +136,8 @@
 <li>
 <a href="https://code.google.com/p/kwakd/"><code>kwakd</code></a> (recommended), OR</li>
 <li><a href="http://proxytunnel.sourceforge.net/pixelserv.php"><code>pixelserv</code></a></li>
-</ul><h1>Installation</h1>
+</ul><h1>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h1>
 
 <p>On an Arch Linux system, you can install hostsblock through AUR utilities such as <a href="https://aur.archlinux.org/packages.php?ID=5863"><code>yaourt</code></a>. If you are not running an Arch Linux system (which you should), follow these steps:</p>
 
@@ -157,11 +173,13 @@ install -Dm644 hosts.head /etc/hostsblock/hosts.head
 
 <p>to check if "<a href="http://www.example.org">http://www.example.org</a>" and any domains present on this page are blocked or unblocked and to change them accordingly.</p>
 </li>
-</ol><h1>Configuration</h1>
+</ol><h1>
+<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h1>
 
 <p>Extensive documentation is found in the <code>rc.conf</code> file (installed by default under <code>/etc/hostsblock/rc.conf</code>). Follow the directions therein before running <code>hostsblock</code>. For more details on specific configurations, follow these instructions:</p>
 
-<h4>If you want to run <code>hostsblock</code> with a dns caching server, e.g. dnsmasq:</h4>
+<h4>
+<a name="if-you-want-to-run-hostsblock-with-a-dns-caching-server-eg-dnsmasq" class="anchor" href="#if-you-want-to-run-hostsblock-with-a-dns-caching-server-eg-dnsmasq"><span class="octicon octicon-link"></span></a>If you want to run <code>hostsblock</code> with a dns caching server, e.g. dnsmasq:</h4>
 
 <ol>
 <li><p>Install <code>dnsmasq</code> (e.g. via <code>pacman -S dnsmasq</code>).</p></li>
@@ -181,7 +199,8 @@ systemctl restart dnsmasq.service
 </li>
 </ol><p>From now on, whenever <code>hostsblock</code> runs, or if <code>hostsblock-urlcheck</code> makes changes, <code>dnsmasq</code> will automatically be restarted.</p>
 
-<h4>If you want to run <code>hostsblock</code> without a dns caching server:</h4>
+<h4>
+<a name="if-you-want-to-run-hostsblock-without-a-dns-caching-server" class="anchor" href="#if-you-want-to-run-hostsblock-without-a-dns-caching-server"><span class="octicon octicon-link"></span></a>If you want to run <code>hostsblock</code> without a dns caching server:</h4>
 
 <ol>
 <li>
@@ -204,7 +223,8 @@ systemctl restart dnsmasq.service
 <pre><code>hostshead="/etc/hostsblock/hosts.head"
 </code></pre>
 </li>
-</ol><h1>Todo</h1>
+</ol><h1>
+<a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>Todo</h1>
 
 <p>Drop me any suggestions in the <a href="https://bbs.archlinux.org/viewtopic.php?id=139784">Arch Linux Forum</a> that you might have, or feel free to fork via github. Other ideas:</p>
 
