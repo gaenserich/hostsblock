@@ -161,8 +161,9 @@ if [ "$changed" != "0" ]; then
     else
         cp -f "$hostshead" "$hostsfile"
     fi
-
-    sed -if "$tmpdir"/hostsblock/whitelist.sed "$tmpdir"/hostsblock/hosts.block.d/*
+    
+    # APPLY WHITELIST TO BLOCKLISTS
+    sed -f "$tmpdir"/hostsblock/whitelist.sed -i "$tmpdir"/hostsblock/hosts.block.d/*
         
     # INCLUDE LOCAL BLACKLIST FILE
     printf "\n    Local blacklist..."
