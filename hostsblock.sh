@@ -162,14 +162,6 @@ if [ "$changed" != "0" ]; then
         cp -f "$hostshead" "$hostsfile"
     fi
     
-    # APPLY WHITELIST TO BLOCKLISTS
-    sed -f "$tmpdir"/hostsblock/whitelist.sed -i "$tmpdir"/hostsblock/hosts.block.d/*
-        
-    # INCLUDE LOCAL BLACKLIST FILE
-    printf "\n    Local blacklist..."
-    cat "$blacklist" |\
-    sed "s|^|$redirecturl |g" >> "$tmpdir"/hostsblock/hosts.block.d/hosts.block.0 && printf "prepared" || printf "FAILED"
-
     printf "\nDONE.\n\nProcessing files..."
     # DETERMINE WHETHER TO INCLUDE REDIRECTIONS
     if [ "$redirects" == "1" ]; then
@@ -180,7 +172,12 @@ if [ "$changed" != "0" ]; then
 
     # PROCESS AND WRITE TO FILE
     eval $grep_eval | sed -e 's/[[:space:]][[:space:]]*/ /g' -e "s/\#.*//g" -e "s/[[:space:]]$//g" -e \
-    "s/$notredirect/$redirecturl/g" | sort -u >> "$hostsfile" && printf "done\n"
+    "s/$notredirect/$redirecturl/g" | sort -u | sed -f "$tmpdir"/hostsblock/whitelist.sed >> "$hostsfile" && printf "done\n"
+   
+    # APPEND BLACKLIST ENTRIES
+    printf "\nAppending blacklist entries..."
+    cat "$blacklist" |\
+        sed "s|^|$redirecturl |g" >> "$hostsfile" && printf "done\n" || printf "FAILED\n"
 
     # REPORT COUNT OF MODIFIED OR BLOCKED URLS
     for addr in `grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$hostsfile" | cut -d" " -f1 | sort -u |\
