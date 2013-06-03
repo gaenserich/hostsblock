@@ -1,3 +1,6 @@
+Version 0.12.3 (03.06.2013)
+*hostblock-urlcheck: issue with colored prompt on white-backgrounded terminals fixed
+
 Version 0.12.2 (02.06.2013)
 *whitelist, blacklist not applying fixed
 

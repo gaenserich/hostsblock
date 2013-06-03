@@ -24,7 +24,7 @@ fi
 # CHECK SUBROUTINE
 check(){
     if grep "[[:space:]]`echo $@ | sed 's|\.|\\\.|g'`$" "$hostsfile" &>/dev/null; then
-	printf "\e[1;31mBLOCKED: \e[0;37m'$@' \e[0;32mUnblock? \e[0;37m[y/N] "
+        printf "\e[1;31mBLOCKED: \e[0m'$@' \e[0;32mUnblock? \e[0m[y/N] "
         read a
         if [[ $a == "y" || $a == "Y" ]]; then
             echo "Unblocking $@"
@@ -34,7 +34,7 @@ check(){
             changed=1
         fi
     else
-        printf "\e[0;32mNOT BLOCKED: \e[0;37m'$@' \e[1;31mBlock? \e[0;37m[y/N] "
+        printf "\e[0;32mNOT BLOCKED: \e[0m'$@' \e[1;31mBlock? \e[0m[y/N] "
         read a
         if [[ $a == "y" || $a == "Y" ]]; then
             echo "Blocking $@"
