@@ -202,7 +202,7 @@ install -Dm644 hosts.head /etc/hostsblock/hosts.head
 <li>
 <p>Add the following to <code>/etc/dnsmasq.conf</code>:</p>
 
-<pre><code>hostsfile="/etc/hosts.block" 
+<pre><code>addn-hosts=/etc/hosts.block
 </code></pre>
 
 <pre><code>postprocess(){ 
@@ -210,7 +210,7 @@ systemctl restart dnsmasq.service
 }
 </code></pre>
 
-<p>Where "systemctl restart dnsmasq.server" is your system's command to restart <code>dnsmasq</code>.</p>
+<p>Where "systemctl restart dnsmasq.service" is your system's command to restart <code>dnsmasq</code>.</p>
 </li>
 </ol><p>From now on, whenever <code>hostsblock</code> runs, or if <code>hostsblock-urlcheck</code> makes changes, <code>dnsmasq</code> will automatically be restarted.</p>
 
