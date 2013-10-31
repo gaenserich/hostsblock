@@ -209,6 +209,9 @@ install -Dm644 hosts.head /etc/hostsblock/hosts.head
 
 <pre><code>addn-hosts=/etc/hosts.block
 </code></pre>
+</li>
+<li>
+<p>Add the following to <code>/etc/hostsblock/rc.conf</code>:</p>
 
 <pre><code>postprocess(){ 
 systemctl restart dnsmasq.service 
@@ -256,7 +259,7 @@ systemctl restart dnsmasq.service
       </section>
       <footer>
         <p>Project maintained by <a href="https://github.com/gaenserich">gaenserich</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></small></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></small></p>
       </footer>
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
