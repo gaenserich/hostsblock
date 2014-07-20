@@ -1,202 +1,216 @@
 #!/bin/bash
 
-# DO NOT MODIFY THIS FILE. MODIFY SETTINGS VIA THE CONFIGURATION FILES IN
-# /etc/hostsblock/
+# GET OPTIONS
+while getopts "v:f:h" _option; do
+    case "$_option" in
+        f)  [ "$OPTARG" != "" ] && _configfile="$OPTARG";;
+        v)  [ "$OPTARG" != "" ] && _verbosity_override=$OPTARG;;
+        *)
+            cat << EOF
+Usage:
+  $0 [ -f CONFIGFILE ] [ -v VERBOSITY ] - update the HOSTS file with block and redirection lists
 
-# CHECK FOR NEEDED AND OPTIONAL UTILITIES AND PERMISSIONS
-if [ `whoami` != "root" ]; then
-    echo "Insufficient permissions. Run as root."
+Help Options:
+  -h                            Show help options
+
+Application Options:
+  -f CONFIGFILE                 Specify an alternative configuration file (instead of /etc/hostsblock/hostsblock.conf)
+  -v VERBOSITY                  Specify how much information hostsblock provides (0=only fatal errors to 3=the kitchen sink)
+EOF
+            exit 1
+        ;;
+    esac
+done
+
+# SOURCE DEFAULT SETTINGS AND SUBROUTINES
+if [ -f /usr/lib/hostsblock-common.sh ]; then
+    source /usr/lib/hostsblock-common.sh
+elif [ -f /usr/local/lib/hostsblock-common.sh ]; then
+    source /usr/local/lib/hostsblock-common.sh
+elif [ -f ./hostsblock-common.sh ]; then
+    source ./hostsblock-common.sh
+else
+    echo "hostsblock.common.sh NOT FOUND. INSTALL IT TO /usr/lib/ OR /usr/local/lib/. EXITING..."
     exit 1
 fi
 
-for dep in curl grep sed tr cut; do
-    if which "$dep" &>/dev/null; then
-        true
-    else
-        if [ "$dep" == "tr" ]; then
-            echo "coreutils is not installed or not in your PATH. Please remedy. Exiting."
-        else
-            echo "Utility $dep not installed or not in your PATH. Please remedy. Exiting."
-        fi
-        exit 1
-    fi
-done
+_source_configfile
+_verbosity_check
+_set_subprocess_verbosity
+_check_root
+_check_depends mv cp rm curl grep sed tr cut mkdir
+_check_unzip
+_check_7z
+_detect_dnscacher
 
-if which unzip &>/dev/null; then
-    zip="1"
+# IDENTIFY WHAT WILL not BE OUR REDIRECTION URL
+if [ "$redirecturl" == "127.0.0.1" ]; then
+    _notredirect="0.0.0.0"
 else
-    echo "Dearchiver unzip not found. URLs which use this format will be skipped."
-    zip="0"
+    _notredirect="127.0.0.1"
 fi
-if which 7za &>/dev/null; then
-    zip7="1"
+
+# CREATE CACHE DIRECTORY IF NOT ALREADY EXISTENT
+if [ -d "$cachedir" ]; then
+    _notify 4 "Cache directory $cachedir already created."
 else
-    echo "Dearchiver 7za not found. URLs which use this format will be skipped."
-    zip7="0"
+    _notify 4 "Creating cache directory $cachedir..."
+    mkdir $_v -p -- "$cachedir" && _notify 3 "Created temporary cache directory $cachedir" || \
+      _notify 1 "FAILED to create cache directory $cachedir."
 fi
-
-# DEFAULT SETTINGS
-tmpdir="/dev/shm"
-hostsfile="/etc/hosts.block"
-redirecturl="127.0.0.1"
-postprocess(){
-    /etc/rc.d/dnsmasq restart
-}
-blocklists=("http://support.it-mate.co.uk/downloads/HOSTS.txt")
-logfile="/var/log/hostsblock.log"
-blacklist="/etc/hostsblock/black.list"
-whitelist="/etc/hostsblock/white.list"
-hostshead="0"
-cachedir="/var/cache/hostsblock"
-redirects="0"
-
-# CHECK TO SEE IF WE ARE LOGGING THIS
-if [ "$logfile" != "0" ]; then
-    exec > "$logfile" 2>&1
-fi
-
-echo -e "\nHostsblock started at `date +'%x %T'`"
-
-# READ CONFIGURATION FILE.
-if [ -f /etc/hostsblock/rc.conf ]; then
-    . /etc/hostsblock/rc.conf
-else
-    echo "Config file /etc/hostsblock/rc.conf not found. Using defaults."
-fi
-
-# CREATE CACHE DIRECTORY IF NOT ALREADY EXISTANT
-[ -d "$cachedir" ] || mkdir -p "$cachedir"
 
 # DOWNLOAD BLOCKLISTS
-changed=0
-printf "\nChecking blocklists for updates..."
-for url in ${blocklists[*]}; do
-    printf "\n   `echo $url | tr -d '%'`..."
-    outfile=`echo $url | sed "s|http:\/\/||g" | tr '/%&+?=' '.'`
-    [ -f "$cachedir"/"$outfile" ] && old_ls=`ls -l "$cachedir"/"$outfile"`
-    if curl --compressed --connect-timeout 60 -sz "$cachedir"/"$outfile" "$url" -o "$cachedir"/"$outfile"; then
-        new_ls=`ls -l "$cachedir"/"$outfile"`
-        if [ "$old_ls" != "$new_ls" ]; then
-            changed=1
-            printf "UPDATED"
+_changed=0
+_notify 3 "Checking blocklists for updates..."
+for _url in ${blocklists[*]}; do
+    _outfile=$(echo $_url | sed "s|http:\/\/||g" | tr '/%&+?=' '.')
+    if [ -f "$cachedir"/"$_outfile".url ]; then
+        _notify 4 "Url file for $cachedir/$_outfile present."
+    else
+        _notify 4 "Url file for $cachedir/$_outfile not present. Creating it..."
+        echo "$_url" > "$cachedir"/"$_outfile".url
+    fi
+    if [ -f "$cachedir"/"$_outfile" ]; then
+        _notify 4 "Cache file $cachedir/$_outfile for blocklist $_url exists. Noting its modification time."
+        _old_ls=$(ls -l "$cachedir"/"$_outfile")
+    else
+        _notify 4 "Cache file $cachedir/$_outfile for blocklist $_url not found. It will be downloaded."
+    fi
+    _notify 4 "Checking and, if needed, downloading blocklist $_url to $cachedir/$_outfile"
+    if curl $_v_curl --compressed --connect-timeout $connect_timeout --retry $retry -z "$cachedir"/"$_outfile" "$_url" -o "$cachedir"/"$_outfile"; then
+        _notify 3 "Refreshed blocklist $_url."
+        _new_ls=$(ls -l "$cachedir"/"$_outfile")
+        if [ "$_old_ls" != "$_new_ls" ]; then
+            _changed=1
+            _notify 2 "CHANGES FOUND for blocklist $_url."
         else
-            printf "no changes"
+            _notify 4 "No changes for blocklist $_url."
         fi
     else
-        printf "FAILED\nScript exiting @ `date +'%x %T'`"
-        exit 1
+        _notify 1 "FAILED to refresh/download blocklist $_url."
     fi
 done
 
 # IF THERE ARE CHANGES...
-if [ "$changed" != "0" ]; then
-    echo -e "\nDONE. Changes found."
+if [ $_changed != 0 ]; then
+    _notify 3 "Changes found among blocklists. Extracting and preparing cached files to working directory..."
 
     # CREATE TMPDIR
-    [ -d "$tmpdir"/hostsblock/hosts.block.d ] || mkdir -p "$tmpdir"/hostsblock/hosts.block.d
-
-    # BACK UP EXISTING HOSTSFILE
-    printf "\nBacking up $hostsfile to $hostsfile.old..."
-    cp "$hostsfile" "$hostsfile".old && printf "done" || printf "FAILED"
+    if [ -d "$tmpdir"/hostsblock/hosts.block.d ]; then
+        _notify 4 "Temporary working directory $tmpdir/hostsblock/hosts.block.d exists."
+    else
+        _notify 4 "Temporary working directory $tmpdir/hostsblock/hosts.block.d does not exist. Creating it..."
+        mkdir $_v -p -- "$tmpdir"/hostsblock/hosts.block.d
+    fi
 
     # EXTRACT CACHED FILES TO HOSTS.BLOCK.D
-    printf "\n\nExtracting and preparing cached files to working directory..."
-    n=1
-    for url in ${blocklists[*]}; do
-        FILE=`echo $url | sed "s|http:\/\/||g" | tr '/%&=?' '.'`
-        printf "\n    `basename $FILE | tr -d '\%'`..."
-        case "$FILE" in
-            *".zip")
-                if [ $zip == "1" ]; then
-                    mkdir "$tmpdir"/hostsblock/tmp
-                    cp "$cachedir"/"$FILE" "$tmpdir"/hostsblock/tmp
-                    cd "$tmpdir"/hostsblock/tmp
-                    printf "extracting..."
-                    unzip -jq "$FILE" &>/dev/null && printf "extracted..." || printf "FAILED"
-                    grep -rIh -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* > "$tmpdir"/hostsblock/hosts.block.d/hosts.block.$n
-                    cd "$tmpdir"/hostsblock
-                    rm -r "$tmpdir"/hostsblock/tmp
-                    printf "prepared"
+    _notify 4 "Extracting cached blocklist files to $tmpdir/hostsblock/hosts.block.d."
+    for _cachefile in "$cachedir"/*; do
+        echo "$_cachefile" | grep -q "\.url$" && continue
+        _basename_cachefile=$(basename "$_cachefile")
+        _cachefile_dir="$tmpdir/hostsblock/$_basename_cachefile.d"
+        _notify 4 "Inspecting $_basename_cachefile for extraction..."
+        case "$_basename_cachefile" in
+            *.zip)
+                if [ $_unzip_available != 0 ]; then
+                    _notify 4 "$_basename_cachefile is a zip archive. Will use unzip to extract it..."
+                    _decompresser="unzip"
                 else
-                    printf "unzip not found. Skipping"
+                    _notify 1 "$_basename_cachefile is a zip archive, but an extractor is NOT FOUND. Skipping..."
+                    continue
                 fi
             ;;
-            *".7z")
-                if [ $zip7 == "1" ]; then
-                    mkdir "$tmpdir"/hostsblock/tmp
-                    cp "$cachedir"/"$FILE" "$tmpdir"/hostsblock/tmp
-                    cd "$tmpdir"/hostsblock/tmp
-                    printf "extracting..."
-                    7za e "$FILE" &>/dev/null && printf "extracted..." || printf "FAILED"
-                    grep -rIh -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* > "$tmpdir"/hostsblock/hosts.block.d/hosts.block.$n
-                    cd "$tmpdir"/hostsblock
-                    rm -r "$tmpdir"/hostsblock/tmp
-                    printf "prepared"
+            *.7z)
+                if [ $_7zip_available != 0 ]; then
+                    _notify 4 "$_basename_cachefile is a 7z archive. Will use $_7zip_available to extract it..."
+                    _decompresser="7z"
                 else
-                    printf "7za not found. Skipping"
+                    _notify 1 "$_basename_cachefile is a 7z archive, but an extractor is NOT FOUND. Skipping..."
+                    continue
                 fi
             ;;
             *)
-                cp "$cachedir"/"$FILE" "$tmpdir"/hostsblock/hosts.block.d/hosts.block.$n && printf "prepared" || printf "FAILED"
+                _notify 4 "$_basename_cachefile is a plaintext file. No extractor needed."
+                _decompresser="none"
             ;;
         esac
-        let "n+=1"
+        _extract_entries &
     done
 
-    # GENERATE WHITELIST SED SCRIPT
-    printf "\n    Local whitelist..."
-    cat "$whitelist" |\
-    sed -e 's/.*/\/&\/d/' -e 's/\./\\./g' >> "$tmpdir"/hostsblock/whitelist.sed && printf "prepared" || printf "FAILED"
+    _notify 4 "Waiting for extraction processes to finish..."
+    wait
+    _backup_old
 
-    # DETERMINE THE REDIRECT URL NOT BEING USED
-    if [ "$redirecturl" == "127.0.0.1" ]; then
-        notredirect="0.0.0.0"
+    # INCLUDE HOSTS.HEAD FILE AS THE BEGINNING OF THE NEW TARGET HOSTS FILE
+    if [ "$hostshead" == "0" ] || [ $hostshead == 0 ]; then
+        _notify 4 "Not using a hostshead file, so deleting existing $hostsfile to make way for its new version..."
+        rm $_v -- "$hostsfile" && _notify 4 "Deleted existing $hostsfile." || _notify 1 "FAILED to delete existing $hostsfile."
     else
-        notredirect="127.0.0.1"
+        _notify 4 "Using a hostshead file, so overwriting $hostsfile with $hostshead..."
+        cp $_v -f -- "$hostshead" "$hostsfile" && _notify 3 "Replaced existing $hostsfile with $hosthead." || \
+          _notify 1 "FAILED to replace $hostsfile with $hostshead"
     fi
 
-    # PROCESS BLOCKLIST ENTRIES INTO TARGET FILE
-    if [ "$hostshead" == "0" ]; then
-        rm "$hostsfile"
+    # PROCESS AND WRITE BLOCK ENTRIES TO FILE
+    _notify 3 "Compiling block entries into $hostsfile..."
+    if grep -IhE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$annotate" | sed "s/ \!.*$//g" |\
+        sort -u >> "$hostsfile"; then
+        _notify 3 "Compiled block entries into $hostsfile."
     else
-        cp -f "$hostshead" "$hostsfile"
+        _notify 0 "FAILED TO COMPILE BLOCK ENTRIES INTO $hostsfile. EXITING."
+        exit 2
+    fi
+
+    # PROCESS AND WRITE REDIRECT ENTRIES TO FILE
+    if [ $redirects == 1 ] || [ "$redirects" == "1" ]; then
+        _notify 3 "Compiling redirect entries into $hostsfile..."
+        if grep -IhEv -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* |\
+          grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" | tee -a "$annotate" |\
+          sed "s/ \!.*$//g" | sort -u | grep -vf "$whilelist"  >> "$hostsfile"; then
+            _notify 3 "Compiled redirect entries into $hostsfile."
+        else
+            _notify 1 "FAILED to compile redirect entries into $hostsfile."
+        fi
+    else
+        _notify 4 "Skipping redirect entries..."
     fi
     
-    printf "\nDONE.\n\nProcessing files..."
-    # DETERMINE WHETHER TO INCLUDE REDIRECTIONS
-    if [ "$redirects" == "1" ]; then
-        grep_eval='grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$tmpdir"/hostsblock/hosts.block.d/*'
-    else
-        grep_eval='grep -IhE -- "^127\.0\.0\.1|^0\.0\.0\.0" "$tmpdir"/hostsblock/hosts.block.d/*'
-    fi
 
-    # PROCESS AND WRITE TO FILE
-    eval $grep_eval | sed -e 's/[[:space:]][[:space:]]*/ /g' -e "s/\#.*//g" -e "s/[[:space:]]$//g" -e \
-    "s/$notredirect/$redirecturl/g" | sort -u | sed -f "$tmpdir"/hostsblock/whitelist.sed >> "$hostsfile" && printf "done\n"
-   
     # APPEND BLACKLIST ENTRIES
-    printf "\nAppending blacklist entries..."
-    cat "$blacklist" |\
-        sed "s|^|$redirecturl |g" >> "$hostsfile" && printf "done\n" || printf "FAILED\n"
+    _notify 3 "Appending blacklisted entries to $hostsfile..."
+    cat "$blacklist" | sed "s|^|$redirecturl |g" >> "$hostsfile" && _notify 3 "Appended blacklisted entries to $hostsfile." || \
+      _notify 1 "FAILED to append blacklisted entries to $hostsfile."
+
+    _notify 4 "Appending blacklisted entries to $annotate..."
+    cat "$blacklist" | sed -e "s|^|$redirecturl |g" -e "s|$| \# $blacklist|g" >> "$annotate" && \
+      _notify 4 "Appended blacklisted entries to $annotate." || \
+      _notify 1 "FAILED to append blacklisted entries to $annotate."
 
     # REPORT COUNT OF MODIFIED OR BLOCKED URLS
-    for addr in `grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$hostsfile" | cut -d" " -f1 | sort -u |\
-    tr '\n' ' '`; do
-        number=`grep -c -- "^$addr" "$hostsfile"`
-        if [ "$addr" == "$redirecturl" ]; then
-            printf "\n$number urls blocked"
-        else
-            printf "\n$number urls redirected to $addr"
-        fi
-    done
+    [ $verbosity -ge 3 ] && _count_hosts "$hostsfile"
 
     # COMMANDS TO BE EXECUTED AFTER PROCESSING
-    printf "\n\nRunning postprocessing..."
-    postprocess && printf "done\n" || printf "FAILED"
+    _notify 3 "Executing postprocessing..."
+    if [ $verbosity -ge 5 ]; then   
+        postprocess && _notify 3 "Postprocessing completed." || _notify 1 "Postprocessing FAILED."
+    else
+        postprocess &>/dev/null && _notify 3 "Postprocessing completed." || _notify 1 "Postprocessing FAILED."
+    fi
+
+    # IF WE HAVE A DNS CACHER, LET'S RESTART IT
+    if [ "$dnscacher" != "none" ]; then
+        _notify 3 "Restarting $dnscacher..."
+        if [ $verbosity -ge 5 ]; then
+            _dnscacher && _notify 3 "Restarted $dnscacher." || _notify 1 "FAILED to restart $dnscacher."
+        else
+            _dnscacher &>/dev/null && _notify 3 "Restarted $dnscacher." || _notify 1 "FAILED to restart $dnscacher."
+        fi
+    fi
 
     # CLEAN UP
-    rm -r "$tmpdir"/hostsblock
+    _notify 4 "Cleaing up temporary directory $tmpdir/hostsblock..."
+    rm $_v -r -- "$tmpdir"/hostsblock && _notify 2 "Cleaned up $tmpdir/hostsblock." || _notify 1 "FAILED to clean up $tmpdir/hostsblock."
+    _notify 3 "DONE."
 else
-    echo -e "\nDONE. No new changes."
+    _notify 3 "No new changes. DONE."
 fi
-echo -e "\nHostsblock completed at `date +'%x %T'`\n"

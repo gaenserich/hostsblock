@@ -14,7 +14,7 @@ Features
 --------
 * System-wide blocking (all non-proxied connections use the HOSTS file)
 * Zip- and 7zip-capable (can download and process zip- and 7zip-compressed files)
-* Non-interactive (can be run as a periodic cronjob without needing user interaction)
+* Non-interactive (can be run as a periodic cronjob or systemd service without needing user interaction)
 * Extensive configurability (allows for custom black and white listing, redirection, post-processing scripting, target HOSTS file, etc.)
 * Bandwith-efficient (only downloads blocklists that have been changed, uses compression when available)
 * Resource-efficient (only processes blocklists when changes are registered, uses minimal pipes)

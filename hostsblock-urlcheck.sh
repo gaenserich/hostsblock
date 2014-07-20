@@ -2,72 +2,67 @@
 # DO NOT MODIFY THIS FILE. MODIFY SETTINGS VIA THE CONFIGURATION FILES IN
 # /etc/hostsblock.conf
 
-# DEFAULT SETTINGS
-hostsfile="/etc/hosts.block"
-redirecturl="127.0.0.1"
-postprocess(){
-    /etc/rc.d/dnsmasq restart
-}
-USECOLOR="yes"
-blacklist="/etc/hostsblock/black.list"
-whitelist="/etc/hostsblock/white.list"
-hostshead="0"
-optimize="0"
-
-# SOURCE MAIN CONFIGURATION FILE
-if [ -f /etc/hostsblock/rc.conf ]; then
-    . /etc/hostsblock/rc.conf
-else
-    echo "Config file /etc/hostsblock/rc.conf not found. Using defaults."
-fi
-
-# CHECK SUBROUTINE
-check(){
-    if grep "[[:space:]]`echo $@ | sed 's|\.|\\\.|g'`$" "$hostsfile" &>/dev/null; then
-        printf "\e[1;31mBLOCKED: \e[0m'$@' \e[0;32mUnblock? \e[0m[y/N] "
-        read a
-        if [[ $a == "y" || $a == "Y" ]]; then
-            echo "Unblocking $@"
-            echo " $@" >> "$whitelist"
-            sed -i "/$@/d" "$blacklist"
-            sed -i "/ $@/d" "$hostsfile"
-            changed=1
-        fi
-    else
-        printf "\e[0;32mNOT BLOCKED: \e[0m'$@' \e[1;31mBlock? \e[0m[y/N] "
-        read a
-        if [[ $a == "y" || $a == "Y" ]]; then
-            echo "Blocking $@"
-            echo "$@" >> "$blacklist"
-            sed -i "/$@/d" "$whitelist"
-            echo "$redirecturl $@" >> "$hostsfile"
-            changed=1
-        fi
-    fi
-}
-
-# MAIN ROUTINE
-if [[ "$@" == "-h" || "$@" == "--help" ]]; then
-    cat << EOF
-
-usage: $0 http[s]://[url]
+# GET OPTIONS
+while getopts "v:f:h" _option; do
+    case "$_option" in
+        f)  [ "$OPTARG" != "" ] && _configfile="$OPTARG";;
+        *)
+            cat << EOF
+Usage:
+  $0 [ -f CONFIGFILE ] URL  - Check if URL and other urls contained therein are blocked
 
 $0 will first verify that [url] is blocked or unblocked,
-and then scan that url for further contained subdomains.
+and then scan that url for further contained subdomains
+
+Help Options:
+  -h                            Show help options
+
+Application Options:
+  -f CONFIGFILE                 Specify an alternative configuration file (instead of /etc/hostsblock/hostsblock.conf)
 EOF
+            exit 1
+        ;;
+    esac
+done
+
+# SOURCE DEFAULT SETTINGS AND SUBROUTINES
+if [ -f /usr/lib/hostsblock-common.sh ]; then
+    source /usr/lib/hostsblock-common.sh
+elif [ -f /usr/local/lib/hostsblock-common.sh ]; then
+    source /usr/local/lib/hostsblock-common.sh
+elif [ -f ./hostsblock-common.sh ]; then
+    source ./hostsblock-common.sh
 else
-    changed=0
-    echo "Verifying that the given page is blocked or unblocked"
-    check `echo "$@" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g"`
-    [ "$changed" == "1" ] && postprocess &>/dev/null
-    printf "Page domain verified. Scan the whole page for other domains for (un)blocking? [y/N] "
-    read a
-    if [[ $a == "y" || $a == "Y" ]]; then
-        for LINE in `curl -s "$@" | tr ' ' '\n' | grep -- "http" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g" |\
-        sort -u | grep -- "\."`; do
-            check "$LINE"
-        done
-        echo "Whole-page scan completed."
+    echo "hostsblock.common.sh NOT FOUND. INSTALL IT TO /usr/lib/ OR /usr/local/lib/. EXITING..."
+    exit 1
+fi
+
+_check_root
+_check_depends curl grep sed tr
+_source_configfile
+_verbosity_check
+_set_subprocess_verbosity
+_detect_dnscacher
+
+# MAIN ROUTINE
+_changed=0
+_notify 0 "Checking to see if url is blocked or unblocked..."
+_check_url $(echo "$@" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g")
+[ $_changed == 1 ] && postprocess &>/dev/null
+read -p "Page domain verified. Scan the whole page for other domains for (un)blocking? [y/N] " a
+if [[ $a == "y" || $a == "Y" ]]; then
+    for LINE in `curl --location-trusted -s "$@" | tr ' ' '\n' | grep "https*:\/\/" | sed -e "s/.*https*:\/\/\(.*\)$/\1/g" -e "s/\//\n/g" | grep "\." |\
+      grep -v "\"" | grep -v ")" | grep -v "(" | grep -v "\&" | grep -v "\?" | grep -v "<" | grep -v ">" | grep -v "'" | grep -v "_" |\
+      grep -v "\.php$" | grep -v "\.html*$" | grep "[a-z]$" | sort -u | tr "\n" " "`; do
+        _check_url "$LINE"
+    done
+    _notify 0 "Whole-page scan completed."
+fi
+
+if [ $_changed == 1 ]; then
+    if [ $verbosity -ge 5 ]; then
+        postprocess
+    else
+        postprocess &>/dev/null
     fi
-    [ "$changed" == "1" ] && postprocess &>/dev/null
 fi
