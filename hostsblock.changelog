@@ -1,3 +1,21 @@
+(07.25.2014)
+PRE-ALPHA RELEASE
+*new main config file: /etc/hostsblock/hostsblock.conf
+*new command-line functions that overrides configuration file location and verbosity
+*new verbosity levels:
+    Level 0: Only fatal errors
+    Level 1: Level 0 + non-fatal errors
+    Level 2: Level 1 + updates to cache files
+    Level 3: Level 2 + narration of each major phase
+    Level 4: Level 3 + step-by-step details of all processes
+    Level 5: Level 4 + stdout/stderr from sub-processes like curl, zip, 7za, etc
+*functions common to hostsblock and hostsblock-urlcheck split off into library /usr/lib/hostsblock-common.sh
+*hostsblock-urlcheck now lists which blocklists affect a given url
+*logic to detect dns caching daemons (e.g. dnsmasq) and offer configuration instructions
+*post-download processing of blocklist files now handled in parallel for greater performance
+*general performance improvements in compiling large hosts.block files (use of more grep over sed)
+*general performance improvements for hostsblock-urlcheck (use of more grep over sed)
+
 Version 0.12.3 (03.06.2013)
 *hostblock-urlcheck: issue with colored prompt on white-backgrounded terminals fixed
 

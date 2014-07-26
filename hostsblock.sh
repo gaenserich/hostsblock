@@ -30,7 +30,7 @@ elif [ -f /usr/local/lib/hostsblock-common.sh ]; then
 elif [ -f ./hostsblock-common.sh ]; then
     source ./hostsblock-common.sh
 else
-    echo "hostsblock.common.sh NOT FOUND. INSTALL IT TO /usr/lib/ OR /usr/local/lib/. EXITING..."
+    echo "hostsblock-common.sh NOT FOUND. INSTALL IT TO /usr/lib/ OR /usr/local/lib/. EXITING..."
     exit 1
 fi
 
@@ -174,7 +174,6 @@ if [ $_changed != 0 ]; then
     else
         _notify 4 "Skipping redirect entries..."
     fi
-    
 
     # APPEND BLACKLIST ENTRIES
     _notify 3 "Appending blacklisted entries to $hostsfile..."
@@ -191,7 +190,7 @@ if [ $_changed != 0 ]; then
 
     # COMMANDS TO BE EXECUTED AFTER PROCESSING
     _notify 3 "Executing postprocessing..."
-    if [ $verbosity -ge 5 ]; then   
+    if [ $verbosity -ge 5 ]; then
         postprocess && _notify 3 "Postprocessing completed." || _notify 1 "Postprocessing FAILED."
     else
         postprocess &>/dev/null && _notify 3 "Postprocessing completed." || _notify 1 "Postprocessing FAILED."
