@@ -181,7 +181,7 @@ if [ $_changed != 0 ]; then
       _notify 1 "FAILED to append blacklisted entries to $hostsfile."
 
     _notify 4 "Appending blacklisted entries to $annotate..."
-    cat "$blacklist" | sed -e "s|^|$redirecturl |g" -e "s|$| \# $blacklist|g" >> "$annotate" && \
+    cat "$blacklist" | sed -e "s|^|$redirecturl |g" -e "s|$| \! $blacklist|g" >> "$annotate" && \
       _notify 4 "Appended blacklisted entries to $annotate." || \
       _notify 1 "FAILED to append blacklisted entries to $annotate."
 
