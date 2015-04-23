@@ -278,13 +278,14 @@ _check_dhcpcd_config() {
 }
 
 _check_dhclient_config() {
-    if [ -f /etc/dhclient.conf ] && grep -v -- "^\#" /etc/dhclient.conf | grep -- "prepend" | grep -q -- "127\.0\.0\.1"; then
+    _dhclient_config=$(find /etc/ -type f -iname 'dhclient.conf' | head -n1)
+    if [ -f "$_dhclient_config" ] && grep -v -- "^\#" "$_dhclient_config" | grep -- "prepend" | grep -q -- "127\.0\.0\.1"; then
         _notify 4 "/etc/dhclient.conf exists and is properly configured."
         _notify 3 "DHCLIENT configured correctly."
         true
     else
-        _notify 3 "/etc/dhclient.conf does NOT exist or does NOT have the correct entry."
-        _notify 4 "Please add 'prepend domain-name-servers 127.0.0.1;' to /etc/dhclient.conf to correct the last error."
+        _notify 3 "dhclient.conf does NOT exist or does NOT have the correct entry."
+        _notify 4 "Please add 'prepend domain-name-servers 127.0.0.1;' to dhclient.conf to correct the last error."
         _notify 3 "DHCLIENT incorrectly configured."
         false
     fi
@@ -382,7 +383,7 @@ _detect_dnscacher() {
 export tmpdir="/dev/shm"
 export hostsfile="/etc/hosts"
 export redirecturl="127.0.0.1"
-export dnscacher="none"
+export dnscacher="auto"
 postprocess() {
      /bin/true
 }

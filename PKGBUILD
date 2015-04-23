@@ -19,7 +19,7 @@ install=$pkgname.install
 source=('hostsblock.sh' 'hostsblock-urlcheck.sh' 'hostsblock-common.sh' 'hostsblock.conf' 'black.list' 'white.list' 'hosts.head')
 md5sums=('4d1da35ebd2aef1d1bba4f975a5a85ab'
          'd38e61230e7a8ac60acf6c2b5a5b7ac8'
-         '52227a5a5ff0424fe73aebf6f507ebb8'
+         'f6f05d483577af15e6247ef1e9686d7c'
          '893af87fa051df0fc44995120deea447'
          '216d5af213e0eb3690ea3c27d4cc6258'
          '3a6ea9f5b0eef002b6ca1dd57388d78a'
