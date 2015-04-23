@@ -1,6 +1,6 @@
 hostsblock
 ==========
-An ad- and malware-blocking cronscript for Linux
+An ad- and malware-blocking script for Linux
 
 News & Bugs
 -----------
@@ -42,4 +42,6 @@ A pseudo-server that serves blank pages in order to remove the boilerplate page 
 
 Todo
 ----
-* Port to Perl or Python for better performance
+* Before 1.0: Create manpages (hostsblock.8 hostsblock.conf.8 hostsblock-urlcheck.8) 
+* Before 1.0: Finish systemd service integration (hostsblock.service, hostsblock.timer)
+* After 1.0: Move all functions (other than those writing to /etc/ and restart dns cachers) to an unpriveledged user
