@@ -17,7 +17,13 @@ backup=('etc/hostsblock/hostsblock.conf' 'etc/hostsblock/black.list' 'etc/hostsb
 changelog=$pkgname.changelog
 install=$pkgname.install
 source=('hostsblock.sh' 'hostsblock-urlcheck.sh' 'hostsblock-common.sh' 'hostsblock.conf' 'black.list' 'white.list' 'hosts.head')
-md5sums=('061b47ee4ec8d7ae17f34294d9eba8f4' '02e9cf97ea6c0863971086a920fdba70' '88465d9b326a6a6eeed5be895289f9f5' '216d5af213e0eb3690ea3c27d4cc6258' '3a6ea9f5b0eef002b6ca1dd57388d78a' '949af91b7a40582de127eb43a96f001e')
+md5sums=('fe0688e31a6e215fd036b04b9da6709a'
+         'd38e61230e7a8ac60acf6c2b5a5b7ac8'
+         'c9c3b305e11c61638babfb483a855ad0'
+         'fd4f0cd7dc037dcf4f47dd4ed2bbb383'
+         '216d5af213e0eb3690ea3c27d4cc6258'
+         '3a6ea9f5b0eef002b6ca1dd57388d78a'
+         '949af91b7a40582de127eb43a96f001e')
 
 package() {
   install -Dm700 "$srcdir"/hostsblock.sh "$pkgdir"/usr/bin/hostsblock

@@ -15,7 +15,7 @@ Help Options:
 
 Application Options:
   -f CONFIGFILE                 Specify an alternative configuration file (instead of /etc/hostsblock/hostsblock.conf)
-  -v VERBOSITY                  Specify how much information hostsblock provides (0=only fatal errors to 3=the kitchen sink)
+  -v VERBOSITY                  Specify how much information hostsblock provides (0=only fatal errors to 5=the kitchen sink)
 EOF
             exit 1
         ;;
