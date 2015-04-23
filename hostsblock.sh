@@ -153,7 +153,7 @@ if [ $_changed != 0 ]; then
 
     # PROCESS AND WRITE BLOCK ENTRIES TO FILE
     _notify 3 "Compiling block entries into $hostsfile..."
-    if grep -IhE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$annotate" | sed "s/ \!.*$//g" |\
+    if grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$annotate" | sed "s/ \!.*$//g" |\
         sort -u >> "$hostsfile"; then
         _notify 3 "Compiled block entries into $hostsfile."
     else
@@ -164,8 +164,8 @@ if [ $_changed != 0 ]; then
     # PROCESS AND WRITE REDIRECT ENTRIES TO FILE
     if [ $redirects == 1 ] || [ "$redirects" == "1" ]; then
         _notify 3 "Compiling redirect entries into $hostsfile..."
-        if grep -IhEv -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* |\
-          grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" | tee -a "$annotate" |\
+        if grep -ahEv -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* |\
+          grep -ah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" | tee -a "$annotate" |\
           sed "s/ \!.*$//g" | sort -u | grep -vf "$whilelist"  >> "$hostsfile"; then
             _notify 3 "Compiled redirect entries into $hostsfile."
         else

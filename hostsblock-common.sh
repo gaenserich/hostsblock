@@ -27,7 +27,7 @@ _notify() {
 
 ## Report counts of addresses from a given hosts-like file
 _count_hosts() {
-    grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$@" | cut -d" " -f1 | sort -u | while read _addr; do
+    grep -ah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$@" | cut -d" " -f1 | sort -u | while read _addr; do
         _number=$(grep -c -- "^$_addr" "$@")
         _notify 3 "$@: $_number urls redirected to $_addr."
     done
@@ -64,23 +64,23 @@ _extract_entries() {
     _notify 4 "Extracting entries from $_cachefile..."
     [ -d "$_cachefile_dir" ] || mkdir $_v -- "$_cachefile_dir" && \
       _notify 4 "Created directory $_cachefile_dir." || _notify 1 "FAILED to create directory $_cachefile_dir." 
-    cp $_v -- "$_cachefile" "$_cachefile_dir"/ && _notify 4 "Moved $_basename_cachefile to $_cachefile_dir." || \
-      _notify 1 "FAILED to move $_basename_cachefile to $_cachefile_dir."
     cd "$_cachefile_dir"
     case "$_decompresser" in
         none)
             _compress_exit=0
             _notify 4 "No need to decompress $_basename_cachefile."
+            cp $_v -- "$_cachefile" "$_cachefile_dir"/ && _notify 4 "Moved $_basename_cachefile to $_cachefile_dir." || \
+              _notify 1 "FAILED to move $_basename_cachefile to $_cachefile_dir."
         ;;
         unzip)
-            unzip -B -o -j $_v_unzip -- "$_basename_cachefile" && _compress_exit=0 || _compress_exit=1
+            unzip -B -o -j $_v_unzip -- "$_cachefile" && _compress_exit=0 || _compress_exit=1
             [ $_compress_exit == 0 ] && _notify 3 "Unzipped $_basename_cachefile." || _notify 1 "FAILED to unzip $_basename_cachefile."
         ;;
         7z*)
             if [ $verbosity -le 4 ]; then
-                eval $_7zip_available e "$_basename_cachefile" &>/dev/null && _compress_exit=0 || _compress_exit=1
+                eval $_7zip_available e "$_cachefile" &>/dev/null && _compress_exit=0 || _compress_exit=1
             else
-                eval $_7zip_available e "$_basename_cachefile" && _compress_exit=0 || _compress_exit=1
+                eval $_7zip_available e "$_cachefile" && _compress_exit=0 || _compress_exit=1
             fi
             [ $_compress_exit == 0 ] && _notify 3 "Un7zipped $_basename_cachefile." || _notify 1 "FAILED to un7zip $_basename_cachefile."
         ;;
@@ -89,7 +89,7 @@ _extract_entries() {
         _target_hostsfile="$tmpdir/hostsblock/hosts.block.d/$_basename_cachefile.hosts"
         _notify 4 "Extracting obvious entries from $_basename_cachefile..."
         _cachefile_url=$(cat "$cachedir"/"$_basename_cachefile".url | head -n1)
-        if grep -rIh -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | sed -e 's/[[:space:]][[:space:]]*/ /g' -e \
+        if grep -rah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | sed -e 's/[[:space:]][[:space:]]*/ /g' -e \
           "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -vf "$whilelist" | \
            sed "s|$| \! $_cachefile_url|g" > "$_target_hostsfile"; then
             _notify 4 "Extracted obvious entries from $_basename_cachefile."
@@ -100,7 +100,7 @@ _extract_entries() {
             _notify 1 "FAILED to extract any obvious entries from $_basename_cachefile."
         fi
         _notify 4 "Extracting less-obvious entries from $_basename_cachefile"
-        if grep -rIhv "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | grep -v "^\." | grep -v "\.$" | grep -v "\*" |\
+        if grep -rahv "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | grep -v "^\." | grep -v "\.$" | grep -v "\*" |\
           grep -v "\"" | grep -v "\$" | grep "[a-z]" | grep "\." | sed "s/^/$redirecturl /g" | sed -e 's/[[:space:]][[:space:]]*/ /g' \
           -e "s/\#.*//g" -e "s/[[:space:]]$//g" | sort -u | grep -vf "$whilelist" | sed "s|$| \! $_cachefile_url|g" |\
            >> "$_target_hostsfile"; then
