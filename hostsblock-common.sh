@@ -20,6 +20,7 @@ _notify() {
             5) _level="[\e[0;32mDEBUG\e[0m]" ;;
         esac
     else
+        case $1 in
             0) _level="[FATAL]" ;;
             1) _level="[WARN]" ;;
             2) _level="[NOTE]" ;;
