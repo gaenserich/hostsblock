@@ -10,8 +10,16 @@
 ### Level 5: Level 4 + stdout/stderr from sub-processes like curl, zip, 7za, etc.
 
 _notify() {
+    case $1 in
+        0) _level="[\e[1;31mFATAL\e[0m]" ;;
+        1) _level="[\e[1;31mWARN\e[0m]" ;;
+        2) _level="[\e[0;33mNOTE\e[0m]" ;;
+        3) _level="[\e[0;33mINFO\e[0m]" ;;
+        4) _level="[\e[0;32mDETAIL\e[0m]" ;;
+        5) _level="[\e[0;32mDEBUG\e[0m]" ;;
+    esac
     if [ $verbosity -ge $1 ]; then
-        echo "$2"
+        echo -e "${_level} $2"
     else
         true
     fi
@@ -21,7 +29,7 @@ _notify() {
 _count_hosts() {
     grep -Ih -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$@" | cut -d" " -f1 | sort -u | while read _addr; do
         _number=$(grep -c -- "^$_addr" "$@")
-        echo "$@: $_number urls redirected to $_addr."
+        _notify 3 "$@: $_number urls redirected to $_addr."
     done
 }
 
@@ -217,7 +225,7 @@ _check_url(){
     if [ $(echo "$_block_matches" | wc -w) -gt 0 ] || [ $(echo "$_redirect_matches" | wc -w) -gt 0 ]; then
         [ $(echo "$_block_matches" | wc -w) -gt 0 ] && echo -e "\n'$@' \e[1;31mBLOCKED \e[0mby blocklist(s)${_block_matches}"
         [ $(echo "$_redirect_matches" | wc -w) -gt 0 ] && echo -e "\n'$@' \e[1;33mREDIRECTED \e[0m$_redirect_matches" 
-        echo -e "    1) Unblock/unredirect just $@\n    2) Unblock/unredirect all sites containing url $@\n    3) Keep blocked/redirected"
+        echo -e "\t1) Unblock/unredirect just $@\n\t2) Unblock/unredirect all sites containing url $@\n\t3) Keep blocked/redirected"
         read -p "1-3 (default: 3): " b
         if [[ $b == 1 || "$b" == "1" ]]; then
             echo "Unblocking just $@"
@@ -235,7 +243,7 @@ _check_url(){
             _changed=1
         fi
     else
-        echo -e "\n'$@' \e[0;32mNOT BLOCKED/REDIRECTED\e[0m\n    1) Block $@\n    2) Block $@ and delete all whitelist url entries containing $@\n    3) Keep unblocked (default)"
+        echo -e "\n'$@' \e[0;32mNOT BLOCKED/REDIRECTED\e[0m\n\t1) Block $@\n\t2) Block $@ and delete all whitelist url entries containing $@\n\t3) Keep unblocked (default)"
         read -p "1-3 (default: 3): " c
         if [[ $c == 1 || "$c" == "1" ]]; then
             echo "Blocking $@"
