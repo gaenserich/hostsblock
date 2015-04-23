@@ -47,7 +47,7 @@ _count_hosts() {
 _backup_old() {
     if [ $recycle_old == 1 ] || [ "$recycle_old" == "1" ] || [ "$recycle_old" == "yes" ] || [ "$recycle_old" == "true" ]; then
         _notify 3 "Recycling old $hostsfile into new version..."
-        cp $_v -f -- "$hostsfile" "$tmpdir"/hostsblock/hosts.block.d/hosts.block.old && \
+        sort -u "$hostsfile" | sed "s|$| ! /etc/hosts.block.old|g" | "$tmpdir"/hostsblock/hosts.block.d/hosts.block.old && \
           _notify 3 "Recycled old $hostsfile into new version." || \
           _notify 1 "FAILED to recycle old $hostsfile into new version."
     else
