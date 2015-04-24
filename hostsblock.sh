@@ -177,13 +177,11 @@ if [ $_changed != 0 ]; then
 
     # APPEND BLACKLIST ENTRIES
     _notify 3 "Appending blacklisted entries to $hostsfile..."
-    cat "$blacklist" | sed "s|^|$redirecturl |g" >> "$hostsfile" && _notify 3 "Appended blacklisted entries to $hostsfile." || \
+    cat "$blacklist" | while read _blacklistline; do
+        echo "$redirecturl $_blacklistline \! $blacklist" >> "$annotate"
+        grep -q "$_blacklistline" "$hostsfile" || echo "$redirecturl $_blacklistline" >> "$hostsfile"
+    done && _notify 3 "Appended blacklisted entries to $hostsfile." || \
       _notify 1 "FAILED to append blacklisted entries to $hostsfile."
-
-    _notify 4 "Appending blacklisted entries to $annotate..."
-    cat "$blacklist" | sed -e "s|^|$redirecturl |g" -e "s|$| \! $blacklist|g" >> "$annotate" && \
-      _notify 4 "Appended blacklisted entries to $annotate." || \
-      _notify 1 "FAILED to append blacklisted entries to $annotate."
 
     # REPORT COUNT OF MODIFIED OR BLOCKED URLS
     [ $verbosity -ge 3 ] && _count_hosts "$hostsfile"
