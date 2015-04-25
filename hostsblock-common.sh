@@ -10,7 +10,7 @@
 ### Level 5: Level 4 + stdout/stderr from sub-processes like curl, zip, 7za, etc.
 
 _notify() {
-    if [ -z "$PS1" ]; then
+    if [ -z "$PS1" ] && [[ $- =~ i ]]; then
         case $1 in
             0) _level="[\e[1;31mFATAL\e[0m]" ;;
             1) _level="[\e[1;31mWARN\e[0m]" ;;
