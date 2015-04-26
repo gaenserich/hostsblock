@@ -26,11 +26,11 @@ md5sums=('83e893d082421df273ec897f4462f846'
          '949af91b7a40582de127eb43a96f001e')
 
 package() {
-  install -Dm700 "$srcdir"/hostsblock.sh "$pkgdir"/usr/bin/hostsblock
-  install -Dm700 "$srcdir"/hostsblock-urlcheck.sh "$pkgdir"/usr/bin/hostsblock-urlcheck
-  install -Dm600 "$srcdir"/hostsblock-common.sh "$pkgdir"/usr/lib/hostsblock-common.sh
-  install -Dm600 "$srcdir"/hostsblock.conf "$pkgdir"/etc/hostsblock/hostsblock.conf
-  install -Dm600 "$srcdir"/black.list "$pkgdir"/etc/hostsblock/black.list
-  install -Dm600 "$srcdir"/white.list "$pkgdir"/etc/hostsblock/white.list
-  install -Dm600 "$srcdir"/hosts.head "$pkgdir"/etc/hostsblock/hosts.head
+  install -Dm744 "$srcdir"/hostsblock.sh "$pkgdir"/usr/bin/hostsblock
+  install -Dm744 "$srcdir"/hostsblock-urlcheck.sh "$pkgdir"/usr/bin/hostsblock-urlcheck
+  install -Dm644 "$srcdir"/hostsblock-common.sh "$pkgdir"/usr/lib/hostsblock-common.sh
+  install -Dm644 "$srcdir"/hostsblock.conf "$pkgdir"/etc/hostsblock/hostsblock.conf
+  install -Dm644 "$srcdir"/black.list "$pkgdir"/etc/hostsblock/black.list
+  install -Dm644 "$srcdir"/white.list "$pkgdir"/etc/hostsblock/white.list
+  install -Dm644 "$srcdir"/hosts.head "$pkgdir"/etc/hostsblock/hosts.head
 }
