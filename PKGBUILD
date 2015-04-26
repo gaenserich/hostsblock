@@ -1,6 +1,6 @@
 # Maintainer: Jake VanderKolk <jakevanderkolk@gmail.com>
 pkgname=hostsblock
-pkgver=0.999.1
+pkgver=0.999.2
 pkgrel=1
 pkgdesc="A script and cronjob that downloads, sorts, and installs multiple ad- and malware-blocking hosts files."
 arch=(any)
@@ -16,14 +16,16 @@ optdepends=('dnsmasq: helps speed up DNS resolutions'
 backup=('etc/hostsblock/hostsblock.conf' 'etc/hostsblock/black.list' 'etc/hostsblock/white.list' 'etc/hostsblock/hosts.head')
 changelog=$pkgname.changelog
 install=$pkgname.install
-source=('hostsblock.sh' 'hostsblock-urlcheck.sh' 'hostsblock-common.sh' 'hostsblock.conf' 'black.list' 'white.list' 'hosts.head')
+source=('hostsblock.sh' 'hostsblock-urlcheck.sh' 'hostsblock-common.sh' 'hostsblock.conf' 'black.list' 'white.list' 'hosts.head' 'hostsblock.service' 'hostsblock.timer')
 md5sums=('83e893d082421df273ec897f4462f846'
          'd38e61230e7a8ac60acf6c2b5a5b7ac8'
-         '4f656b57eabc620767e21b48eb1aca80'
+         'dfbaf4cda860bd7adfc927f859ddc8ba'
          '893af87fa051df0fc44995120deea447'
          '216d5af213e0eb3690ea3c27d4cc6258'
          '3a6ea9f5b0eef002b6ca1dd57388d78a'
-         '949af91b7a40582de127eb43a96f001e')
+         '949af91b7a40582de127eb43a96f001e'
+         'c42cf86eb028e30feacc828231b8c084'
+         '96d43b8f9e81f85111a2ac370c8954d8')
 
 package() {
   install -Dm744 "$srcdir"/hostsblock.sh "$pkgdir"/usr/bin/hostsblock
@@ -33,4 +35,6 @@ package() {
   install -Dm644 "$srcdir"/black.list "$pkgdir"/etc/hostsblock/black.list
   install -Dm644 "$srcdir"/white.list "$pkgdir"/etc/hostsblock/white.list
   install -Dm644 "$srcdir"/hosts.head "$pkgdir"/etc/hostsblock/hosts.head
+  install -Dm644 "$srcdir"/hostsblock.service "$pkgdir"/usr/lib/systemd/system/hostsblock.service
+  install -Dm644 "$srcdir"/hostsblock.timer "$pkgdir"/usr/lib/systemd/system/hostsblock.timer
 }
