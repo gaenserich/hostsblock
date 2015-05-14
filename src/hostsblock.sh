@@ -41,7 +41,6 @@ _check_root
 _check_depends mv cp rm curl grep sed tr cut mkdir
 _check_unzip
 _check_7z
-_detect_dnscacher
 
 # IDENTIFY WHAT WILL not BE OUR REDIRECTION URL
 if [ "$redirecturl" == "127.0.0.1" ]; then
@@ -192,16 +191,6 @@ if [ $_changed != 0 ]; then
         postprocess && _notify 3 "Postprocessing completed." || _notify 1 "Postprocessing FAILED."
     else
         postprocess &>/dev/null && _notify 3 "Postprocessing completed." || _notify 1 "Postprocessing FAILED."
-    fi
-
-    # IF WE HAVE A DNS CACHER, LET'S RESTART IT
-    if [ "$dnscacher" != "none" ]; then
-        _notify 3 "Restarting $dnscacher..."
-        if [ $verbosity -ge 5 ]; then
-            _dnscacher && _notify 3 "Restarted $dnscacher." || _notify 1 "FAILED to restart $dnscacher."
-        else
-            _dnscacher &>/dev/null && _notify 3 "Restarted $dnscacher." || _notify 1 "FAILED to restart $dnscacher."
-        fi
     fi
 
     # CLEAN UP
