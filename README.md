@@ -4,7 +4,7 @@ An ad- and malware-blocking script for Linux
 
 News & Bugs
 -----------
-For the latest news about `hostsblock`, and to submit questions, bugs, patches, and feedback in general, please consult [its issues page](https://gaenserich.github.com/hostsblock/issues). There are also ongoing discussions in the [ArchLinux forum](https://bbs.archlinux.org/viewtopic.php?id=139784) and on [its ArchLinux AUR page](https://aur.archlinux.org/packages/hostsblock/).
+For the latest news about `hostsblock`, and to submit questions, bugs, patches, and feedback in general, please consult [its issues page](https://github.com/gaenserich/hostsblock/issues). There are also ongoing discussions in the [ArchLinux forum](https://bbs.archlinux.org/viewtopic.php?id=139784) and on [its ArchLinux AUR page](https://aur.archlinux.org/packages/hostsblock/).
 
 Description
 -----------
@@ -46,4 +46,4 @@ A pseudo-server that serves blank pages in order to remove the boilerplate page 
 
 Todo
 ----
-See the [issues page](https://gaenserich.github.com/hostsblock/issues)
+See the [issues page](https://github.com/gaenserich/hostsblock/issues)
