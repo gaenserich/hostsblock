@@ -99,7 +99,7 @@ _extract_entries() {
     if [ $_compress_exit == 0 ]; then
         _target_hostsfile="$tmpdir/hostsblock/hosts.block.d/$_basename_cachefile.hosts"
         _notify 4 "Extracting obvious entries from $_basename_cachefile..."
-        _cachefile_url=$(cat "$cachedir"/"$_basename_cachefile".url | head -n1)
+        _cachefile_url=$(head -n1 "$cachedir"/"$_basename_cachefile".url)
         if grep -rah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | sed -e 's/[[:space:]][[:space:]]*/ /g' -e \
           "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -vf "$whilelist" | \
            sed "s|$| \! $_cachefile_url|g" > "$_target_hostsfile"; then

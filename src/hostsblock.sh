@@ -38,7 +38,7 @@ _source_configfile
 _verbosity_check
 _set_subprocess_verbosity
 _check_root
-_check_depends mv cp rm curl grep sed tr cut mkdir
+_check_depends mv cp rm curl grep sed tr cut mkdir file
 _check_unzip
 _check_7z
 
@@ -129,8 +129,28 @@ if [ $_changed != 0 ]; then
                 fi
             ;;
             *)
-                _notify 4 "$_basename_cachefile is a plaintext file. No extractor needed."
-                _decompresser="none"
+                _notify 4 "$_basename_cachefile has an ambiguous suffix. Inspecting it for its filetype..."
+                _cachefile_type=$(file -bi "$_cachefile")
+                if [[ "$_cachefile_type" = *'application/zip'* ]]; then
+                    if [ $_unzip_available != 0 ]; then
+                        _notify 4 "$_basename_cachefile is a zip archive. Will use unzip to extract it..."
+                        _decompresser="unzip"
+                    else
+                        _notify 1 "$_basename_cachefile is a zip archive, but an extractor is NOT FOUND. Skipping..."
+                        continue
+                    fi
+                elif [[ "$_cachefile_type" = *'application/x-7z-compressed'* ]]; then
+                    if [ $_7zip_available != 0 ]; then
+                        _notify 4 "$_basename_cachefile is a 7z archive. Will use $_7zip_available to extract it..."
+                        _decompresser="7z"
+                    else
+                        _notify 1 "$_basename_cachefile is a 7z archive, but an extractor is NOT FOUND. Skipping..."
+                        continue
+                    fi
+                else
+                    _notify 4 "$_basename_cachefile is a plaintext file. No extractor needed."
+                    _decompresser="none"
+                fi
             ;;
         esac
         _extract_entries &
@@ -176,10 +196,10 @@ if [ $_changed != 0 ]; then
 
     # APPEND BLACKLIST ENTRIES
     _notify 3 "Appending blacklisted entries to $hostsfile..."
-    cat "$blacklist" | while read _blacklistline; do
+    while read _blacklistline; do
         echo "$redirecturl $_blacklistline \! $blacklist" >> "$annotate"
         grep -q "$_blacklistline" "$hostsfile" || echo "$redirecturl $_blacklistline" >> "$hostsfile"
-    done && _notify 3 "Appended blacklisted entries to $hostsfile." || \
+    done < "$blacklist" && _notify 3 "Appended blacklisted entries to $hostsfile." || \
       _notify 1 "FAILED to append blacklisted entries to $hostsfile."
 
     # REPORT COUNT OF MODIFIED OR BLOCKED URLS

@@ -17,9 +17,9 @@ backup=('etc/hostsblock/hostsblock.conf' 'etc/hostsblock/black.list' 'etc/hostsb
 changelog=$pkgname.changelog
 install=$pkgname.install
 source=('hostsblock.sh' 'hostsblock-urlcheck.sh' 'hostsblock-common.sh' 'hostsblock.conf' 'black.list' 'white.list' 'hosts.head' 'hostsblock.service' 'hostsblock.timer')
-md5sums=('83e893d082421df273ec897f4462f846'
-         'd38e61230e7a8ac60acf6c2b5a5b7ac8'
-         'dfbaf4cda860bd7adfc927f859ddc8ba'
+md5sums=('8e242c52d9aa4d72236dd258fdd9a844'
+         '7f11429bdb24d63b341e8950484082e3'
+         '8845a64a1c75dd0ae37c99b036401fc1'
          '893af87fa051df0fc44995120deea447'
          '216d5af213e0eb3690ea3c27d4cc6258'
          '3a6ea9f5b0eef002b6ca1dd57388d78a'
