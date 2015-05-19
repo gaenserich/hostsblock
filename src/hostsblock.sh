@@ -172,7 +172,7 @@ if [ $_changed != 0 ]; then
 
     # PROCESS AND WRITE BLOCK ENTRIES TO FILE
     _notify 3 "Compiling block entries into $hostsfile..."
-    if grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$annotate" | sed "s/ \!.*$//g" |\
+    if grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$annotate".tmp | sed "s/ \!.*$//g" |\
         sort -u >> "$hostsfile"; then
         _notify 3 "Compiled block entries into $hostsfile."
     else
@@ -184,7 +184,7 @@ if [ $_changed != 0 ]; then
     if [ $redirects == 1 ] || [ "$redirects" == "1" ]; then
         _notify 3 "Compiling redirect entries into $hostsfile..."
         if grep -ahEv -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* |\
-          grep -ah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" | tee -a "$annotate" |\
+          grep -ah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" | tee -a "$annotate".tmp |\
           sed "s/ \!.*$//g" | sort -u | grep -vf "$whilelist"  >> "$hostsfile"; then
             _notify 3 "Compiled redirect entries into $hostsfile."
         else
@@ -197,10 +197,23 @@ if [ $_changed != 0 ]; then
     # APPEND BLACKLIST ENTRIES
     _notify 3 "Appending blacklisted entries to $hostsfile..."
     while read _blacklistline; do
-        echo "$redirecturl $_blacklistline \! $blacklist" >> "$annotate"
+        echo "$redirecturl $_blacklistline \! $blacklist" >> "$annotate".tmp
         grep -q "$_blacklistline" "$hostsfile" || echo "$redirecturl $_blacklistline" >> "$hostsfile"
     done < "$blacklist" && _notify 3 "Appended blacklisted entries to $hostsfile." || \
       _notify 1 "FAILED to append blacklisted entries to $hostsfile."
+
+    # SORT AND, IF REQUESTED, COMPRESS ANNOTATION FILE.
+    case "$annotate" in
+        *.gz)
+            which pigz &>/dev/null && \
+              sort -u "$annotate".tmp | pigz -zc - > "$annotate" || \
+              sort -u "$annotate".tmp | gzip -zc - > "$annotate"
+        ;;
+        *)
+            sort -u "$annotate".tmp > "$annotate"
+        ;;
+    esac
+    [ -f "$annotate" ] && rm -f "$_v" -- "$annotate".tmp
 
     # REPORT COUNT OF MODIFIED OR BLOCKED URLS
     [ $verbosity -ge 3 ] && _count_hosts "$hostsfile"
@@ -214,7 +227,7 @@ if [ $_changed != 0 ]; then
     fi
 
     # CLEAN UP
-    _notify 4 "Cleaing up temporary directory $tmpdir/hostsblock..."
+    _notify 4 "Cleaning up temporary directory $tmpdir/hostsblock..."
     rm $_v -r -- "$tmpdir"/hostsblock && _notify 2 "Cleaned up $tmpdir/hostsblock." || _notify 1 "FAILED to clean up $tmpdir/hostsblock."
     _notify 3 "DONE."
 else

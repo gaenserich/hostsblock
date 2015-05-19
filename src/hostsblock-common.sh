@@ -221,15 +221,33 @@ _source_configfile() {
 
 # REWRITE A GIVEN FILE SANS REGEX STATEMENT
 _strip_entries() {
-    grep -v "$1" "$2" > "$2".tmp && \
-      mv $_v -f -- "$2".tmp "$2"
+    case "$2" in
+        *.gz)
+            which pigz &>/dev/null && \
+              pigz -dc "$2" | grep -v "$1" | pigz -zc - > "$2".tmp || \
+              gzip -dc "$2" | grep -v "$1" | gzip -zc - > "$2".tmp
+        ;;
+        *)
+            grep -v "$1" "$2" > "$2".tmp && \
+                mv $_v -f -- "$2".tmp "$2"
+        ;;
+    esac
 }
 
 
 # CHECK TO SEE IF GIVEN URL IS BLOCKED OR UNBLOCKED AND OFFER TO CHANGE THIS.
 _check_url(){
     _url_escaped=$(echo "$@" | sed "s/\./\\\./g")
-    _matches=$(grep " $_url_escaped " "$annotate")
+    case "$annotate" in
+        *.gz)
+            which pigz &>/dev/null && \
+              _matches=$(pigz -dc "$annotate" | grep " $_url_escaped ") || \
+              _matches=$(gzip -dc "$annotate" | grep " $_url_escaped ")
+        ;;
+        *)
+            _matches=$(grep " $_url_escaped " "$annotate")
+        ;;
+    esac
     _block_matches=$(echo "$_matches" | grep -- "^$redirecturl" | sed "s/.* \!\(.*\)$/\1/g" | tr '\n' ',' | sed "s/,$//g")
     _redirect_matches=$(echo "$_matches" | grep -v "^$redirecturl" | \
       sed "s/^\([0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\) .* \! \(.*\)$/to \1 by blocklist \2/g" | tr '\n' ',' | sed "s/,$//g")
@@ -259,7 +277,23 @@ _check_url(){
         if [[ $c == 1 || "$c" == "1" ]]; then
             echo "Blocking $@"
             echo "$@" >> "$blacklist"
-            echo "$redirecturl $@ \! $blacklist" >> "$annotate" &
+            case "$annotate" in
+                *.gz)
+                    if which pigz &>/dev/null; then
+                        pigz -dc "$annotate" > "$annotate".tmp
+                        echo "$redirecturl $@ \! $blacklist" >> "$annotate".tmp
+                        sort -u "$annotate".tmp | pigz -zc - > "$annotate"
+                    else
+                        gzip -dc "$annotate" > "$annotate".tmp
+                        echo "$redirecturl $@ \! $blacklist" >> "$annotate".tmp
+                        sort -u "$annotate".tmp | gzip -zc - > "$annotate"
+                    fi
+                    rm -f "$_v" -- "$annotate".tmp
+                ;;
+                *)
+                    echo "$redirecturl $@ \! $blacklist" >> "$annotate"
+                ;;
+            esac &
             _strip_entries "^$@$" "$whitelist" &
             echo "$redirecturl $@" >> "$hostsfile" &
             _changed=1
@@ -267,7 +301,23 @@ _check_url(){
         elif [[ $c == 2 || "$c" == "2" ]]; then
             echo "Blocking $@ and deleting all whitelist url entries containing $@"
             echo "$@" >> "$blacklist" &
-            echo "$redirecturl $@ \! $blacklist" >> "$annotate" &
+            case "$annotate" in
+                *.gz)
+                    if which pigz &>/dev/null; then
+                        pigz -dc "$annotate" > "$annotate".tmp
+                        echo "$redirecturl $@ \! $blacklist" >> "$annotate".tmp
+                        sort -u "$annotate".tmp | pigz -zc - > "$annotate"
+                    else
+                        gzip -dc "$annotate" > "$annotate".tmp
+                        echo "$redirecturl $@ \! $blacklist" >> "$annotate".tmp
+                        sort -u "$annotate".tmp | gzip -zc - > "$annotate"
+                    fi
+                    rm -f "$_v" -- "$annotate".tmp
+                ;;
+                *)
+                    echo "$redirecturl $@ \! $blacklist" >> "$annotate"
+                ;;
+            esac &
             _strip_entries "$@" "$whitelist" &
             echo "$redirecturl $@" >> "$hostsfile" &
             _changed=1
@@ -300,4 +350,4 @@ else
 fi
 export recycle_old=1
 export verbosity=1
-export annotate=/var/lib/hostsblock.db
+export annotate=/var/lib/hostsblock.db.gz
