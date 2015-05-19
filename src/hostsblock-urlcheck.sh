@@ -50,7 +50,7 @@ _check_url $(echo "$@" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g
 [ $_changed == 1 ] && postprocess &>/dev/null
 read -p "Page domain verified. Scan the whole page for other domains for (un)blocking? [y/N] " a
 if [[ $a == "y" || $a == "Y" ]]; then
-    for LINE in `curl --location-trusted -s "$@" | tr ' ' '\n' | grep "https*:\/\/" | sed -e "s/.*https*:\/\/\(.*\)$/\1/g" -e "s/\//\n/g" | grep "\." |\
+    for LINE in `curl -L --location-trusted -s "$@" | tr ' ' '\n' | grep "https*:\/\/" | sed -e "s/.*https*:\/\/\(.*\)$/\1/g" -e "s/\//\n/g" | grep "\." |\
       grep -v "\"" | grep -v ")" | grep -v "(" | grep -v "\&" | grep -v "\?" | grep -v "<" | grep -v ">" | grep -v "'" | grep -v "_" |\
       grep -v "\.php$" | grep -v "\.html*$" | grep "[a-z]$" | sort -u | tr "\n" " "`; do
         _check_url "$LINE"

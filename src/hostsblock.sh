@@ -76,7 +76,7 @@ for _url in ${blocklists[*]}; do
         _notify 4 "Cache file $cachedir/$_outfile for blocklist $_url not found. It will be downloaded."
     fi
     _notify 4 "Checking and, if needed, downloading blocklist $_url to $cachedir/$_outfile"
-    if curl $_v_curl --compressed --connect-timeout $connect_timeout --retry $retry -z "$cachedir"/"$_outfile" "$_url" -o "$cachedir"/"$_outfile"; then
+    if curl $_v_curl --compressed -L --connect-timeout $connect_timeout --retry $retry -z "$cachedir"/"$_outfile" "$_url" -o "$cachedir"/"$_outfile"; then
         _notify 3 "Refreshed blocklist $_url."
         _new_ls=$(ls -l "$cachedir"/"$_outfile")
         if [ "$_old_ls" != "$_new_ls" ]; then
