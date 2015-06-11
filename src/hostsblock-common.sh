@@ -258,7 +258,7 @@ _check_url(){
         read -p "1-3 (default: 3): " b
         if [[ $b == 1 || "$b" == "1" ]]; then
             echo "Unblocking just $@"
-            echo " $@ " >> "$whitelist"
+            echo " $@" >> "$whitelist"
             _strip_entries " $@$" "$annotate"
             _strip_entries " $@$" "$blacklist"
             _strip_entries " $@$" "$hostsfile"
