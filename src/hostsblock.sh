@@ -185,7 +185,7 @@ if [ $_changed != 0 ]; then
         _notify 3 "Compiling redirect entries into $hostsfile..."
         if grep -ahEv -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* |\
           grep -ah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" | tee -a "$annotate".tmp |\
-          sed "s/ \!.*$//g" | sort -u | grep -vf "$whilelist"  >> "$hostsfile"; then
+          sed "s/ \!.*$//g" | sort -u | grep -vf "$whitelist"  >> "$hostsfile"; then
             _notify 3 "Compiled redirect entries into $hostsfile."
         else
             _notify 1 "FAILED to compile redirect entries into $hostsfile."

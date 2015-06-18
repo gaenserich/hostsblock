@@ -101,7 +101,7 @@ _extract_entries() {
         _notify 4 "Extracting obvious entries from $_basename_cachefile..."
         _cachefile_url=$(head -n1 "$cachedir"/"$_basename_cachefile".url)
         if grep -rah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | sed -e 's/[[:space:]][[:space:]]*/ /g' -e \
-          "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -vf "$whilelist" | \
+          "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -vf "$whitelist" | \
            sed "s|$| \! $_cachefile_url|g" > "$_target_hostsfile"; then
             _notify 4 "Extracted obvious entries from $_basename_cachefile."
             if [ $verbosity -ge 4 ]; then
@@ -113,7 +113,7 @@ _extract_entries() {
         _notify 4 "Extracting less-obvious entries from $_basename_cachefile"
         if grep -rahv "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | grep -v "^\." | grep -v "\.$" | grep -v "\*" |\
           grep -v "\"" | grep -v "\$" | grep "[a-z]" | grep "\." | sed "s/^/$redirecturl /g" | sed -e 's/[[:space:]][[:space:]]*/ /g' \
-          -e "s/\#.*//g" -e "s/[[:space:]]$//g" | sort -u | grep -vf "$whilelist" | sed "s|$| \! $_cachefile_url|g" |\
+          -e "s/\#.*//g" -e "s/[[:space:]]$//g" | sort -u | grep -vf "$whitelist" | sed "s|$| \! $_cachefile_url|g" |\
            >> "$_target_hostsfile"; then
             _notify 4 "Extracted less-obvious entries from $_basename_cachefile."
             if [ $verbosity -ge 4 ]; then
@@ -335,7 +335,7 @@ postprocess() {
 }
 export blocklists=("http://support.it-mate.co.uk/downloads/HOSTS.txt")
 export blacklist="/etc/hostsblock/black.list"
-export whilelist="/etc/hostsblock/white.list"
+export whitelist="/etc/hostsblock/white.list"
 export hostshead="0"
 export cachedir="/var/cache/hostsblock"
 export redirects="0"
