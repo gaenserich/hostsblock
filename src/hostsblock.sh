@@ -206,8 +206,8 @@ if [ $_changed != 0 ]; then
     case "$annotate" in
         *.gz)
             which pigz &>/dev/null && \
-              sort -u "$annotate".tmp | pigz -zc - > "$annotate" || \
-              sort -u "$annotate".tmp | gzip -zc - > "$annotate"
+              sort -u "$annotate".tmp | pigz -c - > "$annotate" || \
+              sort -u "$annotate".tmp | gzip -c - > "$annotate"
         ;;
         *)
             sort -u "$annotate".tmp > "$annotate"
