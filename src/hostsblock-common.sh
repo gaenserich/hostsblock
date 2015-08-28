@@ -224,8 +224,8 @@ _strip_entries() {
     case "$2" in
         *.gz)
             which pigz &>/dev/null && \
-              pigz -dc "$2" | grep -v "$1" | pigz -zc - > "$2".tmp || \
-              gzip -dc "$2" | grep -v "$1" | gzip -zc - > "$2".tmp
+              pigz -dc "$2" | grep -v "$1" | pigz -c - > "$2".tmp || \
+              gzip -dc "$2" | grep -v "$1" | gzip -c - > "$2".tmp
         ;;
         *)
             grep -v "$1" "$2" > "$2".tmp && \
@@ -282,11 +282,11 @@ _check_url(){
                     if which pigz &>/dev/null; then
                         pigz -dc "$annotate" > "$annotate".tmp
                         echo "$redirecturl $@ \! $blacklist" >> "$annotate".tmp
-                        sort -u "$annotate".tmp | pigz -zc - > "$annotate"
+                        sort -u "$annotate".tmp | pigz -c - > "$annotate"
                     else
                         gzip -dc "$annotate" > "$annotate".tmp
                         echo "$redirecturl $@ \! $blacklist" >> "$annotate".tmp
-                        sort -u "$annotate".tmp | gzip -zc - > "$annotate"
+                        sort -u "$annotate".tmp | gzip -c - > "$annotate"
                     fi
                     rm -f "$_v" -- "$annotate".tmp
                 ;;
@@ -306,11 +306,11 @@ _check_url(){
                     if which pigz &>/dev/null; then
                         pigz -dc "$annotate" > "$annotate".tmp
                         echo "$redirecturl $@ \! $blacklist" >> "$annotate".tmp
-                        sort -u "$annotate".tmp | pigz -zc - > "$annotate"
+                        sort -u "$annotate".tmp | pigz -c - > "$annotate"
                     else
                         gzip -dc "$annotate" > "$annotate".tmp
                         echo "$redirecturl $@ \! $blacklist" >> "$annotate".tmp
-                        sort -u "$annotate".tmp | gzip -zc - > "$annotate"
+                        sort -u "$annotate".tmp | gzip -c - > "$annotate"
                     fi
                     rm -f "$_v" -- "$annotate".tmp
                 ;;
