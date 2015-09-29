@@ -25,7 +25,7 @@ cat <<EOF >> /home/"$cuser"/.hostsblock.log
 Hostsblock completed at `date +'%d/%m/%Y %H:%M'`
 EOF
 # option to view log
-sudo -Sp '' sudo -H -u "$cuser" zenity --question --text "Hostsblock completed; would you like to view the log file now?" <<<"${sudo_password}"
+sudo -Sp '' sudo -H -u "$cuser" zenity --question --text "Hostsblock completed at<b><i> $last_update </i></b>\n\n<big>Would you like to view the log file now?</big>" <<<"${sudo_password}"
 if [ $? = 0 ];
 then
 # display log
