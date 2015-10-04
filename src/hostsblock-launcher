@@ -1,7 +1,0 @@
-#!/bin/bash
-cuser="${SUDO_USER:-$USER}"
-/etc/hostsblock/hostsblock.sh -v 3 &>/home/"$cuser"/.hostsblock.log
-# append date and time stamp to log
-cat <<EOF >> /home/"$cuser"/.hostsblock.log
-Hostsblock completed at `date +'%d/%m/%Y %H:%M'`
-EOF
