@@ -1,1 +1,0 @@
-/home/jake/hostsblock/pkg/hostsblock-urlcheck.sh
