@@ -10,25 +10,14 @@
 ### Level 5: Level 4 + stdout/stderr from sub-processes like curl, zip, 7za, etc.
 
 _notify() {
-    if [ -z "$PS1" ] && [[ $- =~ i ]]; then
-        case $1 in
-            0) _level="[\e[1;31mFATAL\e[0m]" ;;
-            1) _level="[\e[1;31mWARN\e[0m]" ;;
-            2) _level="[\e[0;33mNOTE\e[0m]" ;;
-            3) _level="[\e[0;33mINFO\e[0m]" ;;
-            4) _level="[\e[0;32mDETAIL\e[0m]" ;;
-            5) _level="[\e[0;32mDEBUG\e[0m]" ;;
-        esac
-    else
-        case $1 in
-            0) _level="[FATAL]" ;;
-            1) _level="[WARN]" ;;
-            2) _level="[NOTE]" ;;
-            3) _level="[INFO]" ;;
-            4) _level="[DETAIL]" ;;
-            5) _level="[DEBUG]" ;;
-        esac
-    fi
+    case $1 in
+        0) _level="[FATAL]" ;;
+        1) _level="[WARN]" ;;
+        2) _level="[NOTE]" ;;
+        3) _level="[INFO]" ;;
+        4) _level="[DETAIL]" ;;
+        5) _level="[DEBUG]" ;;
+    esac
     if [ $verbosity -ge $1 ]; then
         echo -e "${_level} $2"
     else
@@ -259,7 +248,7 @@ _check_url(){
         if [[ $b == 1 || "$b" == "1" ]]; then
             echo "Unblocking just $@"
             echo " $@" >> "$whitelist"
-            _strip_entries " $@$" "$annotate"
+            _strip_entries " $@ \!" "$annotate"
             _strip_entries " $@$" "$blacklist"
             _strip_entries " $@$" "$hostsfile"
             _changed=1
