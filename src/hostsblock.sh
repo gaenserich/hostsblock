@@ -1,10 +1,11 @@
 #!/bin/bash
-
+_changed=0
 # GET OPTIONS
-while getopts "v:f:h" _option; do
+while getopts "v:f:hu" _option; do
     case "$_option" in
         f)  [ "$OPTARG" != "" ] && _configfile="$OPTARG";;
         v)  [ "$OPTARG" != "" ] && _verbosity_override=$OPTARG;;
+        u)  _changed=1;;
         *)
             cat << EOF
 Usage:
@@ -16,6 +17,7 @@ Help Options:
 Application Options:
   -f CONFIGFILE                 Specify an alternative configuration file (instead of /etc/hostsblock/hostsblock.conf)
   -v VERBOSITY                  Specify how much information hostsblock provides (0=only fatal errors to 5=the kitchen sink)
+  -u                            Force hostsblock to update its target file, even if no changes to source files are found
 EOF
             exit 1
         ;;
@@ -59,7 +61,6 @@ else
 fi
 
 # DOWNLOAD BLOCKLISTS
-_changed=0
 _notify 3 "Checking blocklists for updates..."
 for _url in ${blocklists[*]}; do
     _outfile=$(echo $_url | sed "s|http:\/\/||g" | tr '/%&+?=' '.')
