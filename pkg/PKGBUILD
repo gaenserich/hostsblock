@@ -1,6 +1,6 @@
 # Maintainer: Jake VanderKolk <jakevanderkolk@gmail.com>
 pkgname=hostsblock
-pkgver=0.999.2
+pkgver=0.999.3
 pkgrel=1
 pkgdesc="A script and cronjob that downloads, sorts, and installs multiple ad- and malware-blocking hosts files."
 arch=(any)
