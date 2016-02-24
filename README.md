@@ -78,9 +78,18 @@ speed up page resolution on blocked domains:
 
 Installation
 ------------
-Currently hostsblock only support installation on Arch Linux:
+Arch Linux:
 
     cd pkg; makepkg -Acsir
+
+For others:
+
+    install -Dm755 hostsblock.sh /usr/sbin/hostsblock
+    install -Dm755 hostsblock-urlcheck.sh /usr/sbin/hostsblock-urlcheck
+    install -Dm644 rc.conf /etc/hostsblock/rc.conf
+    install -Dm644 black.list /etc/hostsblock/black.list
+    install -Dm644 white.list /etc/hostsblock/white.list
+    install -Dm644 hosts.head /etc/hostsblock/hosts.head
 
 Refer to the *man pages* for more info about hostsblock's **usage**.
 
