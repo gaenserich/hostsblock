@@ -5,7 +5,7 @@
 # GET OPTIONS
 while getopts "v:f:h" _option; do
     case "$_option" in
-        f)  [ "$OPTARG" != "" ] && _configfile="$OPTARG";;
+        f)  [ "$OPTARG" != "" ] && _configfile="$OPTARG"; shift $((OPTIND-1));;
         *)
             cat << EOF
 Usage:
