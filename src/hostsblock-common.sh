@@ -318,7 +318,6 @@ _check_url(){
 export tmpdir="/dev/shm"
 export hostsfile="/etc/hosts"
 export redirecturl="127.0.0.1"
-export dnscacher="auto"
 postprocess() {
      /bin/true
 }
