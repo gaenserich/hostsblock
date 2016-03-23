@@ -69,7 +69,7 @@ Dependencies
 
 **_A_ pseudo-server** that serves *blank pages* to remove boilerplate page and
 speed up page resolution on blocked domains:
-* [kwakd](https://code.google.com/p/kwakd/) (recommended)
+* [kwakd](https://github.com/fetchinson/kwakd/) (recommended)
 * [pixelserv](http://proxytunnel.sourceforge.net/pixelserv.php)
 
 **Compressors** to compress backup files and the annotation database:
