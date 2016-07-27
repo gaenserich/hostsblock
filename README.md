@@ -58,14 +58,12 @@ contained in that website.
 **Unarchivers** to use archive blocklists instead of plain text:
 
 *   [unzip](http://www.info-zip.org/UnZip.html) for zip archives
-
 *   [p7zip](http://p7zip.sourceforge.net/) for 7z archives
   (must include either 7z or 7za executables)
 
-*   **A DNS caching daemon** to help *speed up DNS resolutions*:
+**A DNS caching daemon** to help *speed up DNS resolutions*:
 
 *   [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html) (recommended)
-
 *   [pdnsd](http://members.home.nl/p.a.rombouts/pdnsd/) (untested)
 
 **A pseudo-server** that serves *blank pages* to remove boilerplate page and
