@@ -81,15 +81,15 @@ speed up page resolution on blocked domains:
 
 ##Installation
 
-*   Arch Linux:
+###Arch Linux:
 
-    *   `cd pkg; makepkg -Acsir`
+`cd pkg; makepkg -Acsir`
 
-    *   or use one of the AUR packages:
-    [hostsblock](https://aur.archlinux.org/packages/hostsblock/),
-    [hostsblock-git](https://aur.archlinux.org/packages/hostsblock-git/)
+or use one of the AUR packages:
+[hostsblock](https://aur.archlinux.org/packages/hostsblock/),
+[hostsblock-git](https://aur.archlinux.org/packages/hostsblock-git/)
 
-*   For others:
+###For others:
 
 ```sh
 install -Dm755 hostsblock.sh /usr/sbin/hostsblock
