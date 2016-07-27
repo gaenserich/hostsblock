@@ -93,6 +93,17 @@ For others:
 
 Refer to the *man pages* for more info about hostsblock's **usage**.
 
+Configuration
+------------
+
+Extensive documentation is found in the `hostsblock.conf` file (installed by default under `/etc/hostsblock/hostsblock.conf`). Follow the directions therein before running `hostsblock`.
+
+If you want to run `hostsblock` with a **dns caching server**, e.g. **dnsmasq**, install `dnsmasq` and add the following to `/etc/dnsmasq.conf`: `addn-hosts=/etc/hosts.block`
+
+Further Information
+-------------------
+* https://gaenserich.github.io/hostsblock/
+
 News & Bugs
 -----------
 * [Issue Tracker](https://github.com/gaenserich/hostsblock/issues)
