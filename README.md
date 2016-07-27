@@ -100,7 +100,7 @@ install -Dm644 white.list /etc/hostsblock/white.list
 install -Dm644 hosts.head /etc/hostsblock/hosts.head
 ```
 
-*   **Don't forget** to *enable* and *start* the systemd timer with:
+**Don't forget** to *enable* and *start* the systemd timer with:
 `systemctl enable --now hostsblock.timer `
 
 Refer to the *man pages* for more info about hostsblock's **usage**.
