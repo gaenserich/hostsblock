@@ -117,7 +117,7 @@ Change the following in the `hostsblock.conf`.
 
 In the *FINAL HOSTSFILE* section enable `hostsfile="/etc/hosts.block`.
 
-In the *POSTPROCESSING* SUBROUTINE section enable
+In the *POSTPROCESSING SUBROUTINE* section enable
 
 ```conf
 postprocess(){
