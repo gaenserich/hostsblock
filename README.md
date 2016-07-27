@@ -104,7 +104,7 @@ install -Dm644 hosts.head /etc/hostsblock/hosts.head
 `systemctl enable --now hostsblock.timer `
 
 Refer to the *man pages* for more info about hostsblock's **usage**.
-(Currently useless! see  #59)
+(Currently useless! see  #19)
 
 ##Configuration
 ###Hostsblock
