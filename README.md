@@ -116,6 +116,7 @@ This file is commented realy god, please read through it before first use.
 Change the following in the `hostsblock.conf`.
 
 In the FINAL HOSTSFILE section enable `hostsfile="/etc/hosts.block`.
+
 In the POSTPROCESSING SUBROUTINE section enable
 
 ```conf
