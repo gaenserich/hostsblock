@@ -85,7 +85,7 @@ speed up page resolution on blocked domains:
 
 `cd pkg; makepkg -Acsir`
 
-or use one of the AUR packages:
+Or use one of the AUR packages:
 [hostsblock](https://aur.archlinux.org/packages/hostsblock/),
 [hostsblock-git](https://aur.archlinux.org/packages/hostsblock-git/)
 
