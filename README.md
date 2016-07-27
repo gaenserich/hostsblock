@@ -139,6 +139,13 @@ Set `addn-hosts=` to `addn-hosts=/etc/hosts.block`
 *   [Arch Linux AUR](https://aur.archlinux.org/packages/hostsblock/)
 *   [Arch Linux Forum](https://bbs.archlinux.org/viewtopic.php?id=139784)
 
+##FAQ
+
+*   Why isn't it working witch Chrome/Chromium?
+
+    *   See this [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
+
+##License
 Hostsblock is licensed under [GNU GPL](http://www.gnu.org/licenses/gpl-3.0.txt)
 
 [h]: https://en.wikipedia.org/wiki/Hosts_file
