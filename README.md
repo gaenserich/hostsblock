@@ -150,6 +150,6 @@ Hostsblock is licensed under [GNU GPL](http://www.gnu.org/licenses/gpl-3.0.txt)
 
 [h]: https://en.wikipedia.org/wiki/Hosts_file
 [0]: http://winhelp2002.mvps.org/hosts.htm
-[conf]: (https://github.com/gaenserich/hostsblock/blob/master/conf/hostsblock.conf)
-[unzip]: (http://www.info-zip.org/UnZip.html)
-[7zip]: (http://members.home.nl/p.a.rombouts/pdnsd/)
+[conf]: https://github.com/gaenserich/hostsblock/blob/master/conf/hostsblock.conf
+[unzip]: http://www.info-zip.org/UnZip.html
+[7zip]: http://members.home.nl/p.a.rombouts/pdnsd/
