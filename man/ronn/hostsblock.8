@@ -1,0 +1,62 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "HOSTSBLOCK" "8" "July 2016" "" ""
+.
+.SH "NAME"
+\fBhostsblock\fR \- ad\-blocking and malware\-blocking script for Linux
+.
+.SH "SYNOPSIS"
+\fBhostsblock\fR [\fIoptions\fR]
+.
+.SH "DESCRIPTION"
+Hostsblock is a bash script designed to take advantage of /etc/hosts file to provide system\-wide blocking of internet advertisements, malicious domains, trackers, and other undesirable content\.
+.
+.P
+To do so, it downloads a configurable set of blocklists and processes their entries into a single /etc/hosts file\.
+.
+.P
+Hostsblock also includes hostsblock\-urlcheck(8), a command\-line utility that allows you to block and unblock certain websites and any other domains contained in that website\.
+.
+.SH "OPTIONS"
+If hostsblock is run without any option it will check for updated hostfiles and aply them to the local hostfile
+.
+.TP
+\fB\-h\fR,
+Displays the help screen\.
+.
+.TP
+\fB\-f\fR
+\fBCONFIGFILE\fR Specify an alternative configuration file (instead of /etc/hostsblock/hostsblock\.conf)
+.
+.TP
+\fB\-v\fR
+\fBVERBOSITY\fR How much info hostsblock should provide while running\. Followsthe following scheme:
+.
+.IP
+Level 0: Only fatal errors
+.
+.IP
+Level 1: Level 0 + non\-fatal errors \fBDEFAULT\fR
+.
+.IP
+Level 2: Level 1 + updates to cache files
+.
+.IP
+Level 3: Level 2 + narration of each major phase
+.
+.IP
+Level 4: Level 3 + step\-by\-step details of all processes
+.
+.IP
+Level 5: Level 4 + stdout/stderr from sub\-processes like curl, zip, 7za, etc\.
+.
+.TP
+\fB\-u\fR
+\fBUPDATE\fR Force hostsblock to update its target file, even if no changes to source files are found!
+.
+.SH "AUTHOR"
+The \fBHostsblock project\fR \fIhttps://github\.com/gaenserich/hostsblock\fR
+.
+.SH "SEE ALSO"
+hostsblock\-urlcheck(8) hostsblock\.conf(8)
