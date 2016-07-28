@@ -22,13 +22,17 @@ in that website.
 If hostsblock is run without any option it will check for updated hostfiles and
 aply them to the local hostfile
 
+*   `-h`,:
+    Displays the help screen.
+
+
 *   `-f`:
   **CONFIGFILE** Specify an alternative configuration file
   (instead of /etc/hostsblock/hostsblock.conf)
 
 *   `-v`:
-    **VERBOSITY** How much info hostsblock should provide while running. Follows
-    the following scheme:
+    **VERBOSITY** How much info hostsblock should provide while running.
+    Followsthe following scheme:
 
     Level 0: Only fatal errors
 
