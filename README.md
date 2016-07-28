@@ -105,7 +105,7 @@ Refer to the *man pages* for more info about hostsblock's **usage**.
 
 ## Configuration
 
-All the Hostsblock configuration is done in the `hostsblock.conf`
+All the Hostsblock configuration is done in the `hostsblock.conf`.
 This file is commented realy god, please read through it before first use.
 
 ### Dnsmasq
