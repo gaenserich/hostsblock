@@ -51,6 +51,23 @@ aply them to the local hostfile
     **UPDATE** Force hostsblock to update its target file, even if no changes to
     source files are found!
 
+## EXAMPLES
+
+`'#'` means root shell, `'$'` means unprifileged shell.
+
+View the help`:`
+
+            # hostsblock -h
+
+Check for updates and may aplay them`:`
+
+            # hostsblock
+
+Use an other config file and put verbosity to higest`:`
+*(good way to debug a new config file)*
+
+            # hostsblock -v 10 -f /etc/hostsblock/hostsblock.conf.untested
+
 ## AUTHOR
 
 The [**Hostsblock project**](https://github.com/gaenserich/hostsblock)

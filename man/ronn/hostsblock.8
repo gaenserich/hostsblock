@@ -23,7 +23,7 @@ If hostsblock is run without any option it will check for updated hostfiles and 
 .
 .TP
 \fB\-h\fR,
-Displays the help screen\.
+Displays the \fBhelp\fR screen\.
 .
 .TP
 \fB\-f\fR
@@ -54,6 +54,48 @@ Level 5: Level 4 + stdout/stderr from sub\-processes like curl, zip, 7za, etc\.
 .TP
 \fB\-u\fR
 \fBUPDATE\fR Force hostsblock to update its target file, even if no changes to source files are found!
+.
+.SH "EXAMPLES"
+\fB\'#\'\fR means root shell, \fB\'$\'\fR means unprifileged shell\.
+.
+.P
+View the help\fB:\fR
+.
+.IP "" 4
+.
+.nf
+
+        # hostsblock \-h
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Check for updates and may aplay them\fB:\fR
+.
+.IP "" 4
+.
+.nf
+
+        # hostsblock
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Use an other config file and put verbosity to higest\fB:\fR \fI(good way to debug a new config file)\fR
+.
+.IP "" 4
+.
+.nf
+
+        # hostsblock \-v 10 \-f /etc/hostsblock/hostsblock\.conf\.untested
+.
+.fi
+.
+.IP "" 0
 .
 .SH "AUTHOR"
 The \fBHostsblock project\fR \fIhttps://github\.com/gaenserich/hostsblock\fR
