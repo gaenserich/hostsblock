@@ -110,9 +110,11 @@ This file is commented realy god, please read through it before first use.
 
 ### Dnsmasq
 
-#### Hostsblock
+To use Hostsblock together with Dnsmasq configure Dnsmasq as DNS cashing daemon.
+Pleas refer to your Distributions manual. For Archlinux read the following
+[Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
 
-Change the following in the `hostsblock.conf`.
+#### hostsblock.conf
 
 In the *FINAL HOSTSFILE* section enable `hostsfile="/etc/hosts.block`.
 
@@ -124,13 +126,7 @@ postprocess(){
 }
 ```
 
-#### Dnsmasq
-
-To use Hostsblock together with Dnsmasq configure Dnsmasq as DNS cashing daemon.
-Pleas refer to your Distributions manual. For Archlinux read the following
-[Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
-
-Change the following in the `dnsmasq.conf`.
+#### dnsmasq.conf
 
 Set `addn-hosts=` to `addn-hosts=/etc/hosts.block`
 
