@@ -140,7 +140,9 @@ Set `addn-hosts=` to `addn-hosts=/etc/hosts.block`
 
 *   Why isn't it working witch Chrome/Chromium?
 
-    *   See this [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
+    *   Because they bypass the systems DNS settings and use they're own.
+    To force them to use the systems DNS settings refer to this
+    [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
 
 ## License
 
