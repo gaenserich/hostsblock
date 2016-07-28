@@ -57,9 +57,8 @@ contained in that website.
 
 **Unarchivers** to use archive blocklists instead of plain text:
 
-*   [unzip](http://www.info-zip.org/UnZip.html) for zip archives
-*   [p7zip](http://p7zip.sourceforge.net/) for 7z archives
-  (must include either 7z or 7za executables)
+*   [unzip][unzip] (for zip archives)
+*   [p7zip][7zip] (for 7z archives) must include either 7z or 7za executables!
 
 **A DNS caching daemon** to help *speed up DNS resolutions*:
 
@@ -79,7 +78,7 @@ speed up page resolution on blocked domains:
 
 ## Installation
 
-### Arch Linux:
+### Arch Linux
 
 `cd pkg; makepkg -Acsir`
 
@@ -87,7 +86,7 @@ Or use one of the *AUR* packages:
 [hostsblock](https://aur.archlinux.org/packages/hostsblock/),
 [hostsblock-git](https://aur.archlinux.org/packages/hostsblock-git/)
 
-###For others:
+### For others
 
 ```sh
 install -Dm755 hostsblock.sh /usr/sbin/hostsblock
@@ -105,13 +104,17 @@ Refer to the *man pages* for more info about hostsblock's **usage**.
 (Currently useless! see  [#19](https://github.com/gaenserich/hostsblock/issues/19))
 
 ## Configuration
-### Hostsblock
-All the Hostsblock configuration is done in the `hostsblock.conf`
+
+All the Hostsblock configuration is done in the [`hostsblock.conf`][conf].
 This file is commented realy god, please read through it before first use.
 
 ### Dnsmasq
-#### Hostsblock
-Change the following in the `hostsblock.conf`.
+
+To use Hostsblock together with Dnsmasq configure Dnsmasq as DNS cashing daemon.
+Pleas refer to your Distributions manual. For Archlinux read the following
+[Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
+
+#### hostsblock.conf
 
 In the *FINAL HOSTSFILE* section enable `hostsfile="/etc/hosts.block`.
 
@@ -123,12 +126,7 @@ postprocess(){
 }
 ```
 
-#### Dnsmasq
-To use Hostsblock together with Dnsmasq configure Dnsmasq as DNS cashing daemon.
-Pleas refer to your Distributions manual. For Archlinux read the following
-[Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
-
-Change the following in the `dnsmasq.conf`.
+#### dnsmasq.conf
 
 Set `addn-hosts=` to `addn-hosts=/etc/hosts.block`
 
@@ -142,10 +140,16 @@ Set `addn-hosts=` to `addn-hosts=/etc/hosts.block`
 
 *   Why isn't it working witch Chrome/Chromium?
 
-    *   See this [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
+    *   Because they bypass the systems DNS settings and use they're own.
+    To force them to use the systems DNS settings refer to this
+    [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
 
 ## License
+
 Hostsblock is licensed under [GNU GPL](http://www.gnu.org/licenses/gpl-3.0.txt)
 
 [h]: https://en.wikipedia.org/wiki/Hosts_file
 [0]: http://winhelp2002.mvps.org/hosts.htm
+[conf]: https://github.com/gaenserich/hostsblock/blob/master/conf/hostsblock.conf
+[unzip]: http://www.info-zip.org/UnZip.html
+[7zip]: http://members.home.nl/p.a.rombouts/pdnsd/
