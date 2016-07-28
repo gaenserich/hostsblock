@@ -23,7 +23,7 @@ If hostsblock is run without any option it will check for updated hostfiles and
 aply them to the local hostfile
 
 *   `-h`,:
-    Displays the help screen.
+    Displays the **help** screen.
 
 
 *   `-f`:
