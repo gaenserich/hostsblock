@@ -1,0 +1,57 @@
+# hostsblock(8) -- ad-blocking and malware-blocking script for Linux
+
+## SYNOPSIS
+
+`hostsblock` [*options*]
+
+## DESCRIPTION
+
+Hostsblock is a bash script designed to take advantage of
+/etc/hosts file to provide system-wide blocking of internet advertisements,
+malicious domains, trackers, and other undesirable content.
+
+To do so, it downloads a configurable set of blocklists and processes their
+entries into a single /etc/hosts file.
+
+Hostsblock also includes hostsblock-urlcheck(8), a command-line utility that
+allows you to block and unblock certain websites and any other domains contained
+in that website.
+
+## OPTIONS
+
+If hostsblock is run without any option it will check for updated hostfiles and
+aply them to the local hostfile
+
+*   `-f`:
+  **CONFIGFILE** Specify an alternative configuration file
+  (instead of /etc/hostsblock/hostsblock.conf)
+
+*   `-v`:
+    **VERBOSITY** How much info hostsblock should provide while running. Follows
+    the following scheme:
+
+    Level 0: Only fatal errors
+
+    Level 1: Level 0 + non-fatal errors **DEFAULT**
+
+    Level 2: Level 1 + updates to cache files
+
+    Level 3: Level 2 + narration of each major phase
+
+    Level 4: Level 3 + step-by-step details of all processes
+
+    Level 5: Level 4 + stdout/stderr from sub-processes like
+    curl, zip, 7za, etc.
+
+*   `-u`:
+    **UPDATE** Force hostsblock to update its target file, even if no changes to
+    source files are found!
+
+## AUTHOR
+
+The [**Hostsblock project**](https://github.com/gaenserich/hostsblock)
+
+## SEE ALSO
+
+hostsblock-urlcheck(8)
+hostsblock.conf(8)
