@@ -106,17 +106,17 @@ Refer to the *man pages* for more info about hostsblock's **usage**.
 ## Configuration
 
 All the Hostsblock configuration is done in the [`hostsblock.conf`][conf].
-This file is commented realy god, please read through it before first use.
+This file is commented really good, please read through it before first use.
 
 ### Dnsmasq
 
-To use Hostsblock together with Dnsmasq configure Dnsmasq as DNS cashing daemon.
-Pleas refer to your Distributions manual. For Archlinux read the following
+To use Hostsblock together with Dnsmasq, configure Dnsmasq as DNS cashing daemon.
+Pleas refer to your distribution's manual. For Archlinux read the following:
 [Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
 
 #### hostsblock.conf
 
-In the *FINAL HOSTSFILE* section enable `hostsfile="/etc/hosts.block`.
+In the *FINAL HOSTSFILE* section, enable `hostsfile="/etc/hosts.block`.
 
 In the *POSTPROCESSING SUBROUTINE* section enable:
 
@@ -130,19 +130,19 @@ postprocess(){
 
 Set `addn-hosts=` to `addn-hosts=/etc/hosts.block`
 
+## FAQ
+
+*   Why isn't it working with Chrome/Chromium?
+
+    *   Because they bypass the systems DNS settings and use their own.
+    To force them to use the system's DNS settings, refer to this
+    [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
+
 ## News & Bugs
 
 *   [Issue Tracker](https://github.com/gaenserich/hostsblock/issues)
 *   [Arch Linux AUR](https://aur.archlinux.org/packages/hostsblock/)
 *   [Arch Linux Forum](https://bbs.archlinux.org/viewtopic.php?id=139784)
-
-## FAQ
-
-*   Why isn't it working witch Chrome/Chromium?
-
-    *   Because they bypass the systems DNS settings and use they're own.
-    To force them to use the systems DNS settings refer to this
-    [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
 
 ## License
 
