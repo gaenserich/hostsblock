@@ -1,0 +1,101 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "HOSTSBLOCK\-URLCHECK" "8" "July 2016" "" ""
+.
+.SH "NAME"
+\fBhostsblock\-urlcheck\fR \- command\-line utility to block and unblock URLs and other domains contained in that website\.
+.
+.SH "SYNOPSIS"
+\fBhostsblock\-urlcheck\fR [\fIoptions\fR] \fIfile\fR
+.
+.SH "DESCRIPTION"
+Hostsblock\-urlcheck is a command\-line utility, written in bash, that allows you to block and unblock certain websites and any other domains contained in that website\.
+.
+.P
+E\.g\. An script to manage your Hostsblock black and whitlist\.
+.
+.SH "OPTIONS"
+If hostsblock is run without any option it will check for updated hostfiles and aply them to the local hostfile
+.
+.TP
+\fB\-h\fR,
+Displays the \fBhelp\fR screen\.
+.
+.TP
+\fB\-f\fR
+\fBCONFIGFILE\fR Specify an alternative configuration file (instead of /etc/hostsblock/hostsblock\.conf)
+.
+.TP
+\fB\-v\fR
+\fBVERBOSITY\fR How much info hostsblock should provide while running\. Followsthe following scheme:
+.
+.IP
+Level 0: Only fatal errors
+.
+.IP
+Level 1: Level 0 + non\-fatal errors \fBDEFAULT\fR
+.
+.IP
+Level 2: Level 1 + updates to cache files
+.
+.IP
+Level 3: Level 2 + narration of each major phase
+.
+.IP
+Level 4: Level 3 + step\-by\-step details of all processes
+.
+.IP
+Level 5: Level 4 + stdout/stderr from sub\-processes like curl, zip, 7za, etc\.
+.
+.TP
+\fB\-u\fR
+\fBUPDATE\fR Force hostsblock to update its target file, even if no changes to source files are found!
+.
+.SH "EXAMPLES"
+\fB\'#\'\fR means root shell, \fB\'$\'\fR means unprifileged shell\.
+.
+.P
+View the help\fB:\fR
+.
+.IP "" 4
+.
+.nf
+
+        # hostsblock \-h
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Check for updates and may aplay them\fB:\fR
+.
+.IP "" 4
+.
+.nf
+
+        # hostsblock
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Use an other config file and put verbosity to higest\fB:\fR \fI(good way to debug a new config file)\fR
+.
+.IP "" 4
+.
+.nf
+
+        # hostsblock \-v 10 \-f /etc/hostsblock/hostsblock\.conf\.untested
+.
+.fi
+.
+.IP "" 0
+.
+.SH "AUTHOR"
+The \fBHostsblock project\fR \fIhttps://github\.com/gaenserich/hostsblock\fR
+.
+.SH "SEE ALSO"
+hostsblock\-urlcheck(8) hostsblock\.conf(8)

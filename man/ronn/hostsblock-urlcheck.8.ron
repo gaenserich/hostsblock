@@ -1,0 +1,44 @@
+# hostsblock-urlcheck(8) -- command-line utility to block and unblock URLs and other domains contained in that website.
+
+## SYNOPSIS
+
+`hostsblock-urlcheck` [*options*] <*URL*>
+
+## DESCRIPTION
+
+Hostsblock-urlcheck is a command-line utility, written in bash, that
+allows you to block and unblock certain websites and any other domains contained
+in that website.
+
+E.g. An script to manage your Hostsblock black and whitlist.
+## OPTIONS
+
+*   `-h`,:
+    Displays the **help** screen.
+
+
+*   `-f`:
+  **CONFIGFILE** Specify an alternative configuration file
+  (instead of /etc/hostsblock/hostsblock.conf)
+
+## EXAMPLES
+
+`'#'` means root shell, `'$'` means unprivileged shell.
+
+View the help`:`
+
+            # hostsblock-urlcheck -h
+
+Checks if the given domain/URL is blocked or unblocked and will ask you if you
+wat to chage its state.`:`
+
+            # hostsblock-urlcheck 'some.domain.example/you/want/to_check'
+
+## AUTHOR
+
+The [**Hostsblock project**](https://github.com/gaenserich/hostsblock)
+
+## SEE ALSO
+
+hostsblock.(8)
+hostsblock.conf.(8)
