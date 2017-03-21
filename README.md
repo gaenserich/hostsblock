@@ -19,10 +19,10 @@ contained in that website.
 ## Features
 
 *   **System-wide blocking** - *All non-proxied* connections use the HOSTS
-  file (Proxied connections can adopt the HOSTS file)
+  file (Proxied connections can be modified to use the HOSTS file)
 
-*   **Compressed-friendly** - Can download and process compressed files
-  **automatically**.  (Currently only `zip` and `7zip` are supported)
+*   **Compression-friendly** - Can download and process zip- and 7zip-compressed files
+  **automatically**. (Provided that `unzip` and `p7zip` are installed)
 
 *   **Non-interactive** - Can be run as a periodic `cronjob` or `systemd timer`
   without needing user interaction.
@@ -31,7 +31,7 @@ contained in that website.
   **redirection**, **post-processing scripting**, *etc.*
 
 *   **Bandwith-efficient** - *Only* downloads blocklists that have been changed,
-  uses *compression* when available.
+  using *compression* when available.
 
 *   **Resource-efficient** - *Only* processes blocklists when changes are
   registered, uses *minimal pipes*.
@@ -39,10 +39,10 @@ contained in that website.
 *   **High performance blocking** - **Only** when using *dns caching* and
   *pseudo-server* daemons.
 
-*   **Redirection capability** - **Enchance security** and combats [DNS cache
+*   **Redirection capability** - **Enchances security** by combating [DNS cache
   poisoning](https://en.wikipedia.org/wiki/DNS_cache_poisoning).
 
-*   **Extensive choice of blocklists included** - It is up to the *user* to
+*   **Extensive choice of blocklists included** - Allowing the *user* to
   **choose** how much or how little is blocked/redirected.
 
 ## Dependencies
@@ -106,12 +106,12 @@ Refer to the *man pages* for more info about hostsblock's **usage**.
 ## Configuration
 
 All the Hostsblock configuration is done in the [`hostsblock.conf`][conf].
-This file is commented really good, please read through it before first use.
+This file is commented really well, so please read through it before first use.
 
 ### Dnsmasq
 
-To use Hostsblock together with Dnsmasq, configure Dnsmasq as DNS cashing daemon.
-Pleas refer to your distribution's manual. For Archlinux read the following:
+To use Hostsblock together with Dnsmasq, configure Dnsmasq as DNS caching daemon.
+Please refer to your distribution's manual. For ArchLinux read the following:
 [Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
 
 #### hostsblock.conf
@@ -134,7 +134,7 @@ Set `addn-hosts=` to `addn-hosts=/etc/hosts.block`
 
 *   Why isn't it working with Chrome/Chromium?
 
-    *   Because they bypass the systems DNS settings and use their own.
+    *   Because they bypass the system's DNS settings and use their own.
     To force them to use the system's DNS settings, refer to this
     [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
 
