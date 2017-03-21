@@ -78,9 +78,13 @@ speed up page resolution on blocked domains:
 
 ## Installation
 
+First download the archive [here](https://github.com/gaenserich/hostsblock/archive/master.zip) or with curl like so: `curl -O "https://github.com/gaenserich/hostsblock/archive/master.zip"`
+
+Unzip the archive, e.g. `unzip hostsblock-master.zip`
+
 ### Arch Linux
 
-`cd pkg; makepkg -Acsir`
+`cd hostsblock-master/pkg; makepkg -Acsir`
 
 Or use one of the *AUR* packages:
 [hostsblock](https://aur.archlinux.org/packages/hostsblock/),
