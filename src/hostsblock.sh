@@ -174,7 +174,7 @@ if [ $_changed != 0 ]; then
     # PROCESS AND WRITE BLOCK ENTRIES TO FILE
     _notify 3 "Compiling block entries into $hostsfile..."
     if grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$annotate".tmp | sed "s/ \!.*$//g" |\
-        sort -u >> "$hostsfile"; then
+        sort -u | grep -vf "$whitelist" >> "$hostsfile"; then
         _notify 3 "Compiled block entries into $hostsfile."
     else
         _notify 0 "FAILED TO COMPILE BLOCK ENTRIES INTO $hostsfile. EXITING."
