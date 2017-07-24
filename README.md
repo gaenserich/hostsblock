@@ -204,7 +204,7 @@ hostsblock now executes as an unpriviledged user (instead of root). If you need 
 `sudo -u hostsblock hostsblock`
 
 To allow other users to manually execute hostsblock (and also hostsblock-urlcheck), edit `sudoers` by typing `sudo visudo` and add the following line to the end:
-`jake	ALL	=	(hostsblock)	NOPASSWD:	/usr/bin/hostsblock,/usr/bin/hostsblock-url`
+`jake	ALL	=	(hostsblock)	NOPASSWD:	/usr/bin/hostsblock,/usr/bin/hostsblock-urlcheck`
 Replacing "jake" with whatever user you want to execute hostsblock from.
 
 ### hostsblock [OPTIONS] - generate a HOSTS file with block and redirection lists
