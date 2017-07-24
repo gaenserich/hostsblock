@@ -198,7 +198,7 @@ postprocess() {
 Edit `sudoers` by typing `sudo visudo`. Add the following line to the end:
 `hostsblock	ALL	=	(root)	NOPASSWD:	/usr/bin/cp`
 
-#### Usage
+## Usage
 
 hostsblock now executes as an unpriviledged user (instead of root). If you need to execute it outside of systemd, this means that you must use sudo, e.g.:
 `sudo -u hostsblock hostsblock`
