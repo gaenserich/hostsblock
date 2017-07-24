@@ -98,14 +98,25 @@ Execute the `install.sh` script, which will guide you through installation.
 
 ### For Any Others (The Hard Way)
 
+#### Create a 'hostsblock' user and group
+
+`sudo useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock`
+
+#### Install the files
+
+After downloading the archive [here](https://github.com/gaenserich/hostsblock/archive/master.zip) and unzipping, go into the resulting directory.
+
 ```sh
-install -Dm755 hostsblock.sh /usr/sbin/hostsblock
-install -Dm755 hostsblock-urlcheck.sh /usr/sbin/hostsblock-urlcheck
-install -Dm644 hostsblock.conf /etc/hostsblock/hostsblock.conf
-install -Dm644 black.list /etc/hostsblock/black.list
-install -Dm644 white.list /etc/hostsblock/white.list
-install -Dm644 hosts.head /etc/hostsblock/hosts.head
+install -Dm755 src/hostsblock.sh /usr/bin/hostsblock
+install -Dm644 conf/hostsblock.conf /var/lib/hostsblock/hostsblock.conf
+install -Dm644 conf/black.list /var/lib/hostsblock/black.list
+install -Dm644 conf/white.list /var/lib/hostsblock/white.list
+install -Dm644 conf/hosts.head /var/lib/hostsblock/hosts.head
+install -Dm644 systemd/hostsblock.service /usr/lib/systemd/system/hostsblock.service
+install -Dm644 systemd/hostsblock.timer /usr/lib/systemd/system/hostsblock.timer
 ```
+
+#### Enable the systemd service
 
 **Don't forget** to *enable* and *start* the systemd timer with:
 `systemctl enable --now hostsblock.timer`
