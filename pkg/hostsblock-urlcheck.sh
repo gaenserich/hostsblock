@@ -1,1 +1,0 @@
-../src/hostsblock-urlcheck.sh

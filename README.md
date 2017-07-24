@@ -1,6 +1,6 @@
 # Hostsblock
 
-An **ad-blocking** and **malware-blocking** script for *Linux*
+An **ad-** and **malware-blocking** script for *Linux*
 
 ## Description
 
@@ -18,6 +18,9 @@ contained in that website.
 
 ## Features
 
+*   **NEW: Enhanced security** - Runs as an unpriviledged user instead of
+  root.
+
 *   **System-wide blocking** - *All non-proxied* connections use the HOSTS
   file (Proxied connections can be modified to use the HOSTS file)
 
@@ -31,7 +34,7 @@ contained in that website.
   **redirection**, **post-processing scripting**, *etc.*
 
 *   **Bandwith-efficient** - *Only* downloads blocklists that have been changed,
-  using *compression* when available.
+  using *http compression* when available.
 
 *   **Resource-efficient** - *Only* processes blocklists when changes are
   registered, uses *minimal pipes*.
@@ -51,7 +54,8 @@ contained in that website.
 *   [GNU bash](http://www.gnu.org/software/bash/bash.html)
 *   [GNU sed](http://www.gnu.org/software/sed)
 *   [GNU grep](http://www.gnu.org/software/grep/grep.html)
-*   [GNU coreutils](http://www.gnu.org/software/coreutils).
+*   [GNU coreutils](http://www.gnu.org/software/coreutils)
+*   [GNU gzip](https://www.gnu.org/software/gzip/) (or [pigz](http://www.zlib.net/pigz/) for multi-core systems)
 
 ### Optional dependencies for **additional features**
 
@@ -71,26 +75,28 @@ speed up page resolution on blocked domains:
 *   [kwakd](https://github.com/fetchinson/kwakd/) (recommended)
 *   [pixelserv](http://proxytunnel.sourceforge.net/pixelserv.php)
 
-**Compressors** to compress backup files and the annotation database:
-
-*   [gzip](http://www.gnu.org/software/gzip/)
-*   [pigz](http://www.zlib.net/pigz/)
-
 ## Installation
-
-First download the archive [here](https://github.com/gaenserich/hostsblock/archive/master.zip) or with curl like so: `curl -O "https://github.com/gaenserich/hostsblock/archive/master.zip"`
-
-Unzip the archive, e.g. `unzip hostsblock-master.zip`
 
 ### Arch Linux
 
-`cd hostsblock-master/pkg; makepkg -Acsir`
+If you have yaourt installed: `yaourt -S hostsblock` or `yaourt -S hostsblock-git`
 
 Or use one of the *AUR* packages:
 [hostsblock](https://aur.archlinux.org/packages/hostsblock/),
 [hostsblock-git](https://aur.archlinux.org/packages/hostsblock-git/)
 
-### For others
+**Don't forget** to *enable* and *start* the systemd timer with:
+`systemctl enable --now hostsblock.timer`
+
+### For Other Linux Distros (The Easy Way)
+
+First download the archive [here](https://github.com/gaenserich/hostsblock/archive/master.zip) or with curl like so: `curl -O "https://github.com/gaenserich/hostsblock/archive/master.zip"`
+
+Unzip the archive, e.g. `unzip hostsblock-master.zip`
+
+Execute the `install.sh` script, which will guide you through installation.
+
+### For Any Others (The Hard Way)
 
 ```sh
 install -Dm755 hostsblock.sh /usr/sbin/hostsblock
@@ -102,37 +108,124 @@ install -Dm644 hosts.head /etc/hostsblock/hosts.head
 ```
 
 **Don't forget** to *enable* and *start* the systemd timer with:
-`systemctl enable --now hostsblock.timer `
-
-Refer to the *man pages* for more info about hostsblock's **usage**.
-(Currently useless! see  [#19](https://github.com/gaenserich/hostsblock/issues/19))
+`systemctl enable --now hostsblock.timer`
 
 ## Configuration
 
-All the Hostsblock configuration is done in the [`hostsblock.conf`][conf].
+All the hostsblock configuration is done in the [`hostsblock.conf`][conf].
 This file is commented really well, so please read through it before first use.
 
-### Dnsmasq
+By default, hostsblock does not write to /etc/hosts or manipulate any dns caching daemons.
+Instead, it will just compile a hosts-formatted file to /var/lib/hostsblock/hosts.block.
+To make this file actually work, you have one of two options:
 
-To use Hostsblock together with Dnsmasq, configure Dnsmasq as DNS caching daemon.
+### OPTION 1: Using a DNS Caching Daemon (Here: dnsmasq)
+
+Using a DNS caching daemon like dnsmasq offers (theoretically) better performance.
+
+To use hostsblock together with dnsmasq, configure dnsmasq as DNS caching daemon.
 Please refer to your distribution's manual. For ArchLinux read the following:
 [Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
 
 #### hostsblock.conf
 
-In the *FINAL HOSTSFILE* section, enable `hostsfile="/etc/hosts.block`.
+Edit the hostsblock.conf file (by default under `/var/lib/hostsblock/hostsblock.conf`)
 
-In the *POSTPROCESSING SUBROUTINE* section enable:
+In the *POSTPROCESSING SUBROUTINE* section comment out:
 
 ```conf
-postprocess(){
-    systemctl restart dnsmasq.service # For dnsmasq under systemd
+postprocess() {
+    true
+}
+```
+
+And uncomment (that is, remove the '#'s from in front of):
+
+```conf
+postprocess() {
+    sudo systemctl reload dnsmasq.service
 }
 ```
 
 #### dnsmasq.conf
 
-Set `addn-hosts=` to `addn-hosts=/etc/hosts.block`
+Edit `dnsmasq.conf` (e.g. /etc/dnsmasq.conf).
+
+Set `addn-hosts=` to `addn-hosts=/var/lib/hostsblock/hosts.block`
+
+#### sudoers
+
+Edit `sudoers` by typing `sudo visudo`. Add the following line to the end:
+`hostsblock              ALL     =       (root)  NOPASSWD:       /usr/bin/systemctl reload dnsmasq.service`
+
+### OPTION 2: Copy /var/lib/hostsblock/hosts.block to /etc/hosts
+
+It is possible to make hostsblock copy its generated file over to /etc/hosts, just make sure that you configure `hostshead` in hostsblock.conf to make sure you don't remove the default system loopback address(es).
+
+#### hostsblock.conf
+
+Edit the hostsblock.conf file (by default under `/var/lib/hostsblock/hostsblock.conf`)
+
+In the *POSTPROCESSING SUBROUTINE* section comment out:
+
+```conf
+postprocess() {
+    true
+}
+```
+
+And uncomment (that is, remove the '#'s from in front of):
+
+```conf
+postprocess() {
+    sudo cp -f $_v "$hostsfile" /etc/hosts
+}
+```
+
+#### sudoers
+
+Edit `sudoers` by typing `sudo visudo`. Add the following line to the end:
+`hostsblock	ALL	=	(root)	NOPASSWD:	/usr/bin/cp`
+
+#### Usage
+
+hostsblock now executes as an unpriviledged user (instead of root). If you need to execute it outside of systemd, this means that you must use sudo, e.g.:
+`sudo -u hostsblock hostsblock`
+
+To allow other users to manually execute hostsblock (and also hostsblock-urlcheck), edit `sudoers` by typing `sudo visudo` and add the following line to the end:
+`jake	ALL	=	(hostsblock)	NOPASSWD:	/usr/bin/hostsblock,/usr/bin/hostsblock-url`
+Replacing "jake" with whatever user you want to execute hostsblock from.
+
+### hostsblock [OPTIONS] - generate a HOSTS file with block and redirection lists
+
+Without the `-c URL` option, hostsblock will check to see if its monitored blocklists have changed. If it detects changes in them (or if forced by the `-u` flag), it will download the changed blocklist(s) and recompile the target HOSTS file.
+
+```
+Help Options:
+  -h                            Show help options
+
+Application Options:
+  -f CONFIGFILE                 Specify an alternative configuration file (instead of /var/lib/hostsblock/hostsblock.conf)
+  -q                            Only show fatal errors
+  -v                            Be verbose.
+  -u                            Force hostsblock to update its target file, even if no changes to source files are found
+```
+
+### hostsblock [OPTIONS] -c URL - Check if URL and other urls contained therein are blocked
+
+With the `-c URL` flag option, hostsblock will check to see if the specified URL is presently blocked or not, and then prompt the user for action (e.g. to block, unblock, or leave as-is).
+It will then prompt if it should inspect the URLs contained on the page summoned by the original URL, and likewise prompt the user what to do.
+
+The other flags (e.g. `-f`, `-q`, `-v`) except for `-u` (which is ignored) remain available when using `-c URL`.
+
+This option replaces the `hostsblock-urlcheck` script, which now comprises a symlink to `hostsblock` that automatically triggers `-c URL`.
+
+Example:
+`sudo -u hostsblock hostsblock -c "http://www.example.com"`
+
+This will check to see if "http://www.example.com" is blocked by hostsblock. If it is, it will tell the user which blocklist is responsible, and prompt as to whether it should continue blocking it or unblock it.
+If "http://www.example.com" is NOT blocked, hostsblock will ask if it should block it.
+Should the user decide to change the status of "http://www.example.com", it will place entries into either its whitelist or blacklist and then recompile the target HOSTS file, executing any postprocessing routines laid out in `hostsblock.conf`.
 
 ## FAQ
 
