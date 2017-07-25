@@ -12,7 +12,7 @@ other undesirable content**.
 To do so, it downloads a **configurable** set of blocklists and processes their
 entries into a single [`/etc/hosts`][h] file.
 
-`Hostsblock` also includes `hostsblock-urlcheck`, a command-line utility that
+`Hostsblock` also acts as a command-line utility that
 allows you to block and unblock certain websites and any other domains
 contained in that website.
 
@@ -86,7 +86,9 @@ Or use one of the *AUR* packages:
 [hostsblock-git](https://aur.archlinux.org/packages/hostsblock-git/)
 
 **Don't forget** to *enable* and *start* the systemd timer with:
-`systemctl enable --now hostsblock.timer`
+```sh
+systemctl enable --now hostsblock.timer
+```
 
 ### For Other Linux Distros (The Easy Way)
 
@@ -100,7 +102,9 @@ Execute the `install.sh` script, which will guide you through installation.
 
 #### Create a 'hostsblock' user and group
 
-`sudo useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock`
+```sh
+sudo useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock
+```
 
 #### Install the files
 
@@ -119,28 +123,30 @@ install -Dm644 systemd/hostsblock.timer /usr/lib/systemd/system/hostsblock.timer
 #### Enable the systemd service
 
 **Don't forget** to *enable* and *start* the systemd timer with:
-`systemctl enable --now hostsblock.timer`
+```sh
+systemctl enable --now hostsblock.timer
+```
 
 ## Configuration
 
-All the hostsblock configuration is done in the [`hostsblock.conf`][conf].
+All the `hostsblock` configuration is done in the [`hostsblock.conf`][conf].
 This file is commented really well, so please read through it before first use.
 
-By default, hostsblock does not write to /etc/hosts or manipulate any dns caching daemons.
-Instead, it will just compile a hosts-formatted file to /var/lib/hostsblock/hosts.block.
+By default, `hostsblock` does not write to `/etc/hosts` or manipulate any dns caching daemons.
+Instead, it will just compile a hosts-formatted file to `/var/lib/hostsblock/hosts.block`.
 To make this file actually work, you have one of two options:
 
 ### OPTION 1: Using a DNS Caching Daemon (Here: dnsmasq)
 
-Using a DNS caching daemon like dnsmasq offers (theoretically) better performance.
+Using a DNS caching daemon like `dnsmasq` offers (theoretically) better performance.
 
-To use hostsblock together with dnsmasq, configure dnsmasq as DNS caching daemon.
+To use `hostsblock` together with `dnsmasq`, configure `dnsmasq` as DNS caching daemon.
 Please refer to your distribution's manual. For ArchLinux read the following:
 [Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
 
 #### hostsblock.conf
 
-Edit the hostsblock.conf file (by default under `/var/lib/hostsblock/hostsblock.conf`)
+Edit the `hostsblock.conf` file (by default under `/var/lib/hostsblock/hostsblock.conf`)
 
 In the *POSTPROCESSING SUBROUTINE* section comment out:
 
@@ -160,22 +166,24 @@ postprocess() {
 
 #### dnsmasq.conf
 
-Edit `dnsmasq.conf` (e.g. /etc/dnsmasq.conf).
+Edit `dnsmasq.conf` (e.g. `/etc/dnsmasq.conf`).
 
 Set `addn-hosts=` to `addn-hosts=/var/lib/hostsblock/hosts.block`
 
 #### sudoers
 
 Edit `sudoers` by typing `sudo visudo`. Add the following line to the end:
-`hostsblock              ALL     =       (root)  NOPASSWD:       /usr/bin/systemctl reload dnsmasq.service`
+```conf
+hostsblock              ALL     =       (root)  NOPASSWD:       /usr/bin/systemctl reload dnsmasq.service
+```
 
 ### OPTION 2: Copy /var/lib/hostsblock/hosts.block to /etc/hosts
 
-It is possible to make hostsblock copy its generated file over to /etc/hosts, just make sure that you configure `hostshead` in hostsblock.conf to make sure you don't remove the default system loopback address(es).
+It is possible to make hostsblock copy its generated file over to /etc/hosts, just make sure that you configure `hostshead=` in `hostsblock.conf` to make sure you don't remove the default system loopback address(es).
 
 #### hostsblock.conf
 
-Edit the hostsblock.conf file (by default under `/var/lib/hostsblock/hostsblock.conf`)
+Edit the `hostsblock.conf` file (by default under `/var/lib/hostsblock/hostsblock.conf`):
 
 In the *POSTPROCESSING SUBROUTINE* section comment out:
 
@@ -196,22 +204,29 @@ postprocess() {
 #### sudoers
 
 Edit `sudoers` by typing `sudo visudo`. Add the following line to the end:
-`hostsblock	ALL	=	(root)	NOPASSWD:	/usr/bin/cp`
+```conf
+hostsblock	ALL	=	(root)	NOPASSWD:	/usr/bin/cp
+```
 
 ## Usage
 
 hostsblock now executes as an unpriviledged user (instead of root). If you need to execute it outside of systemd, this means that you must use sudo, e.g.:
-`sudo -u hostsblock hostsblock`
+```sh
+sudo -u hostsblock hostsblock
+```
 
 To allow other users to manually execute hostsblock (and also hostsblock-urlcheck), edit `sudoers` by typing `sudo visudo` and add the following line to the end:
-`jake	ALL	=	(hostsblock)	NOPASSWD:	/usr/bin/hostsblock,/usr/bin/hostsblock-urlcheck`
+```conf
+jake	ALL	=	(hostsblock)	NOPASSWD:	/usr/bin/hostsblock,/usr/bin/hostsblock-urlcheck
+```
+
 Replacing "jake" with whatever user you want to execute hostsblock from.
 
 ### hostsblock [OPTIONS] - generate a HOSTS file with block and redirection lists
 
 Without the `-c URL` option, hostsblock will check to see if its monitored blocklists have changed. If it detects changes in them (or if forced by the `-u` flag), it will download the changed blocklist(s) and recompile the target HOSTS file.
 
-```
+```sh
 Help Options:
   -h                            Show help options
 
@@ -232,7 +247,9 @@ The other flags (e.g. `-f`, `-q`, `-v`) except for `-u` (which is ignored) remai
 This option replaces the `hostsblock-urlcheck` script, which now comprises a symlink to `hostsblock` that automatically triggers `-c URL`.
 
 Example:
-`sudo -u hostsblock hostsblock -c "http://www.example.com"`
+```sh
+sudo -u hostsblock hostsblock -c "http://www.example.com"
+```
 
 This will check to see if "http://www.example.com" is blocked by hostsblock. If it is, it will tell the user which blocklist is responsible, and prompt as to whether it should continue blocking it or unblock it.
 If "http://www.example.com" is NOT blocked, hostsblock will ask if it should block it.
