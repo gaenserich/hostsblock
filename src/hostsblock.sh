@@ -465,24 +465,28 @@ else
         # APPEND BLACKLIST ENTRIES
         while read _blacklistline; do
             echo "$redirecturl $_blacklistline \! $blacklist" >> "$annotate".tmp
-            grep -Fq "$_blacklistline" "$hostsfile" || echo "$redirecturl $_blacklistline" >> "$hostsfile"
+            grep -Fqx "$_blacklistline" "$hostsfile" || echo "$redirecturl $_blacklistline" >> "$hostsfile"
         done < "$blacklist" || _notify 1 "FAILED to append blacklisted entries to $hostsfile."
 
         # SORT AND COMPRESS ANNOTATION FILE.
-        which pigz &>/dev/null
-        if [ $? -eq 0 ]; then
-            sort -u "$annotate".tmp | pigz $_pigz_opt -c - > "$annotate"
-        else
-            sort -u "$annotate".tmp | gzip $_gzip_opt -c - > "$annotate"
-        fi
-        [ -f "$annotate" ] && rm -f "$_v" -- "$annotate".tmp
+        (
+          which pigz &>/dev/null
+          if [ $? -eq 0 ]; then
+              sort -u "$annotate".tmp | pigz $_pigz_opt -c - > "$annotate"
+          else
+              sort -u "$annotate".tmp | gzip $_gzip_opt -c - > "$annotate"
+          fi
+          [ -f "$annotate" ] && rm -f "$_v" -- "$annotate".tmp
+        ) &
 
         # REPORT COUNT OF MODIFIED OR BLOCKED URLS
-        [ $_verbosity -ge 1 ] && _count_hosts "$hostsfile"
+        ( [ $_verbosity -ge 1 ] && _count_hosts "$hostsfile" ) &
 
         # COMMANDS TO BE EXECUTED AFTER PROCESSING
         _notify 1 "Executing postprocessing..."
         postprocess || _notify 1 "Postprocessing FAILED."
+
+        wait
 
         # CLEAN UP
         rm $_v -r -- "$tmpdir"/hostsblock || _notify 1 "FAILED to clean up $tmpdir/hostsblock."
