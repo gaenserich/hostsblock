@@ -100,14 +100,16 @@ _check_url() {
             _strip_entries " $@ \!" "$annotate"
             _strip_entries " $@$" "$blacklist"
             _strip_entries " $@$" "$hostsfile"
-            _changed=1
+            [ ! -d "$tmpdir" ] && mkdir "$tmpdir"
+            touch "$tmpdir"/changed
         elif [[ $b == 2 || "$b" == "2" ]]; then
             echo "Unblocking all sites containing url $@"
             echo "$@" >> "$whitelist"
             _strip_entries "$@" "$annotate"
             _strip_entries "$@" "$blacklist"
             _strip_entries "$@" "$hostsfile"
-            _changed=1
+            [ ! -d "$tmpdir" ] && mkdir "$tmpdir"
+            touch "$tmpdir"/changed
         fi
     else
         echo -e "\n'$@' \e[0;32mNOT BLOCKED/REDIRECTED\e[0m\n\t1) Block $@\n\t2) Block $@ and delete all whitelist url entries containing $@\n\t3) Keep unblocked (default)"
@@ -129,7 +131,8 @@ _check_url() {
             ) &
             _strip_entries "^$@$" "$whitelist" &
             echo "$redirecturl $@" >> "$hostsfile" &
-            _changed=1
+            [ ! -d "$tmpdir" ] && mkdir "$tmpdir"
+            touch "$tmpdir"/changed
             wait
         elif [[ $c == 2 || "$c" == "2" ]]; then
             echo "Blocking $@ and deleting all whitelist url entries containing $@"
@@ -148,7 +151,8 @@ _check_url() {
             ) &
             _strip_entries "$@" "$whitelist" &
             echo "$redirecturl $@" >> "$hostsfile" &
-            _changed=1
+            [ ! -d "$tmpdir" ] && mkdir "$tmpdir"
+            touch "$tmpdir"/changed
         fi
     fi
 }
@@ -174,8 +178,9 @@ backup_old=0
 recycle_old=0
 annotate="$HOME/hostsblock.db.gz"
 _verbosity=1
-_changed=0
+[ -f "$tmpdir"/changed ] && rm -f "$tmpdir"/changed
 _check=0
+max_simultaneous_downloads=4
 
 # GET OPTIONS
 while getopts "qvf:huc:" _option; do
@@ -183,7 +188,10 @@ while getopts "qvf:huc:" _option; do
         f)  [ "$OPTARG" != "" ] && _configfile="$OPTARG";;
         v)  _verbosity=2;;
         q)  _verbosity=0;;
-        u)  _changed=1;;
+        u)
+            [ ! -d "$tmpdir" ] && mkdir "$tmpdir"
+            touch "$tmpdir"/changed
+        ;;
         c)
             _check=1
             [ "$OPTARG" != "" ] && _URL="$OPTARG"
@@ -270,10 +278,10 @@ done
 # RUN AS URLCHECK IF $_check = 1 or if run from a symlink named "hostsblock-urlcheck"
 if [ $_check -eq 1 ] || [ "${0##*/}" == "hostsblock-urlcheck" ]; then
     # URLCHECK
-    _changed=0
+    [ -f "$tmpdir"/changed ] && rm -f "$tmpdir"/changed
     echo "Checking to see if url is blocked or not..."
     _check_url $(echo "$_URL" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g")
-    if [ $_changed == 1 ]; then
+    if [ -f "$tmpdir"/changed ]; then
         if [ $_verbosity -ge 1 ]; then
             postprocess
         else
@@ -322,6 +330,11 @@ else
         [ -f "$cachedir"/"$_outfile".url ] || echo "$_url" > "$cachedir"/"$_outfile".url
         [ -f "$cachedir"/"$_outfile" ] && _old_sha1sum=$(sha1sum < "$cachedir"/"$_outfile")
 
+        # Make process wait until the number of curl processes are less than $max_simultaneous_downloads
+        until [ $(pidof curl | wc -w) -lt $max_simultaneous_downloads ]; do
+            sleep $(pidof sleep | wc -w)
+        done
+
         # Add a User-Agent and referer string when needed
         if [ "$_url" == "http://adblock.mahakala.is/hosts" ]; then
             curl -A "Mozilla/5.0 (X11; Linux x86_64; rv:30.0) Gecko/20100101 Firefox/30.0" -e "http://forum.xda-developers.com/" $_v_curl --compressed -L --connect-timeout $connect_timeout --retry $retry -z "$cachedir"/"$_outfile" "$_url" -o "$cachedir"/"$_outfile"
@@ -334,15 +347,17 @@ else
             _new_sha1sum=$(sha1sum < "$cachedir"/"$_outfile")
             if [ "$_old_sha1sum" != "$_new_sha1sum" ]; then
                 _notify 1 "Changes found to $_url"
-                _changed=1
+                [ ! -d "$tmpdir" ] && mkdir "$tmpdir"
+                touch "$tmpdir"/changed
             fi
         else
             _notify 1 "FAILED to refresh/download blocklist $_url"
         fi
-    done
+    done &
+    wait
 
     # IF THERE ARE CHANGES...
-    if [ $_changed -ne 0 ]; then
+    if [ -f "$tmpdir"/changed ]; then
         _notify 1 "Changes found among blocklists. Extracting and preparing cached files to working directory..."
 
         # CREATE TMPDIR
