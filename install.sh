@@ -85,6 +85,7 @@ install -Dm644 conf/white.list "$HOMEDIR"/white.list
 install -Dm644 conf/hosts.head "$HOMEDIR"/hosts.head
 install -Dm644 systemd/hostsblock.service "$systemd_dir"/
 install -Dm644 systemd/hostsblock.timer "$systemd_dir"/
+install -Dm644 systemd/reload_dnsmasq.service "$systemd_dir"/
 
 echo "Setting up permissions for hostsblock home directory $HOMEDIR..."
 chown -R hostsblock:hostsblock "$HOMEDIR"
