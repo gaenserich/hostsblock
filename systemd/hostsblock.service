@@ -1,7 +1,8 @@
 [Unit]
 Description=Block bad domains system-wide
-Wants=network-online.target
+Wants=network-online.target reload_dnsmasq.service
 After=network-online.target
+Before=reload_dnsmasq.service
 
 [Service]
 Type=oneshot
