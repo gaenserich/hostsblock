@@ -48,7 +48,7 @@ gpasswd -A hostsblock hostsblock
 
 if ps aux | grep [d]nsmasq | tr -s ' ' | cut -d' ' -f 11- | grep -q [d]nsmasq; then
     dnsmasq_user=$(ps aux | grep [d]nsmasq | tr -s ' ' | cut -d' ' -f 1)
-    echo -e "You appear to be running dnsmasq under user $dnsmasq_user. If you will be using hostsblock\nwith dnsmasq as a caching daemon, dnsmasq needs read access to hostsblock's blocklist.\nTo do so, should I let $dnsmasq_user read "$HOMEDIR"/hosts.block via setfact?"
+    echo -e "You appear to be running dnsmasq under user $dnsmasq_user. If you will be using hostsblock\nwith dnsmasq as a caching daemon, dnsmasq needs read access to hostsblock's blocklist.\nTo do so, should I let $dnsmasq_user read "$HOMEDIR"/hosts.block via setfacl?"
     read -p "y/N " e
     if [ "$e" == "y" ] || [ "$e" == "Y" ]; then
         setfacl -m u:"$dnsmasq_user":r /var/lib/hostsblock/hosts.block 
