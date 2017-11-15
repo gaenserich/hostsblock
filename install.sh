@@ -63,7 +63,7 @@ else
     fi
 fi
 
-echo -e "In order to manage hostsblock correctly, you must run the script as the user 'hostsblock',\neven when using the 'hostsblock-urlcheck' script (aka 'hostsblock -c').\nTo do so, type 'sudo -u hostsblock hostsblock' or 'sudo -u hostsblock hostsblock-urlcheck', etc.\nBefore you can do this, however, the following line must be added to sudoers:\n\njake	ALL	=	(hostsblock)	NOPASSWD: $DESTDIR/hostsblock,$DESTDIR/hostsblock-urlcheck\n\nwhere 'jake' is the user from which you want to manage hostsblock.\nDo you want to add this line to the bottom of sudoers right now? (if so, make sure to copy the text now).
+echo -e "In order to manage hostsblock correctly, you must run the script as the user 'hostsblock',\neven when using the 'hostsblock-urlcheck' script (aka 'hostsblock -c').\nTo do so, type 'sudo -u hostsblock hostsblock' or 'sudo -u hostsblock hostsblock-urlcheck', etc.\nBefore you can do this, however, the following line must be added to sudoers:\n\njake	ALL	=	(hostsblock)	NOPASSWD: $DESTDIR/hostsblock,$DESTDIR/hostsblock-urlcheck\n\nwhere 'jake' is the user from which you want to manage hostsblock.\nDo you want to add this line to the bottom of sudoers right now? (if so, make sure to copy the text now)."
 read -p "[y/N] " dosu
 if [ "$dosu" == "Y" ] || [ "$dosu" == "y" ]; then
     visudo
