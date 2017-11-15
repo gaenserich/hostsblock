@@ -1,0 +1,7 @@
+
+[Unit]
+Description=Reloads dnsmasq to make it read new blocked hosts list
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl reload dnsmasq
