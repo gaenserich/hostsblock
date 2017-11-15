@@ -48,11 +48,10 @@ gpasswd -A hostsblock hostsblock
 
 if ps aux | grep [d]nsmasq | tr -s ' ' | cut -d' ' -f 11- | grep -q [d]nsmasq; then
     dnsmasq_user=$(ps aux | grep [d]nsmasq | tr -s ' ' | cut -d' ' -f 1)
-    echo -e "You appear to be running dnsmasq under user $dnsmasq_user. If you will be using hostsblock\nwith dnsmasq as a caching daemon, dnsmasq needs read access to hostsblock's home directory.\nTo do so, should I add $dnsmasq_user to the hostblock group?"
+    echo -e "You appear to be running dnsmasq under user $dnsmasq_user. If you will be using hostsblock\nwith dnsmasq as a caching daemon, dnsmasq needs read access to hostsblock's blocklist.\nTo do so, should I let $dnsmasq_user read "$HOMEDIR"/hosts.block via setfact?"
     read -p "y/N " e
     if [ "$e" == "y" ] || [ "$e" == "Y" ]; then
-        gpasswd -a "$dnsmasq_user" hostsblock
-        gpasswd -M "$dnsmasq_user" hostsblock
+        setfacl -m u:"$dnsmasq_user":r /var/lib/hostsblock/hosts.block 
     fi
 else
     echo -e "If you are using hostsblock with a dns cacher, you should add the user under which the cacher\nruns to the 'hostsblock' group so that the daemon can access your generated host file.\nEnter the user of the DNS daemon or leave blank to add no additional user."
