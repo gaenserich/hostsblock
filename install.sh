@@ -89,7 +89,7 @@ install -Dm644 systemd/hostsblock.timer "$systemd_dir"/
 
 echo "Setting up permissions for hostsblock home directory $HOMEDIR..."
 chown -R hostsblock:hostsblock "$HOMEDIR"
-chmod -R 750 "$HOMEDIR"
+chmod 755 "$HOMEDIR"
 
 echo -e "Should I enable and/or start the hostsblock service? (Requires systemd)\n\t1) Only Enable\n\t2) Only Start\n\t3)Start and Enable\n\t4) Do Nothing (Default)"
 read -p "[1-4] " start

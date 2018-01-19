@@ -29,10 +29,10 @@ package() {
   mkdir -p -m 750 "$pkgdir"/var/lib/hostsblock
   install -Dm750 "$srcdir"/hostsblock.sh "$pkgdir"/usr/bin/hostsblock
   ln -sf /usr/bin/hostsblock "$pkgdir"/usr/bin/hostsblock-urlcheck
-  install -Dm640 "$srcdir"/hostsblock.conf "$pkgdir"/var/lib/hostsblock/hostsblock.conf
-  install -Dm640 "$srcdir"/black.list "$pkgdir"/var/lib/hostsblock/black.list
-  install -Dm640 "$srcdir"/white.list "$pkgdir"/var/lib/hostsblock/white.list
-  install -Dm640 "$srcdir"/hosts.head "$pkgdir"/var/lib/hostsblock/hosts.head
+  install -Dm644 "$srcdir"/hostsblock.conf "$pkgdir"/var/lib/hostsblock/hostsblock.conf
+  install -Dm644 "$srcdir"/black.list "$pkgdir"/var/lib/hostsblock/black.list
+  install -Dm644 "$srcdir"/white.list "$pkgdir"/var/lib/hostsblock/white.list
+  install -Dm644 "$srcdir"/hosts.head "$pkgdir"/var/lib/hostsblock/hosts.head
   install -Dm644 "$srcdir"/hostsblock.service "$pkgdir"/usr/lib/systemd/system/hostsblock.service
   install -Dm644 "$srcdir"/hostsblock.timer "$pkgdir"/usr/lib/systemd/system/hostsblock.timer
 }
