@@ -10,6 +10,7 @@ depends=(bash curl grep sed coreutils gzip)
 optdepends=('dnsmasq: helps speed up DNS resolutions'
 	    'pixelserv: removes boilerplate page on blocked urls'
 	    'kwakd: removes boilerplate page on blocked urls (recommended)'
+            'pixelserv-tls: removes boilerplate page on blocked urls (supports HTTPS)'
 	    'unzip: allows the use of zipped downloads'
 	    'p7zip: allows the use of 7zipped downloads'
             'pigz: improves performance of gzip operations')
