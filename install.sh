@@ -8,7 +8,7 @@ if [ "$(whoami)" != "root" ]; then
 fi
 
 for dep in getent grep useradd groupadd gpasswd cut ps chmod chown; do
-    if $(which $dep) &>/dev/null; then
+    if which $dep &>/dev/null; then
         true
     else
         echo "$dep utility missing. Please install before running this script. Exiting..."
