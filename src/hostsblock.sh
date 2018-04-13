@@ -3,7 +3,7 @@
 # SUBROUTINES
 
 _notify() {
-    [ $_verbosity -ge $1 ] && echo "$2"
+    [ "$_verbosity" -ge "$1" ] && echo "$2"
 }
 
 _count_hosts() {
@@ -16,15 +16,15 @@ _count_hosts() {
 _strip_entries() {
     which pigz &>/dev/null
     if [ $? -eq 0 ]; then
-        pigz -dc "$2" | grep -v "$1" | pigz $pigz_opt -c - > "$2".tmp
+        pigz -dc "$2" | grep -v "$1" | pigz "$pigz_opt" -c - > "$2".tmp
     else
-        gzip -dc "$2" | grep -v "$1" | gzip $gzip_opt -c - > "$2".tmp
+        gzip -dc "$2" | grep -v "$1" | gzip "$gzip_opt" -c - > "$2".tmp
     fi
 }
 
 _extract_entries() {
     if [ ! -d "$_cachefile_dir" ]; then
-        mkdir $_v -p -- "$_cachefile_dir"
+        mkdir "$_v" -p -- "$_cachefile_dir"
         if [ $? -ne 0 ]; then
             _notify 0 "FAILED TO CREATE DIRECTORY $_cachefile_dir. EXITING..."
             exit 9
@@ -34,19 +34,19 @@ _extract_entries() {
     case "$_decompresser" in
         none)
             _compress_exit=0
-            cp $_v -- "$_cachefile" "$_cachefile_dir"/ || _notify 1 "FAILED to move ${_cachefile##*/} to $_cachefile_dir."
+            cp "$_v" -- "$_cachefile" "$_cachefile_dir"/ || _notify 1 "FAILED to move ${_cachefile##*/} to $_cachefile_dir."
         ;;
         unzip)
-            unzip -B -o -j $_v_unzip -- "$_cachefile"
+            unzip -B -o -j "$_v_unzip" -- "$_cachefile"
             _compress_exit=$?
             [ $_compress_exit -ne 0 ] && _notify 1 "FAILED to unzip ${_cachefile##*/}."
         ;;
         7z*)
-            if [ $_verbosity -le 1 ]; then
-                eval $_7zip_available e "$_cachefile" &>/dev/null
+            if [ "$_verbosity" -le 1 ]; then
+                eval "$_7zip_available" e "$_cachefile" &>/dev/null
                 _compress_exit=$?
             else
-                eval $_7zip_available e "$_cachefile"
+                eval "$_7zip_available" e "$_cachefile"
                 _compress_exit=$?
             fi
             [ $_compress_exit -ne 0 ] && _notify 1 "FAILED to un7zip ${_cachefile##*/}."
@@ -59,7 +59,7 @@ _extract_entries() {
           sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -Fvf "$whitelist" | \
           sed "s|$| \! $_cachefile_url|g" > "$_target_hostsfile"
         if [ $? -eq 0 ]; then
-            [ $_verbosity -ge 2 ] && _count_hosts "$_target_hostsfile"
+            [ "$_verbosity" -ge 2 ] && _count_hosts "$_target_hostsfile"
         else
             _notify 1 "FAILED to extract any obvious entries from ${_cachefile##*/}."
         fi
@@ -68,11 +68,11 @@ _extract_entries() {
           sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" | sort -u | grep -Fvf "$whitelist" | sed "s|$| \! $_cachefile_url|g" \
           >> "$_target_hostsfile"
         if [ $? -eq 0 ]; then
-            [ $_verbosity -ge 2 ] && _count_hosts "$_target_hostsfile"
+            [ "$_verbosity" -ge 2 ] && _count_hosts "$_target_hostsfile"
         else
             _notify 1 "FAILED to extract any less-obvious entries from ${_cachefile##*/}."
         fi
-        cd "$tmpdir"/hostsblock && rm $_v -r -- "$_cachefile_dir" || _notify 1 "FAILED to delete $_cachefile_dir."
+        cd "$tmpdir"/hostsblock && rm "$_v" -r -- "$_cachefile_dir" || _notify 1 "FAILED to delete $_cachefile_dir."
     fi
 }
 
@@ -89,9 +89,9 @@ _check_url() {
       tr '\n' ',' | sed "s/,$//g")
     _block_matches_count=$(echo "$_block_matches" | wc -w)
     _redirect_matches_count=$(echo "$_redirect_matches" | wc -w)
-    if [ $_block_matches_count -gt 0 ] || [ $_redirect_matches_count -gt 0 ]; then
-        [ $_block_matches_count -gt 0 ] && echo -e "\n'$@' \e[1;31mBLOCKED \e[0mby blocklist(s)${_block_matches}"
-        [ $_redirect_matches_count -gt 0 ] && echo -e "\n'$@' \e[1;33mREDIRECTED \e[0m$_redirect_matches"
+    if [ "$_block_matches_count" -gt 0 ] || [ "$_redirect_matches_count" -gt 0 ]; then
+        [ "$_block_matches_count" -gt 0 ] && echo -e "\n'$@' \e[1;31mBLOCKED \e[0mby blocklist(s)${_block_matches}"
+        [ "$_redirect_matches_count" -gt 0 ] && echo -e "\n'$@' \e[1;33mREDIRECTED \e[0m$_redirect_matches"
         echo -e "\t1) Unblock/unredirect just $@\n\t2) Unblock/unredirect all sites containing url $@\n\t3) Keep blocked/redirected"
         read -p "1-3 (default: 3): " b
         if [[ $b == 1 || "$b" == "1" ]]; then
@@ -100,7 +100,7 @@ _check_url() {
             _strip_entries " $@ \!" "$annotate"
             sed -i "/ $@$/d" "$blacklist"
             sed -i "/ $@$/d" "$hostsfile"
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
+            [ ! -d "$tmpdir"/hostsblock ] && mkdir "$_v" -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
         elif [[ $b == 2 || "$b" == "2" ]]; then
             echo "Unblocking all sites containing url $@"
@@ -108,7 +108,7 @@ _check_url() {
             _strip_entries "$@" "$annotate"
             sed -i "/$@/d" "$blacklist"
             sed -i "/$@/d" "$hostsfile"
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
+            [ ! -d "$tmpdir"/hostsblock ] && mkdir "$_v" -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
         fi
     else
@@ -121,17 +121,17 @@ _check_url() {
               if which pigz &>/dev/null; then
                   pigz -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
                   echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $pigz_opt -c - > "$annotate"
+                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz "$pigz_opt" -c - > "$annotate"
               else
                   gzip -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
                   echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $gzip_opt -c - > "$annotate"
+                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip "$gzip_opt" -c - > "$annotate"
               fi
               rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
             ) &
             sed -i "/^$@$/d" "$whitelist" &
             echo "$redirecturl $@" >> "$hostsfile" &
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
+            [ ! -d "$tmpdir"/hostsblock ] && mkdir "$_v" -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
             wait
         elif [[ $c == 2 || "$c" == "2" ]]; then
@@ -141,17 +141,17 @@ _check_url() {
               if which pigz &>/dev/null; then
                   pigz -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
                   echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $pigz_opt -c - > "$annotate"
+                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz "$pigz_opt" -c - > "$annotate"
               else
                   gzip -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
                   echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $gzip_opt -c - > "$annotate"
+                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip "$gzip_opt" -c - > "$annotate"
               fi
               rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
             ) &
             sed -i "/$@/d" "$whitelist" &
             echo "$redirecturl $@" >> "$hostsfile" &
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
+            [ ! -d "$tmpdir"/hostsblock ] && mkdir "$_v" -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
         fi
     fi
@@ -189,7 +189,7 @@ while getopts "qvf:huc:" _option; do
         v)  _verbosity=2;;
         q)  _verbosity=0;;
         u)
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
+            [ ! -d "$tmpdir"/hostsblock ] && mkdir "$_v" -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
         ;;
         c)
@@ -219,13 +219,13 @@ EOF
 done
 
 # SOURCE CONFIG FILE
-if [ $_configfile ]; then
+if [ "$_configfile" ]; then
     if [ -f "$_configfile" ]; then
     . "$_configfile"
-    elif [ $(whoami) != "root" ] && [ -f ${HOME}/.config/hostsblock/hostsblock.conf ]; then
+    elif [ "$(whoami)" != "root" ] && [ -f ${HOME}/.config/hostsblock/hostsblock.conf ]; then
         _notify 1 "Config file $_configfile missing. Using ${HOME}/.config/hostsblock/hostsblock.conf"
         . ${HOME}/.config/hostsblock/hostsblock.conf
-    elif [ $(whoami) != "root" ] && [ -f ${HOME}/hostsblock.conf ]; then
+    elif [ "$(whoami)" != "root" ] && [ -f ${HOME}/hostsblock.conf ]; then
         _notify 1 "Config file $_configfile missing. Using ${HOME}/hostsblock.conf"
         . ${HOME}/hostsblock.conf
     elif [ -f /etc/hostsblock/hostsblock.conf ]; then
@@ -234,9 +234,9 @@ if [ $_configfile ]; then
     else
         _notify 1 "No config files found. Using defaults."
     fi
-elif [ $(whoami) != "root" ] && [ -f ${HOME}/.config/hostsblock/hostsblock.conf ]; then
+elif [ "$(whoami)" != "root" ] && [ -f ${HOME}/.config/hostsblock/hostsblock.conf ]; then
     . ${HOME}/.config/hostsblock/hostsblock.conf
-elif [ $(whoami) != "root" ] && [ -f ${HOME}/hostsblock.conf ]; then
+elif [ "$(whoami)" != "root" ] && [ -f ${HOME}/hostsblock.conf ]; then
     . ${HOME}/hostsblock.conf
 elif [ -f /etc/hostsblock/hostsblock.conf ]; then
     . /etc/hostsblock/hostsblock.conf
@@ -261,7 +261,7 @@ else
 fi
 
 # CHECK FOR CORRECT PRIVILEDGES AND DEPENDENCIES
-if [ $(whoami) != "hostsblock" ]; then
+if [ "$(whoami)" != "hostsblock" ]; then
     echo -e "WRONG PERMISSIONS. RUN AS USER hostsblock, EITHER DIRECTLY OR VIA SUDO, E.G. sudo -u hostsblock $0 $@\n\nYou may have to add the following line to the end of sudoers after typing 'sudo visudo':\n $(whoami)	ALL	=	(hostblock)	NOPASSWD:	$0\n\nExiting..."
     exit 3
 fi
@@ -282,7 +282,7 @@ if [ $_check -eq 1 ] || [ "${0##*/}" == "hostsblock-urlcheck" ]; then
     echo "Checking to see if url is blocked or not..."
     # If run from symlink "hostsblock-urlcheck" _URL will not be set by getopts
     [ "$_URL" == "" ] && _URL="$1"
-    _check_url $(echo "$_URL" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g")
+    _check_url "$(echo "$_URL" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g")"
     if [ -f "$tmpdir"/hostsblock/changed ]; then
         if [ $_verbosity -ge 1 ]; then
             postprocess
@@ -345,13 +345,13 @@ else
     # DOWNLOAD BLOCKLISTS
     _notify 1 "Checking blocklists for updates..."
     for _url in ${blocklists[*]}; do
-        _outfile=$(echo $_url | sed -e "s|http:\/\/||g" -e "s|https:\/\/||g" | tr '/%&+?=' '.')
+        _outfile=$(echo "$_url" | sed -e "s|http:\/\/||g" -e "s|https:\/\/||g" | tr '/%&+?=' '.')
         [ -f "$cachedir"/"$_outfile".url ] || echo "$_url" > "$cachedir"/"$_outfile".url
         [ -f "$cachedir"/"$_outfile" ] && _old_sha1sum=$(sha1sum < "$cachedir"/"$_outfile")
 
         # Make process wait until the number of curl processes are less than $max_simultaneous_downloads
-        until [ $(pidof curl | wc -w) -lt $max_simultaneous_downloads ]; do
-            sleep $(pidof sleep | wc -w)
+        until [ "$(pidof curl | wc -w)" -lt $max_simultaneous_downloads ]; do
+            sleep "$(pidof sleep | wc -w)"
         done
 
         # Add a User-Agent and referer string when needed
@@ -491,9 +491,9 @@ else
         (
           which pigz &>/dev/null
           if [ $? -eq 0 ]; then
-              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $_pigz_opt -c - > "$annotate"
+              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz "$pigz_opt" -c - > "$annotate"
           else
-              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $_gzip_opt -c - > "$annotate"
+              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip "$gzip_opt" -c - > "$annotate"
           fi
           [ -f "$annotate" ] && rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
         ) &
