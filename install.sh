@@ -19,7 +19,7 @@ done
 DESTDIR="/usr/bin/"
 echo "Destination directory for hostsblock is $DESTDIR. Enter a new path or press Enter to keep as is."
 read -p "$DESTDIR " d
-if [ "$d" != "" ] || [ -n $d ]; then
+if [ "$d" != "" ] || [[ -n $d ]]; then
     DESTDIR="$d"
 fi
 
@@ -29,7 +29,7 @@ else
     HOMEDIR="/var/lib/hostsblock"
     echo "Creating user and group 'hostsblock' with home directory $HOMEDIR. Enter a new path or press Enter to keep as is."
     read -p "$HOMEDIR " h
-    if [ "$h" != "" ] || [ -n $h ]; then
+    if [ "$h" != "" ] || [[ -n $h ]]; then
         HOMEDIR="$h"
     fi
     echo "Creating user and group 'hostsblock' with home directory $HOMEDIR..."
@@ -46,8 +46,8 @@ fi
 gpasswd -a hostsblock hostsblock
 gpasswd -A hostsblock hostsblock
 
-if ps aux | grep [d]nsmasq | tr -s ' ' | cut -d' ' -f 11- | grep -q [d]nsmasq; then
-    dnsmasq_user=$(ps aux | grep [d]nsmasq | tr -s ' ' | cut -d' ' -f 1)
+if ps aux | grep '[d]nsmasq' | tr -s ' ' | cut -d' ' -f 11- | grep -q '[d]nsmasq'; then
+    dnsmasq_user=$(ps aux | grep '[d]nsmasq' | tr -s ' ' | cut -d' ' -f 1)
     echo -e "You appear to be running dnsmasq under user $dnsmasq_user. If you will be using hostsblock\nwith dnsmasq as a caching daemon, dnsmasq needs read access to hostsblock's home directory.\nTo do so, should I add $dnsmasq_user to the hostblock group?"
     read -p "y/N " e
     if [ "$e" == "y" ] || [ "$e" == "Y" ]; then
@@ -57,7 +57,7 @@ if ps aux | grep [d]nsmasq | tr -s ' ' | cut -d' ' -f 11- | grep -q [d]nsmasq; t
 else
     echo -e "If you are using hostsblock with a dns cacher, you should add the user under which the cacher\nruns to the 'hostsblock' group so that the daemon can access your generated host file.\nEnter the user of the DNS daemon or leave blank to add no additional user."
     read -p "[No DNS user] " dns
-    if [ "$dns" != "" ] || [ -n $dns ]; then
+    if [ "$dns" != "" ] || [[ -n $dns ]]; then
         gpasswd -a "$dns" hostsblock
         gpasswd -M "$dns" hostsblock
     fi
