@@ -14,8 +14,7 @@ _count_hosts() {
 }
 
 _strip_entries() {
-    which pigz &>/dev/null
-    if [ $? -eq 0 ]; then
+    if which pigz &>/dev/null; then
         pigz -dc "$2" | grep -v "$1" | pigz $pigz_opt -c - > "$2".tmp
     else
         gzip -dc "$2" | grep -v "$1" | gzip $gzip_opt -c - > "$2".tmp
@@ -24,8 +23,7 @@ _strip_entries() {
 
 _extract_entries() {
     if [ ! -d "$_cachefile_dir" ]; then
-        mkdir $_v -p -- "$_cachefile_dir"
-        if [ $? -ne 0 ]; then
+        if mkdir $_v -p -- "$_cachefile_dir"; then
             _notify 0 "FAILED TO CREATE DIRECTORY $_cachefile_dir. EXITING..."
             exit 9
         fi
@@ -55,19 +53,17 @@ _extract_entries() {
     if [ $_compress_exit -eq 0 ]; then
         _target_hostsfile="$tmpdir/hostsblock/hosts.block.d/${_cachefile##*/}.hosts"
         _cachefile_url=$(head -n1 "$cachedir"/"${_cachefile##*/}".url)
-        grep -rah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | tr '\t' ' ' | tr -s ' ' | \
+        if grep -rah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | tr '\t' ' ' | tr -s ' ' | \
           sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -Fvf "$whitelist" | \
-          sed "s|$| \! $_cachefile_url|g" > "$_target_hostsfile"
-        if [ $? -eq 0 ]; then
+          sed "s|$| \! $_cachefile_url|g" > "$_target_hostsfile"; then
             [ $_verbosity -ge 2 ] && _count_hosts "$_target_hostsfile"
         else
             _notify 1 "FAILED to extract any obvious entries from ${_cachefile##*/}."
         fi
-        grep -rahv "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | grep -v -e "^\." -e "\.$" -e "\*" -e "\"" -e "\$" |\
+        if grep -rahv "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | grep -v -e "^\." -e "\.$" -e "\*" -e "\"" -e "\$" |\
           grep -P '^(?=.*[[:alpha:]])(?=.*\.)' | sed "s/^/$redirecturl /g" | tr '\t' ' ' | tr -s ' ' | \
           sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" | sort -u | grep -Fvf "$whitelist" | sed "s|$| \! $_cachefile_url|g" \
-          >> "$_target_hostsfile"
-        if [ $? -eq 0 ]; then
+          >> "$_target_hostsfile"; then
             [ $_verbosity -ge 2 ] && _count_hosts "$_target_hostsfile"
         else
             _notify 1 "FAILED to extract any less-obvious entries from ${_cachefile##*/}."
@@ -77,8 +73,7 @@ _extract_entries() {
 }
 
 _check_url() {
-    which pigz &>/dev/null
-    if [ $? -eq 0 ]; then
+    if which pigz &>/dev/null; then
         _matches=$(pigz -dc "$annotate" | grep -F " $@ ")
     else
         _matches=$(gzip -dc "$annotate" | grep -F " $@ ")
@@ -268,8 +263,7 @@ fi
 
 # MAKE SURE NECESSARY DEPENDENCIES ARE PRESENT
 for _depends in mv cp rm sha1sum curl grep sed tr cut mkdir file; do
-    which "$_depends" &>/dev/null
-    if [ $? -ne 0 ]; then
+    if which "$_depends" &>/dev/null; then
         _notify 0 "MISSING REQUIRED DEPENDENCY $_depends. PLEASE INSTALL. EXITING..."
         exit 5
     fi
@@ -335,8 +329,7 @@ else
 
     # CREATE CACHE DIRECTORY IF NOT ALREADY EXISTENT
     if [ ! -d "$cachedir" ]; then
-        mkdir $_v -p -- "$cachedir"
-        if [ $? -ne 0 ]; then
+        if mkdir $_v -p -- "$cachedir"; then
             _notify 0 "CACHE DIRECTORY $cachedir COULD NOT BE CREATED. EXITING..."
             exit 6
         fi
@@ -381,8 +374,7 @@ else
 
         # CREATE TMPDIR
         if [ ! -d "$tmpdir"/hostsblock/hosts.block.d ]; then
-            mkdir $_v -p -- "$tmpdir"/hostsblock/hosts.block.d
-            if [ $? -ne 0 ]; then
+            if mkdir $_v -p -- "$tmpdir"/hostsblock/hosts.block.d; then
                 _notify 0 "FAILED TO CREATED TEMPORARY DIRECTORY $tmpdir/hostsblock/hosts.block.d. EXITING..."
                 exit 7
             fi
@@ -445,8 +437,7 @@ else
             true
         else
             ls "$hostsfile".old* &>/dev/null && rm $_v -- "$hostsfile".old*
-            which pigz &>/dev/null
-            if [ $? -eq 0 ]; then
+            if which pigz &>/dev/null; then
                 cat "$hostsfile" | pigz $pigz_opt -c - > "$hostsfile".old.gz
                 gzip_exit=$?
             else
@@ -466,9 +457,8 @@ else
 
         # PROCESS AND WRITE BLOCK ENTRIES TO FILE
         _notify 1 "Compiling into $hostsfile..."
-        grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$tmpdir"/hostsblock/"${annotate##*/}".tmp | sed "s/ \!.*$//g" |\
-          sort -u | grep -Fvf "$whitelist" >> "$hostsfile"
-        if [ $? -ne 0 ]; then
+        if grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$tmpdir"/hostsblock/"${annotate##*/}".tmp | sed "s/ \!.*$//g" |\
+          sort -u | grep -Fvf "$whitelist" >> "$hostsfile"; then
             _notify 0 "FAILED TO COMPILE BLOCK ENTRIES INTO $hostsfile. EXITING..."
             exit 2
         fi
@@ -489,11 +479,10 @@ else
 
         # SORT AND COMPRESS ANNOTATION FILE.
         (
-          which pigz &>/dev/null
-          if [ $? -eq 0 ]; then
-              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $_pigz_opt -c - > "$annotate"
+          if which pigz &>/dev/null; then
+              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $pigz_opt -c - > "$annotate"
           else
-              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $_gzip_opt -c - > "$annotate"
+              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $gzip_opt -c - > "$annotate"
           fi
           [ -f "$annotate" ] && rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
         ) &
