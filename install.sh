@@ -60,7 +60,7 @@ if getent passwd | grep -q "^hostsblock:"; then
         elif [ "$h" != "" ]; then
             HOMEDIR="$h"
             _homedir_changed=1
-        if
+        fi
         if [ -d "$HOMEDIR" ]; then
             if [ $_homedir_changed -eq 0 ]; then
                 _homedir_ok=1
