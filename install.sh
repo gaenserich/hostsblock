@@ -157,12 +157,12 @@ else
     useradd -d "$HOMEDIR" -c "hostblock" -m -U hostsblock
 fi
 
-gpasswd -A hostsblock hostsblock
+gpasswd -A hostsblock hostsblock &>/dev/null
 
 if pidof dnsmasq; then
     dnsmasq_user=$(ps -o user= -p "$(pidof dnsmasq)")
     if getent group hostsblock | cut -d":" -f4 | tr ',' '\n' | grep -q "^${dnsmasq_user}$"; then
-        gpasswd -M "$dnsmasq_user" hostsblock
+        gpasswd -M "$dnsmasq_user" hostsblock &>/dev/null
     else
         msg "You appear to be running dnsmasq under user $dnsmasq_user. If you will be using hostsblock with dnsmasq as a caching daemon, dnsmasq needs read access to hostsblock's home directory. To do so, should I add $dnsmasq_user to the hostblock group?"
         e="n"

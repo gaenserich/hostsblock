@@ -263,7 +263,7 @@ fi
 
 # MAKE SURE NECESSARY DEPENDENCIES ARE PRESENT
 for _depends in mv cp rm sha1sum curl grep sed tr cut mkdir file; do
-    if which "$o_depends" &>/dev/null; then
+    if which "$_depends" &>/dev/null; then
         true
     else
         _notify 0 "MISSING REQUIRED DEPENDENCY $_depends. PLEASE INSTALL. EXITING..."
