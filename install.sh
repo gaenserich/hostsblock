@@ -161,7 +161,7 @@ fi
 
 gpasswd -A hostsblock hostsblock &>/dev/null
 
-if pidof dnsmasq; then
+if pidof dnsmasq &>/dev/null; then
     dnsmasq_user=$(ps -o user= -p "$(pidof dnsmasq)")
     if getent group hostsblock | cut -d":" -f4 | tr ',' '\n' | grep -q "^${dnsmasq_user}$"; then
         gpasswd -M "$dnsmasq_user" hostsblock &>/dev/null
