@@ -465,6 +465,8 @@ else
         _notify 1 "Compiling into $hostsfile..."
         if grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$tmpdir"/hostsblock/"${annotate##*/}".tmp | sed "s/ \!.*$//g" |\
           sort -u | grep -Fvf "$whitelist" >> "$hostsfile"; then
+            true
+        else
             _notify 0 "FAILED TO COMPILE BLOCK ENTRIES INTO $hostsfile. EXITING..."
             exit 2
         fi

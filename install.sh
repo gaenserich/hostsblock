@@ -118,7 +118,7 @@ if getent passwd | grep -q "^hostsblock:"; then
             usermod -d "$HOMEDIR" hostsblock
         fi
     fi
-    if getent group hostsblock; then
+    if getent group hostsblock &>/dev/null; then
         msg "Using preexisting group 'hostsblock'"
     else
         msg "Creating group 'hostsblock'..."
