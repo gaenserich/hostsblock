@@ -3,6 +3,7 @@
 # Install script for hostsblock.
 
 msg() {
+    printf "\\n"
     echo "$@" | fold -s
 }
 
