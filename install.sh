@@ -13,8 +13,10 @@ check_install() {
         y="n"
         read -rp "[y/N] " y
         if [ "$y" == "y" ] || [ "$y" == "Y" ]; then
+            rm -f "$3"
             install "$1" "$2" "$3"
         else
+            [ -f "$3".new ] && rm -f "$3".new
             install "$1" "$2" "$3".new
         fi
     else
@@ -69,7 +71,7 @@ until [ $_destdir_ok -eq 1 ]; do
 done
 
 if getent passwd | grep -q "^hostsblock:"; then
-    echo "Using preexisting user 'hostsblock'"
+    msg "Using preexisting user 'hostsblock'"
     _homedir_ok=0
     _homedir_changed=0
     HOMEDIR=$(getent passwd hostsblock | cut -d':' -f6)
@@ -120,9 +122,9 @@ if getent passwd | grep -q "^hostsblock:"; then
         msg "Using preexisting group 'hostsblock'"
     else
         msg "Creating group 'hostsblock'..."
-        groupadd hostsblock
+        groupadd hostsblock &>/dev/null
     fi
-    gpasswd -a hostsblock hostsblock
+    gpasswd -a hostsblock hostsblock &>/dev/null
 else
     HOMEDIR="/var/lib/hostsblock"
     _homedir_ok=0
@@ -201,7 +203,9 @@ else
 fi
 
 [ ! -d "$DESTDIR" ] && mkdir -p "$DESTDIR"
+[ -f "$DESTDIR"/hostsblock ] && rm -f "$DESTDIR"/hostsblock
 install -Dm755 src/hostsblock.sh "$DESTDIR"/hostsblock
+[ -f "$DESTDIR"/hostsblock-urlcheck ] && rm -f "$DESTDIR"/hostsblock-urlcheck
 ln -sf "$DESTDIR"/hostsblock "$DESTDIR"/hostsblock-urlcheck
 [ ! -d "$HOMEDIR" ] && mkdir -p "$HOMEDIR"
 
@@ -209,7 +213,10 @@ check_install -Dm644 conf/hostsblock.conf "$HOMEDIR"/hostsblock.conf
 check_install -Dm644 conf/black.list "$HOMEDIR"/black.list
 check_install -Dm644 conf/white.list "$HOMEDIR"/white.list
 check_install -Dm644 conf/hosts.head "$HOMEDIR"/hosts.head
+
+[ -f "$systemd_dir"/hostsblock.service ] && rm -f "$systemd_dir"/hostsblock.service
 install -Dm644 systemd/hostsblock.service "$systemd_dir"/
+[ -f "$systemd_dir"/hostsblock.timer ] && rm -f "$systemd_dir"/hostsblock.timer
 install -Dm644 systemd/hostsblock.timer "$systemd_dir"/
 
 msg "Setting up permissions for hostsblock home directory $HOMEDIR..."
@@ -226,13 +233,9 @@ while [ ${#_dir} -gt 0 ]; do
 done
 
 msg "Should I enable and/or start the hostsblock service? (Requires systemd)"
-printf "\\t"
 msg "1) Only Enable"
-printf "\\t"
 msg "2) Only Start"
-printf "\\t"
 msg "3) Start and Enable"
-printf "\\t"
 msg "4) Do Nothing (Default)"
 read -rp "[1-4] " start
 case "$start" in

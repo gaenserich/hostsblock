@@ -24,6 +24,8 @@ _strip_entries() {
 _extract_entries() {
     if [ ! -d "$_cachefile_dir" ]; then
         if mkdir $_v -p -- "$_cachefile_dir"; then
+            true
+        else
             _notify 0 "FAILED TO CREATE DIRECTORY $_cachefile_dir. EXITING..."
             exit 9
         fi
@@ -377,6 +379,8 @@ else
         # CREATE TMPDIR
         if [ ! -d "$tmpdir"/hostsblock/hosts.block.d ]; then
             if mkdir $_v -p -- "$tmpdir"/hostsblock/hosts.block.d; then
+                true
+            else
                 _notify 0 "FAILED TO CREATED TEMPORARY DIRECTORY $tmpdir/hostsblock/hosts.block.d. EXITING..."
                 exit 7
             fi
