@@ -6,6 +6,21 @@ msg() {
     echo "$@" | fold -s
 }
 
+check_install() {
+    if [ -f "$3" ]; then
+        msg "$3 already exists in filesystem. Should it be overwritten with a new version? (If no, the new version will be saved as ${3}.new)"
+        y="n"
+        read -rp "[y/N] " y
+        if [ "$y" == "y" ] || [ "$y" == "Y" ]; then
+            install "$1" "$2" "$3"
+        else
+            install "$1" "$2" "$3".new
+        fi
+    else
+        install "$1" "$2" "$3"
+    fi
+}
+
 if [ "$(whoami)" != "root" ]; then
     msg "$0 must be run as root or via sudo, e.g. 'sudo $0'. Exiting..."
     exit 1
@@ -188,10 +203,11 @@ fi
 install -Dm755 src/hostsblock.sh "$DESTDIR"/hostsblock
 ln -sf "$DESTDIR"/hostsblock "$DESTDIR"/hostsblock-urlcheck
 [ ! -d "$HOMEDIR" ] && mkdir -p "$HOMEDIR"
-install -Dm644 conf/hostsblock.conf "$HOMEDIR"/hostsblock.conf
-install -Dm644 conf/black.list "$HOMEDIR"/black.list
-install -Dm644 conf/white.list "$HOMEDIR"/white.list
-install -Dm644 conf/hosts.head "$HOMEDIR"/hosts.head
+
+check_install -Dm644 conf/hostsblock.conf "$HOMEDIR"/hostsblock.conf
+check_install -Dm644 conf/black.list "$HOMEDIR"/black.list
+check_install -Dm644 conf/white.list "$HOMEDIR"/white.list
+check_install -Dm644 conf/hosts.head "$HOMEDIR"/hosts.head
 install -Dm644 systemd/hostsblock.service "$systemd_dir"/
 install -Dm644 systemd/hostsblock.timer "$systemd_dir"/
 
@@ -214,7 +230,7 @@ msg "1) Only Enable"
 printf "\\t"
 msg "2) Only Start"
 printf "\\t"
-msg "3)Start and Enable"
+msg "3) Start and Enable"
 printf "\\t"
 msg "4) Do Nothing (Default)"
 read -rp "[1-4] " start
