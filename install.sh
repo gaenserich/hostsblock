@@ -45,7 +45,7 @@ until [ $_destdir_ok -eq 1 ]; do
     read -rp "[$DESTDIR] " d
     if echo "$d" | grep -q "\\/$"; then
         DESTDIR="${d%/}"
-    elif [ "$d" != "" ]; then
+    elif [ "$d" != "" ] && [ -n "$d" ]; then
         DESTDIR="$d"
     fi
     if  echo "$PATH" | tr ':' '\n' | grep -q "^${DESTDIR}$"; then
@@ -81,7 +81,7 @@ if getent passwd | grep -q "^hostsblock:"; then
         if echo "$h" | grep -q "\\/$"; then
             HOMEDIR="${h%/}"
             _homedir_changed=1
-        elif [ "$h" != "" ]; then
+        elif [ "$h" != "" ] && [ -n "%h" ]; then
             HOMEDIR="$h"
             _homedir_changed=1
         fi
@@ -133,7 +133,7 @@ else
         read -rp "[$HOMEDIR] " h
         if echo "$h" | grep -q "\\/$"; then
             HOMEDIR="${h%/}"
-        elif [ "$h" != "" ]; then
+        elif [ "$h" != "" ] && [ -n "$h" ]; then
             HOMEDIR="$h"
         fi
         if [ -d "$HOMEDIR" ]; then
@@ -177,7 +177,7 @@ if pidof dnsmasq &>/dev/null; then
 else
     msg "If you are using hostsblock with a dns cacher, you should add the user under which the cacher runs to the 'hostsblock' group so that the daemon can access your generated host file. Enter the user of the DNS daemon or leave blank to add no additional user."
     read -rp "[No DNS user] " dns
-    if [ "$dns" != "" ]; then
+    if [ "$dns" != "" ] && [ -n "$dns" ] ; then
         gpasswd -a "$dns" hostsblock
         gpasswd -M "$dns" hostsblock
     fi
