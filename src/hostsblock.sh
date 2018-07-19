@@ -155,6 +155,7 @@ _check_url() {
 }
 
 # VARIABLE DEFAULTS
+HOME="$(getent passwd hostsblock | cut -d':' -f 6)"
 tmpdir="/tmp/hostsblock"
 hostsfile="$HOME/hosts.block"
 redirecturl="127.0.0.1"
