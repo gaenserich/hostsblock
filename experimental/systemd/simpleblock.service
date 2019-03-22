@@ -1,0 +1,10 @@
+[Unit]
+Description=Block bad domains system-wide
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=hostsblock
+Group=hostsblock
+ExecStart=/usr/bin/hostsblock

@@ -1,0 +1,53 @@
+# HIGHLY RECOMMENDED LISTS
+    http://support.it-mate.co.uk/downloads/HOSTS.txt                           #Identical to 'http://hosts-file.net/download/hosts.zip'
+    #http://winhelp2002.mvps.org/hosts.zip                                     #anti-ad and anti-malware list (winhelp2002.mvps.org/hosts.htm)
+    #http://pgl.yoyo.org/as/serverlist.php?hostformat=hosts&mimetype=plaintext #anti-ad (pgl.yoyo.org/adservers/
+    #http://hosts-file.net/download/hosts.zip                                  #hpHosts main anti-ad and anti-malware (hosts-file.net/)
+                                                                               #Compressed version of 'http://support.it-mate.co.uk/downloads/HOSTS.txt'
+    #http://www.malwaredomainlist.com/hostslist/hosts.txt                      #anti-malware (www.malwaredomainlist.com/)
+    #http://hosts-file.net/ad_servers.txt                                      #anti-ads-only version of hpHosts main list (hosts-file.net)
+## RECOMMENDED LISTS
+    #http://hosts-file.net/hphosts-partial.asp                                 #hpHosts inter-release (hosts-file.net/)
+    #http://hostsfile.org/Downloads/BadHosts.unx.zip                           #anti-malware (hostsfile.org/hosts.html)
+    #http://hostsfile.mine.nu/Hosts.zip                                        #anti-ad (hostsfile.mine.nu)
+    #http://sysctl.org/cameleon/hosts                                          #anti-ad (sysctl.org/cameleon/)
+## ANTI-CRYTPOMINING LISTS
+    #https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/hosts.txt #anti-cryptomining in browser (github.com/hoshsadiq/adblock-nocoin-list)
+    # anti-cryptomining from https://github.com/ZeroDot1/CoinBlockerLists
+        #https://raw.githubusercontent.com/ZeroDot1/CoinBlockerLists/master/hosts #All domains
+        #https://raw.githubusercontent.com/ZeroDot1/CoinBlockerLists/master/hosts_optional #Optional domains
+        #https://raw.githubusercontent.com/ZeroDot1/CoinBlockerLists/master/hosts_browser  #Browser mining domains; prevents browser mining only
+## OPTIONAL LISTS
+    #https://raw.githubusercontent.com/jmdugan/blocklists/master/corporations/facebook/all #block Facebook completely
+    #http://hosts-file.net/download/yahoo_servers.zip                          #hpHosts for yahoo adservers (hosts-file.net/)
+    #http://adblock.mahakala.is/hosts                                          #another general-purpose anti-ad list
+    #http://abp.mozilla-hispano.org/nauscopio/hosts.zip                        #supplemented version of someonewhocares.org list (https://nauscopio.wordpress.com/category/filtrado/)
+    #http://rlwpx.free.fr/WPFF/htrc.7z                                         #anti-trackers (very large and aggressive) (rlwpx.free.fr/WPFF) 
+    #http://rlwpx.free.fr/WPFF/hpub.7z                                         #anti-ad (very large and aggressive) (rlwpx.free.fr/WPFF)
+    #http://rlwpx.free.fr/WPFF/hrsk.7z                                         #anti-malware (very large and aggressive) (rlwpx.free.fr/WPFF)
+    #http://rlwpx.free.fr/WPFF/hsex.7z                                         #anti-porn (very large) (rlwpx.free.fr/WPFF)
+    #http://rlwpx.free.fr/WPFF/hmis.7z                                         #miscellaneous sites to be blocked (rlwpx.free.fr/WPFF)
+    #https://raw.githubusercontent.com/lewisje/jansal/master/adblock/hostsbig  # 
+    #https://raw.githubusercontent.com/lewisje/jansal/master/adblock/hostsbk   #
+    #https://raw.githubusercontent.com/lewisje/jansal/master/adblock/hostsbkp  #relatively old lists
+    #https://raw.githubusercontent.com/lewisje/jansal/master/adblock/hostsrt   #
+    #https://raw.githubusercontent.com/lewisje/jansal/master/adblock/hostsu    #
+    #https://downloads.sourceforge.net/project/adzhosts/AdZHosts.zip           #general ad- and pop-up-blocker (https://sourceforge.net/projects/adzhosts/)
+    #https://downloads.sourceforge.net/project/adzhosts/HOSTS.txt              #uncompressed version of 'https://downloads.sourceforge.net/project/adzhosts/AdZHosts.zip'
+    # The various permutations of Steven Blacks list. Select one. (https://github.com/StevenBlack/hosts/blob/master/readme.md)
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts      # Unified hosts = (adware + malware)
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews/hosts # Unified hosts + fakenews
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/gambling/hosts # Unified hosts + gambling
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn/hosts # Unified hosts + porn
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/social/hosts # Unified hosts + social
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling/hosts # Unified hosts + fakenews + gambling
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-porn/hosts # Unified hosts + fakenews + porn
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-social/hosts # Unified hosts + fakenews + social
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/gambling-porn/hosts # Unified hosts + gambling + porn
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/gambling-social/hosts # Unified hosts + gambling + social
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-social/hosts # Unified hosts + porn + social
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn/hosts # Unified hosts + fakenews + gambling + porn
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-social/hosts # Unified hosts + fakenews + gambling + social
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-porn-social/hosts # Unified hosts + fakenews + porn + social
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/gambling-porn-social/hosts # Unified hosts + gambling + porn + social
+        #https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn-social/hosts # Unified hosts + fakenews + gambling + porn + social
