@@ -7,4 +7,4 @@ After=network-online.target
 Type=oneshot
 User=hostsblock
 Group=hostsblock
-ExecStart=/usr/bin/hostsblock
+ExecStart=/usr/lib/simpleblock.sh
