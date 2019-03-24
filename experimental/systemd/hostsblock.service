@@ -8,3 +8,4 @@ Type=oneshot
 User=hostsblock
 Group=hostsblock
 ExecStart=/usr/lib/simpleblock.sh
+ExecStartPost=/usr/bin/systemctl reload dnsmasq.service
