@@ -1,0 +1,6 @@
+[Unit]
+Description=Reload dnsmasq.service if hostsblock detects changes
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl reload-or-restart dnsmasq.service

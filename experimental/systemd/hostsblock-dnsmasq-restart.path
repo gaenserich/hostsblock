@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch /var/lib/hostsblock/hosts.block for changes
+
+[Path]
+PathModified=/var/lib/hostsblock/hosts.block
+
+[Install]
+Also=hostsblock.timer
+WantedBy=multi-user.target
