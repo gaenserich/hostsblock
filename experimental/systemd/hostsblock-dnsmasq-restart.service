@@ -1,5 +1,6 @@
 [Unit]
 Description=Reload dnsmasq.service if hostsblock detects changes
+Conflicts=hostsblock-hosts-clobber.path hostsblock-hosts-clobber.service
 
 [Service]
 Type=oneshot

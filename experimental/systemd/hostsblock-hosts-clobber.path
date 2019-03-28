@@ -1,6 +1,6 @@
 [Unit]
 Description=Watch /var/lib/hostsblock/hosts.block for changes
-Conflicts=hostsblock-hosts-clobber.path hostsblock-hosts-clobber.service
+Conflicts=hostsblock-dnsmasq-restart.path hostsblock-dnsmasq-restart.service
 
 [Path]
 PathModified=/var/lib/hostsblock/hosts.block

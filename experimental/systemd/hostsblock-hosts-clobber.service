@@ -1,0 +1,7 @@
+[Unit]
+Description=Clobber /etc/hosts if hostsblock detects changes
+Conflicts=hostsblock-dnsmasq-restart.path hostsblock-dnsmasq-restart.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash -l -c "cp -f /var/lib/hostsblock/hosts.block /etc/hosts; chmod 444 /etc/hosts"
