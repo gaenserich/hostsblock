@@ -69,13 +69,12 @@ _HOME=$(getent passwd hostsblock | cut -f6 -d:)
 install -m500 -g hostsblock -o hostsblock -d "$_HOME"/config.examples
 install -b -m600 -g hostsblock -o hostsblock "$SRCDIR"/conf/* "$_HOME"/config.examples/
 
-# Install the script under $PREFIX/bin
-install -m500 -g hostsblock -o hostsblock "$SRCDIR"/src/hostsblock.sh "$PREFIX"/bin/hostsblock
-
-# Symlink hostsblock to hostsblock-urlcheck
-ln -sf "$PREFIX"/bin/hostsblock "$PREFIX"/bin/hostsblock-urlcheck
-chown hostsblock:hostsblock "$PREFIX"/bin/hostsblock-urlcheck
-chmod 500 "$PREFIX"/bin/hostsblock-urlcheck
+# Install the script under $PREFIX/lib and the wrapper under $PREFIX/bin
+install -m500 -g hostsblock -o hostsblock "$SRCDIR"/src/hostsblock.sh "$PREFIX"/lib/hostsblock.sh
+[ ! -d "$PREFIX"/bin ] && mkdir -p "$PREFIX"/bin
+sed "s/%PREFIX%/$PREFIX/g" "$SRCDIR"/bin/hostsblock > "$PREFIX"/bin/hostsblock
+chown hostsblock:hostsblock "$PREFIX"/bin/hostsblock
+chmod 550 "$PREFIX"/bin/hostsblock
 
 # Install the systemd unit files
 install -m444 -g root -o root "$SRCDIR"/systemd/* "$SYSTEMD_DIR"/
@@ -137,3 +136,5 @@ updates or modifies, type:
 
 If you deviated from the default installation settings, you may need to modify
 these unit files."
+
+##### Add legacy urllist check here #####
