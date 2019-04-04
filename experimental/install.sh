@@ -1,5 +1,9 @@
 #!/bin/sh
 
+_msg() {
+    printf %s\\n "$1" 1>&2
+}
+
 # Parameters
 SRCDIR="${SRCDIR:-./}"                         # Assuming we are running this script from the root directory of our source code
 PREFIX="${PREFIX:-/usr}"                       # Default installation of hostsblock.sh under /usr/bin/
@@ -8,7 +12,7 @@ DNSMASQ_CONF="${DNSMASQ_CONF:-/etc/dnsmasq.conf}"
 
 if [ "$1" != "please" ]; then
 # Warning
-echo "WARNING: This script will install hostblock and its configuration files with
+_msg "WARNING: This script will install hostblock and its configuration files with
 exclusive permissions for their owner, the user 'hostsblock'. If this user does
 not yet exist, it will create it with a home directory under
 /var/lib/hostsblock. If you do not want the home directory here, please create
@@ -30,29 +34,24 @@ fi
 
 # Check if this script is running as root.
 if [ "$(whoami)" != "root" ]; then
-    echo "Run this script as root or via sudo, e.g. sudo install.sh"
+    _msg "Run this script as root or via sudo, e.g. sudo install.sh"
     exit 2
 fi
 
 # Dependency check for both this installation script and host block
 for _dep in getent groupadd whoami install useradd grep mkdir mv cp rm cut; do
-    if ! which $_dep >/dev/null 2>&1; then
-        echo "Dependency $_dep missing. Please install."
+    if ! command -v $_dep >/dev/null 2>&1; then
+        _msg "Dependency $_dep missing. Please install."
         exit 3
     fi
 done
 
-if ! ( which gzip >/dev/null 2>&1 || which pigz >/dev/null 2>&1 ); then
-    echo "Dependency gzip missing. Please install."
-    exit 3
-fi
-
 # Opt dependency checks
-if ! which unzip >/dev/null 2>&1; then
-    echo "Optional dependency unzip missing. You will not be able to extract zipped block files without it."
+if ! command -v unzip >/dev/null 2>&1; then
+    _msg "Optional dependency unzip missing. You will not be able to extract zipped block files without it."
 fi
-if ! ( which 7zr >/dev/null 2>&1 || which 7za >/dev/null 2>&1 || which 7z >/dev/null 2>&1 ); then
-    echo "Optional dependency p7zip missing. You will not be able to extract 7zipped block files without it."
+if ! ( command -v 7zr >/dev/null 2>&1 || command -v 7za >/dev/null 2>&1 || command -v 7z >/dev/null 2>&1 ); then
+    _msg "Optional dependency p7zip missing. You will not be able to extract 7zipped block files without it."
 fi
 
 # Check for/create hostsblock user
@@ -83,15 +82,16 @@ install -m444 -g root -o root "$SRCDIR"/systemd/* "$SYSTEMD_DIR"/
 
 # Configure sudoers
 _sudoers_conf_yn="y"
-read -p 'Add the following line via visudo to allow select users other than root to manage hostsblock. Copy and paste this line:
+_msg 'Add the following line via visudo to allow select users other than root to manage hostsblock. Copy and paste this line:
 
     %hostsblock    ALL    =    (hostsblock)    NOPASSWD:    /usr/bin/hostsblock,/usr/bin/hostsblock-urlcheck
 
-Should I open visudo so that you can paste the above line in? [n/Y]: ' _sudoers_conf_yn
+Should I open visudo so that you can paste the above line in? [n/Y]: ' 
+read _sudoers_conf_yn
 if [ "$_sudoers_conf_yn" !="n" ] || [ "$_sudoers_conf_yn" != "N" ]; then
     visudo
 fi
-echo "Add any users you want to allow to administer hostsblock by adding them to the
+_msg "Add any users you want to allow to administer hostsblock by adding them to the
 'hostsblock' group:
 
     gpasswd -a [your user name here] hostsblock
@@ -101,17 +101,18 @@ hostsblock -c option through sudo, e.g.
 
     sudo -u hostsblock hostsblock -c 'www.google.com' status"
 
-if which dnsmasq >/dev/null 2>&1; then
+if command -v dnsmasq >/dev/null 2>&1; then
     _dnsmasq_conf_yn="n"
-    read -p '
-Do you want me to automatically configure dnsmasq to be used with hostsblock? [y/N]: ' _dnsmasq_conf_yn
+    _msg '
+Do you want me to automatically configure dnsmasq to be used with hostsblock? [y/N]: '
+read _dnsmasq_conf_yn
 else
     _dnsmasq_conf_yn="n"
-    echo "DNSMASQ not available, so I won't attempt to configure it."
+    _msg "DNSMASQ not available, so I won't attempt to configure it."
 fi
 if [ "$_dnsmasq_conf_yn = "y" ] || [ "$_dnsmasq_conf_yn = "Y" ]; then
-    sed "s/#.*//g" "$DNSMASQ_CONF" | grep -q "\baddn-hosts=$_HOME/hosts.block\b" || echo "addn-hosts=$_HOME/hosts.block" >> "$DNSMASQ_CONF"
-    echo "DNSMASQ will now read $_HOME/hosts.block on start up. If you
+    sed "s/#.*//g" "$DNSMASQ_CONF" | grep -q "\baddn-hosts=$_HOME/hosts.block\b" || printf %s "addn-hosts=$_HOME/hosts.block" >> "$DNSMASQ_CONF"
+    _msg "DNSMASQ will now read $_HOME/hosts.block on start up. If you
 change the $hostsfile variable in $_HOME/hostsblock.conf to
 something other than $_HOME/hosts.block, make sure to also change
 the add-hosts variable in $DNSMASQ_CONF as well.
@@ -121,7 +122,7 @@ please follow the directions here:
 https://wiki.archlinux.org/index.php/Dnsmasq#DNS_server"
 fi
 
-echo "Hostsblock now uses systemd to manage postprocessing. If you want to have
+_msg "Hostsblock now uses systemd to manage postprocessing. If you want to have
 dnsmasq reload after hostsblock updates or modifies its target file, type:
 
     sudo systemctl enable --now hostsblock-dnsmasq-restart.path
