@@ -180,7 +180,7 @@ _urlcheck_status_url() {
         fi
     fi
     [ "$_urlcheck_status_single_line" = "$1:" ] && \
-        _urlcheck_status_single_line="$_urlcheck_status_single_line is not managed"
+        _urlcheck_status_single_line="$_urlcheck_status_single_line not managed"
 }
 
 ## _urlcheck_*_lines: do the selected action (block, blacklist,
