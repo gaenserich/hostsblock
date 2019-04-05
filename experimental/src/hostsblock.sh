@@ -54,9 +54,14 @@ _job_extract_from_cachefiles() {
                 _notify 1 "${_cachefile##*/} is a 7z archive, but an extractor is NOT FOUND. Skipping..."
             fi
         else
-            grep -hI $_ipv4_match_patterns "$_cachefile" | _sanitize
+            if grep -qE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" "$_cachefile"; then
+                _sanitize < "$_cachefile"
+            else
+                _sanitize_raw < "$_cachefile"
+            fi
         fi 
-    done | sort -u | grep -Fvf "$whitelist" >> "$hostsfile".new
+    done | sort -u | grep -ve " localhost$" -ve " localhost\.localdomain$" -ve " broadcasthost$" -ve ".* .* .*" | \
+      grep -Fvf "$whitelist" >> "$hostsfile".new
     if [ $? -ne 0 ]; then
         _notify 0 "FAILED TO COMPILE BLOCK/REDIRECT ENTRIES FROM URLS IN $1 INTO $hostsfile. EXITING..."
         exit 2
@@ -539,13 +544,12 @@ _job() {
         _unzip_available=1
         _unzip() {
             if unzip -l "$1" | tail -n1 | grep -q "\b1 file\b"; then
-                unzip -c -a $_v_unzip -- "$1" | \
-                  grep -hI $_ipv4_match_patterns | _sanitize
+                unzip -c -a $_v_unzip -- "$1" | _sanitize
             else
                 mkdir -p $_v -- "$tmpdir"/"${1##*/}".d
                 unzip -B -o -j -a -d "$tmpdir"/"${1##*/}".d $_v_unzip -- "$1" && \
                 { find "$tmpdir"/"${1##*/}".d -type f -print0 | \
-                  xargs -0 grep -hI $_ipv4_match_patterns ; } | _sanitize
+                  xargs -0 cat ; } | _sanitize
                 _exit=$?
                 rm -rf $_v -- "$tmpdir"/"${1##*/}".d
                 return $_exit
@@ -579,25 +583,17 @@ _job() {
             if _7zip_bin l "$1" | \
               grep -A1 "^Scanning the drive for archives:" | \
               grep -q "^1 file\b"; then
-                _7zip_bin e -so -- "$1" | grep -hI $_ipv4_match_patterns | \
-                  _sanitize
+                _7zip_bin e -so -- "$1" | _sanitize
             else
                 mkdir -p $_v -- "$tmpdir"/"${1##*/}".d
                 _7zip_bin e -so -o "$tmpdir"/"${1##*/}".d -- "$1" && \
                 { find "$tmpdir"/"${1##*/}".d -type f -print0 | \
-                  xargs -0 grep -hI $_ipv4_match_patterns ; } | _sanitize
+                  xargs -0 cat ; } | _sanitize
                 _exit=$?
                 rm -rf $_v -- "$tmpdir"/"${1##*/}".d
                 return $_exit
             fi
         }
-    fi
-
-    # IDENTIFY WHAT WILL not BE OUR REDIRECTION URL
-    if [ "$redirecturl" != '127.0.0.1' ]; then
-        _notredirecturl='127.0.0.1'
-    else
-        _notredirecturl='0.0.0.0'
     fi
 
     # DOWNLOAD BLOCKLISTS AND/OR REDIRECT LISTS
@@ -633,12 +629,16 @@ _job() {
         # EXTRACT BLOCK ENTRIES DIRECTLY FROM CACHED FILES
         if [ "$blocklists" ]; then
             _notify 1 "  Extracting blocklists..."
-            _ipv4_match_patterns="-e 0\\.0\\.0\\.0 -e 127\\.0\\.0\\.1"
             _sanitize() {
-                tr -d '\r' | tr '\t' ' ' | tr -s ' ' | sed -e "s/#.*//g" \
-                  -e "s/^ //g" -e "s/ $//g" \
-                  -e "s/$_notredirecturl/$redirecturl/g" | \
-                  grep -I "^$redirecturl "
+                tr -s '\t\r ' ' ' | sed -e "s/[#;<].*//g" -e "s/^ //g" \
+                  -e "s/ $//g" | grep -hIe "^0\.0\.0\.0 " -e "^127\.0\.0\.1 " \
+                  -e "^0 " -e "^:: " | cut -d' ' -f2 | \
+                  grep -I "^[[:alnum:]]*\.[[:alnum:]]*" | sed "s/^/$redirecturl /g"
+            }
+            _sanitize_raw() {
+                grep -Ih "^[[:alnum:]]*\.[[:alnum:]]*" | tr -s '\t\r ' ' ' | \
+                  sed -e "s/[#;<].*//g" -e "s/^ //g" -e "s/ $//g" | grep -Ihv " " | \
+                  grep -I "^[[:alnum:]]*\.[[:alnum:]]*" | sed "s/^/$redirecturl /g"
             }
             _job_extract_from_cachefiles "$blocklists"
         fi
@@ -646,11 +646,13 @@ _job() {
         # EXTRACT REDIRECT ENTRIES DIRECTLY FROM CACHED FILES
         if [ "$redirectlists" ]; then
             _notify 1 "  Extracting redirectlists..."
-            _ipv4_match_patterns="-E [0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}"
             _sanitize() {
-                tr -d '\r' | tr '\t' ' ' | tr -s ' ' | sed -e "s/#.*//g" \
-                  -e "s/^ //g" -e "s/ $//g" | \
+                grep -IE "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}" | \
+                  tr -s '\t\r ' ' ' | sed -e "s/[#;<].*//g" -e "s/^ //g" -e "s/ $//g" | \
                   grep -IE "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3} "
+            }
+            _sanitize_raw() {
+                _sanitize
             }
             _job_extract_from_cachefiles "$redirectlists"
         fi
@@ -663,6 +665,7 @@ _job() {
               printf %s\\n "$redirecturl $_blacklistline" >> "$hostsfile".new
         done < "$blacklist" && \
         mv $_v -- "$hostsfile".new "$hostsfile" && \
+        chmod 644 "$hostsfile"
         _notify 1 "$hostsfile successfully compiled. DONE."
     else
         _notify 1 "No new changes. DONE."
