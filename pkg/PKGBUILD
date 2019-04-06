@@ -13,27 +13,28 @@ optdepends=('dnsmasq: helps speed up DNS resolutions'
         'pixelserv-tls: removes boilerplate page on blocked urls (supports HTTPS)'
 	    'unzip: allows the use of zipped downloads'
 	    'p7zip: allows the use of 7zipped downloads')
-source=(https://github.com/gaenserich/hostsblock/archive/0.999.8.tar.gz)
+source=(https://github.com/gaenserich/hostsblock/archive/v$pkgver.tar.gz)
 changelog=$pkgname.changelog
 install=$pkgname.install
-sha1sums=('895e820e6ff80d9e7a8fec5992dedd72b7dc57c7')
+sha1sums=('SKIP')
 
 package() {
+  cd "$srcdir"/"$pkgname"-"$pkgver"
   mkdir -p -m 755 "$pkgdir"/var/lib/hostsblock
-  install -Dm500 "$srcdir"/hostsblock.sh "$pkgdir"/usr/lib/hostsblock.sh
+  install -Dm500 src/hostsblock.sh "$pkgdir"/usr/lib/hostsblock.sh
   [ ! -d "$pkgdir"/usr/bin ] && mkdir "$pkgdir"/usr/bin
-  sed "s/%PREFIX%/\/usr/g" "$srcdir"/hostsblock-wrapper.sh > "$pkgdir"/usr/bin/hostsblock
+  sed "s/%PREFIX%/\/usr/g" src/hostsblock-wrapper.sh > "$pkgdir"/usr/bin/hostsblock
   chmod 550 "$pkgdir"/usr/bin/hostsblock
-  install -Dm600 "$srcdir"/hostsblock.conf "$pkgdir"/var/lib/hostsblock/config.examples/hostsblock.conf
-  install -Dm600 "$srcdir"/black.list "$pkgdir"/var/lib/hostsblock/config.examples/black.list
-  install -Dm600 "$srcdir"/white.list "$pkgdir"/var/lib/hostsblock/config.examples/white.list
-  install -Dm600 "$srcdir"/hosts.head "$pkgdir"/var/lib/hostsblock/config.examples/hosts.head
-  install -Dm600 "$srcdir"/block.urls "$pkgdir"/var/lib/hostsblock/config.examples/block.urls
-  install -Dm600 "$srcdir"/redirect.urls "$pkgdir"/var/lib/hostsblock/config.examples/redirect.urls
-  install -Dm444 "$srcdir"/hostsblock.service "$pkgdir"/usr/lib/systemd/system/hostsblock.service
-  install -Dm444 "$srcdir"/hostsblock.timer "$pkgdir"/usr/lib/systemd/system/hostsblock.timer
-  install -Dm444 "$srcdir"/hostsblock-dnsmasq-restart.path "$pkgdir"/usr/lib/systemd/system/hostsblock-dnsmasq-restart.path
-  install -Dm444 "$srcdir"/hostsblock-dnsmasq-restart.service "$pkgdir"/usr/lib/systemd/system/hostsblock-dnsmasq-restart.service
-  install -Dm444 "$srcdir"/hostsblock-hosts-clobber.path "$pkgdir"/usr/lib/systemd/system/hostsblock-hosts-clobber.path
-  install -Dm444 "$srcdir"/hostsblock-hosts-clobber.service "$pkgdir"/usr/lib/systemd/system/hostsblock-hosts-clobber.service
+  install -Dm600 conf/hostsblock.conf "$pkgdir"/var/lib/hostsblock/config.examples/hostsblock.conf
+  install -Dm600 conf/black.list "$pkgdir"/var/lib/hostsblock/config.examples/black.list
+  install -Dm600 conf/white.list "$pkgdir"/var/lib/hostsblock/config.examples/white.list
+  install -Dm600 conf/hosts.head "$pkgdir"/var/lib/hostsblock/config.examples/hosts.head
+  install -Dm600 conf/block.urls "$pkgdir"/var/lib/hostsblock/config.examples/block.urls
+  install -Dm600 conf/redirect.urls "$pkgdir"/var/lib/hostsblock/config.examples/redirect.urls
+  install -Dm444 systemd/hostsblock.service "$pkgdir"/usr/lib/systemd/system/hostsblock.service
+  install -Dm444 systemd/hostsblock.timer "$pkgdir"/usr/lib/systemd/system/hostsblock.timer
+  install -Dm444 systemd/hostsblock-dnsmasq-restart.path "$pkgdir"/usr/lib/systemd/system/hostsblock-dnsmasq-restart.path
+  install -Dm444 systemd/hostsblock-dnsmasq-restart.service "$pkgdir"/usr/lib/systemd/system/hostsblock-dnsmasq-restart.service
+  install -Dm444 systemd/hostsblock-hosts-clobber.path "$pkgdir"/usr/lib/systemd/system/hostsblock-hosts-clobber.path
+  install -Dm444 systemd/hostsblock-hosts-clobber.service "$pkgdir"/usr/lib/systemd/system/hostsblock-hosts-clobber.service
 }
