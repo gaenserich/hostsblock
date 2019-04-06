@@ -332,7 +332,7 @@ hostsblock -c URL (urlCheck) Commands:
   -i [-o -r -k]         Interactively inspect URL
 
 hostsblock -c URL Command Subcommands:
-  -r                    COMMAND recurses to all domains on URL's page
+  -r                    COMMAND recurses to all domains on URL\'s page
   -k                    COMMAND recurses for all BLOCKED domains on page
   -o                    Perform opposite of COMMAND (e.g UNblock)
   -b                    With "-l", immediately block URL
