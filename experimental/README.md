@@ -446,6 +446,10 @@ Due to enhanced security and sandboxing, hostsblock no longer handles postproces
 
 Hostsblock comes with systemd service files that replicate the most common scenarios. See the [directions above for instructions on how to enable them](#enablepostprocess).
 
+#### Changes with `sudo`
+
+`sudo` is no longer as widely used as before. The man systemd service no longer requires. You only need it if you want to use the `hostsblock -c URL` (urlcheck) utility. [See the above directions for details](#sudo).
+
 #### Other Caveats
 *   The `hostsblock-urlcheck` symlink is depreciated. Please use [`hostsblock -c URL`](#urlcheck) instead.
 *   In UrlCheck mode, large hosts files will generate large temporary cache files that will eat up a lot of temporary storage. If you have a machine with little RAM (<6GB) and want to block a lot of domains, consider changing your $tmpdir to an HDD- or SSD-backed filesystem instead of the default tmpfs under `/tmp`.

@@ -32,8 +32,9 @@ post_upgrade() {
     chown hostsblock:hostsblock /usr/bin/hostsblock
     cat << EOF
 
-As of 0.999.8, hostsblock's configuration file format has changed significantly.
-Please see https://github.com/gaenserich/hostsblock for details.
+As of 0.999.8, hostsblock's configuration has changed significantly. Please see
+https://github.com/gaenserich/hostsblock#upgrade09998
+for a guide on how to migrate your configuration
 
 EOF
 }
