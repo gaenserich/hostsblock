@@ -27,7 +27,7 @@ Hostsblock also provides a command-line utility that allows you to configure how
 
 *   **Compression-friendly** - Can download and process zip- and 7zip-compressed files **automatically**. (Provided that `unzip` and `p7zip` are installed)
 
-*   **Non-interactive** - Can be run as a periodic `cronjob` or via a `systemd timer` without needing user interaction.
+*   **Non-interactive** - Can be run as a periodic background job without needing user interaction.
 
 *   **Extensive configurability** - Allows for custom **black & white listing**, **redirection**, ~~**post-processing scripting**~~ (now provided via systemd configuration), *etc.*
 
