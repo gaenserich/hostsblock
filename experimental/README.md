@@ -305,7 +305,7 @@ The wrapper script installed in your PATH will automatically use sudo to execute
 
 Without the `-c URL` option, hostsblock will check to see if its monitored blocklists have changed. If it detects changes in them (or if forced by the `-u` flag), it will download the changed blocklist(s) and recompile the target HOSTS file.
 
-```sh
+```conf
 Help Options:
   -h                            Show help options
 
@@ -323,7 +323,7 @@ With the `-c URL` flag option, hostsblock can check and manipulate how it handle
 
 ***Note: The `hostsblock-urlcheck` symlink is now officially depreciated. Use `hostsblock -c` instead.***
 
-```sh
+```conf
 hostsblock -c URL (urlCheck) Commands:
   -s [-r -k]            State how hostblock modifies URL
   -b [-o -r]            Temporarily (un)block URL
@@ -332,7 +332,7 @@ hostsblock -c URL (urlCheck) Commands:
   -i [-o -r -k]         Interactively inspect URL
 
 hostsblock -c URL Command Subcommands:
-  -r                    COMMAND recurses to all domains on URL\'s page
+  -r                    COMMAND recurses to all domains on URL's page
   -k                    COMMAND recurses for all BLOCKED domains on page
   -o                    Perform opposite of COMMAND (e.g UNblock)
   -b                    With "-l", immediately block URL
