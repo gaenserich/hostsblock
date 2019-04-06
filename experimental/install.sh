@@ -66,8 +66,8 @@ fi
 _HOME=$(getent passwd hostsblock | cut -f6 -d:)
 
 # Install config examples into home directory
-install -m500 -g hostsblock -o hostsblock -d "$_HOME"/config.examples
-install -b -m600 -g hostsblock -o hostsblock "$SRCDIR"/conf/* "$_HOME"/config.examples/
+install -D -m500 -g hostsblock -o hostsblock -d "$_HOME"/config.examples
+install -D -b -m600 -g hostsblock -o hostsblock "$SRCDIR"/conf/* "$_HOME"/config.examples/
 
 # Install the script under $PREFIX/lib and the wrapper under $PREFIX/bin
 install -m500 -g hostsblock -o hostsblock "$SRCDIR"/src/hostsblock.sh "$PREFIX"/lib/hostsblock.sh
@@ -77,7 +77,7 @@ chown hostsblock:hostsblock "$PREFIX"/bin/hostsblock
 chmod 550 "$PREFIX"/bin/hostsblock
 
 # Install the systemd unit files
-install -m444 -g root -o root "$SRCDIR"/systemd/* "$SYSTEMD_DIR"/
+install -D -m444 -g root -o root "$SRCDIR"/systemd/* "$SYSTEMD_DIR"/
 
 # Configure sudoers
 _sudoers_conf_yn="y"

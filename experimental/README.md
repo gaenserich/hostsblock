@@ -112,10 +112,10 @@ After downloading the archive [here](https://github.com/gaenserich/hostsblock/ar
 
 ```sh
 install -Dm500 -g hostsblock -o hostsblock src/hostsblock.sh /usr/lib/hostsblock.sh
-sed "s/%PREFIX%/\/usr/g" src/hostsblock-wrapper.sh /usr/bin/hostsblock
+sed "s/%PREFIX%/\/usr/g" src/hostsblock-wrapper.sh > /usr/bin/hostsblock
 chown hostsblock:hostsblock /usr/bin/hostsblock
 chmod 550 /usr/bin/hostsblock
-install -Dm600 -g hostsblock -o hostsblock conf/* /var/lib/hostsblock/
+install -Dm600 -g hostsblock -o hostsblock conf/* /var/lib/hostsblock/config.examples/
 install -Dm444 -g root -o root systemd/* /usr/lib/systemd/system/
 ```
 
