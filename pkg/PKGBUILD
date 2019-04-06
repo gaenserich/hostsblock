@@ -16,7 +16,7 @@ optdepends=('dnsmasq: helps speed up DNS resolutions'
 source=(https://github.com/gaenserich/hostsblock/archive/v$pkgver.tar.gz)
 changelog=$pkgname.changelog
 install=$pkgname.install
-sha1sums=('SKIP')
+sha1sums=('ad67ce3f45cc5a4b967f5c9e3af6ef8d65b56fa1')
 
 package() {
   cd "$srcdir"/"$pkgname"-"$pkgver"

@@ -448,7 +448,7 @@ Hostsblock comes with systemd service files that replicate the most common scena
 
 #### Changes with `sudo`
 
-`sudo` is no longer as widely used as before. The man systemd service no longer requires it. You only need it if you want to use the `hostsblock -c URL` (urlcheck) utility. [See the above directions for details](#sudo).
+`sudo` is no longer as widely used as before. The main systemd service no longer requires it. You only need it if you want to use the `hostsblock -c URL` (urlcheck) utility. [See the above directions for details](#sudo).
 
 #### Other Caveats
 *   The `hostsblock-urlcheck` symlink is depreciated. Please use [`hostsblock -c URL`](#urlcheck) instead.
