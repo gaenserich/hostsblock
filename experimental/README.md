@@ -279,7 +279,7 @@ hostsblock -c "http://github.com/gaenserich/hostsblock" -s -k
 hostsblock -c "http://github.com/gaenserich/hostsblock" -b
 ```
 
-***Note that "blocking" (and "unblocking", i.e. `-b -o`) a domain only works until the next time hostsblock refreshes `/var/lib/hostsfile/hosts.block`, unless you use a blocklist that does include it. To permanently block this domain, use the blacklist (`-l`) command.***
+Note that "blocking" (and "unblocking", i.e. `-b -o`) a domain only works until the next time hostsblock refreshes `/var/lib/hostsfile/hosts.block`, unless you use a blocklist that does include it. To permanently block this domain, use the blacklist (`-l`) command.
 
 ##### Permanently block (blacklist) the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
@@ -287,7 +287,7 @@ hostsblock -c "http://github.com/gaenserich/hostsblock" -b
 hostsblock -c "http://github.com/gaenserich/hostsblock" -l
 ```
 
-***Note that "blacklisting" on its own will not block the target domain until hostblock refreshes. You can combine both "blocking" and "blacklisting" in one command, however:***
+Note that "blacklisting" on its own will not block the target domain until hostblock refreshes. You can combine both "blocking" and "blacklisting" in one command, however:
 
 ##### Permanently and immediately block the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
