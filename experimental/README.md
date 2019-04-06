@@ -3,23 +3,13 @@
 An **ad-** and **malware-blocking** utility for *POSIX*
 
 ### Contents
-1.   [Description](#description)
-  *   [Features](#features)
-2.   [Installation](#installation)
-  *   [Dependencies](#depends)
-  *   [Arch Linux](#archinstall)
-  *   [Other POSIX](#posixinstall)
-3.   [Configuration](#config)
-  *   [Edit `hostsblock.conf`](#hostblockconf)
-  *   [Enable Timer](#enabletimer)
-  *   [Enable Postprocessing](#enablepostprocess)
-4.   [Usage](#usage)
-  *   [Configuring `sudo`](#sudo)
-  *   [Manual Usage](#manual)
-  *   [UrlCheck Usage](#urlcheck) ([examples](#examples))
-5.   [FAQ](#faq)
-6.   [News & Bugs](#news)
-7.   [License](#license)
+1.   **[Description](#description):** [Features](#features)
+2.   **[Installation](#installation):** [Dependencies](#depends), [Arch Linux](#archinstall), [Other POSIX](#posixinstall)
+3.   **[Configuration](#config):** [Edit `hostsblock.conf`](#hostblockconf), [Enable Timer](#enabletimer), [Enable Postprocessing](#enablepostprocess)
+4.   **[Usage](#usage):** [Configuring `sudo`](#sudo), [Manual Usage](#manual), [UrlCheck Usage](#urlcheck) ([examples](#examples))
+5.   **[FAQ](#faq)**
+6.   **[News & Bugs](#news)**
+7.   **[License](#license)**
 
 ## Description <a name="description"></a>
 
@@ -27,7 +17,7 @@ An **ad-** and **malware-blocking** utility for *POSIX*
 
 To do so, it downloads a **configurable** set of blocklists and processes their entries into a single [HOSTS][h] file.
 
-**Hostsblock** also provides a command-line utility that allows you to configure how individual websites and any other domains contained in that website are handled.
+Hostsblock also provides a command-line utility that allows you to configure how individual websites and any other domains contained in that website are handled.
 
 ### Features <a name="features"></a>
 
@@ -135,7 +125,7 @@ By default, the configuration files are included in the `/var/lib/hostsblock/con
 
 ### Editing `hostsblock.conf` <a name="hostblockconf"></a>
 
-Most of the **hostsblock** configuration is done in the [`hostsblock.conf`][conf]. This file is commented really well, so please read through it before first use:
+Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. This file is commented really well, so please read through it before first use:
 
 ```conf
 # CACHE DIRECTORY. Directory where blocklists will be downloaded and stored.
@@ -242,13 +232,13 @@ systemctl enable --now hostsblock.timer
 
 #### OPTION 1: Using a DNS Caching Daemon (Here: dnsmasq)
 
-Using a DNS caching daemon like `dnsmasq` offers better performance.
+Using a DNS caching daemon like **dnsmasq** offers better performance.
 
-To use `hostsblock` together with `dnsmasq`, configure `dnsmasq` as DNS caching daemon.
+To use hostsblock together with dnsmasq, configure dnsmasq as DNS caching daemon.
 Please refer to your distribution's manual. For ArchLinux read the following:
 [Wiki section](https://wiki.archlinux.org/index.php/dnsmasq#DNS_cache_setup).
 
-After that, add the following line to `dnsmasq.conf` (usually under `/etc/dnsmasq.conf`) so that `dnsmasq` will reference the file:
+After that, add the following line to `dnsmasq.conf` (usually under `/etc/dnsmasq.conf`) so that **dnsmasq** will reference the file:
 
 ```conf
 addn-hosts=/var/lib/hostsblock/hosts.block
@@ -291,11 +281,11 @@ This has systemd watch the target file `/var/lib/hostsblock/hosts.block` for cha
 
 ## Usage <a name="usage"></a>
 
-In its normal systemd-job configuration, **hostsblock** requires no interaction from the user aside from the steps above. If, however, you want to manually run the process, or to use the UrlCheck tool (`hostsblock -c URL`), you need to configure `sudo`:
+In its normal systemd-job configuration, hostsblock requires no interaction from the user aside from the steps above. If, however, you want to manually run the process, or to use the UrlCheck tool (`hostsblock -c URL`), you need to configure `sudo`:
 
 ### Configuring `sudo` <a name="sudo"></a>
 
-Because **hostsblock** executes as a heavily sandboxed unpriviledged user (instead of root), you must configure `sudo` to allow other users to manually execute it.
+Because hostsblock executes as a heavily sandboxed unpriviledged user (instead of root), you must configure `sudo` to allow other users to manually execute it.
 
 To do so, edit `sudoers` by typing `sudo visudo` and add the following line to the end:
 
@@ -353,7 +343,7 @@ Note that the `-o` subcommand turns a blocking command into an UNblocking comman
 
 #### Examples: <a name="examples"></a>
 
-##### See if "http://github.com/gaenserich/hostsblock" is blocked, blacklisted, whitelisted, or redirected by `hostsblock`:
+##### See if "http://github.com/gaenserich/hostsblock" is blocked, blacklisted, whitelisted, or redirected by hostsblock:
 
 ```sh
 hostsblock -c "http://github.com/gaenserich/hostsblock" -s
