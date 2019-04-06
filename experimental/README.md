@@ -444,7 +444,7 @@ See the example `block.urls` in the `/var/lib/hostsblock/config.examples` direct
 
 Due to enhanced security and sandboxing, hostsblock no longer handles postprocessing on its own. Instead, users should use other systemd capabilities to replace the `postprocess() {}` functionality.
 
-Hostsblock comes with systemd service files that replicate the most common scenarios. See the [directions above for instructions on how to enable them](#enablepostprocess)
+Hostsblock comes with systemd service files that replicate the most common scenarios. See the [directions above for instructions on how to enable them](#enablepostprocess).
 
 #### Other Caveats
 *   The `hostsblock-urlcheck` symlink is depreciated. Please use [`hostsblock -c URL`](#urlcheck) instead.
@@ -453,7 +453,7 @@ Hostsblock comes with systemd service files that replicate the most common scena
 *   Hostsblock uses 0.0.0.0 as default redirection IP address instead of 127.0.0.1. 0.0.0.0 theoretically offers better performance without the need of a pseudo-server.
 
 #### Other Changes from 0.999.7 to 0.999.8
-**Systemd Job Improvements**
+##### Systemd Job Improvements
 *   Systemd service now heavily hardened and sandboxed for enhanced security
 *   Fixed simultaneous download feature so that it actually does what it is supposed to
 *   Added processing support for source blocklists that just list domain names to be blocked, e.g. `ads.google.com` instead of `0.0.0.0 ads.google.com`
@@ -463,12 +463,12 @@ Hostsblock comes with systemd service files that replicate the most common scena
 *   Removed annotation feature to reduce dependencies and overall processing demands
 *   Vastly expanded list of potential blocklists (see `block.urls`)
 
-**POSIX-Compatibility Improvements**
+##### POSIX-Compatibility Improvements
 *   Supports POSIX shells (dash, ash, zsh) instead of just bash
 *   Removed GNU-specific utilities, relies only on POSIX options
 *   Should now run on \*BSD and macOS (and perhaps even Android and iOS!) if proper POSIX environments are installed. ***UNTESTED***
 
-**UrlCheck Mode Improvements**
+##### UrlCheck Mode Improvements
 *   User-facing command now a wrapper script that handles `sudo` execution for the user, reducing configuration demands
 *   Significant performance improvements by moving from incremental to mass handling of domain names
 *   [Added noninteractive commands `-s` (status), `-b` (block), `-l` (blacklist), `-w` (whitelist), `-b -o` (unblock), `-l -o` (deblacklist), `-w -o` (dewhitelist)](#urlcheck)
