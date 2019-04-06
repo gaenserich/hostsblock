@@ -1,7 +1,7 @@
 #!/bin/sh
-_home=$(getent passwd hostsblock | cut -d':' -f6)
+_home=$(sudo -u hostsblock -H sh -l -c "cd; pwd")
 pwd=$(pwd)
-if [ "$(whoami)" = "hostsblock" ]; then
+if [ "$(id -un)" = "hostsblock" ]; then
     exec %PREFIX%/lib/hostsblock.sh "$@"
 else
     exec sudo -u hostsblock -H %PREFIX%/lib/hostsblock.sh "$@"

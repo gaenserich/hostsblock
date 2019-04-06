@@ -10,7 +10,7 @@ PREFIX="${PREFIX:-/usr}"                       # Default installation of hostsbl
 SYSTEMD_DIR="${SYSTEMD_DIR:-/usr/lib/systemd/system}" #
 DNSMASQ_CONF="${DNSMASQ_CONF:-/etc/dnsmasq.conf}"
 
-if [ "$1" != "please" ]; then
+if [ "$1" != "install" ]; then
 # Warning
 _msg "WARNING: This script will install hostblock and its configuration files with
 exclusive permissions for their owner, the user 'hostsblock'. If this user does
@@ -28,18 +28,18 @@ Variables effecting installation:
  \$DNSMASQ_CONF (currently $DNSMASQ_CONF): file where hostsblock
   will append its configuration for dnsmasq
 
-If you are read to install, execute '$0 please'"
+If you are read to install, execute '$0 install'"
  exit 0
 fi
 
 # Check if this script is running as root.
-if [ "$(whoami)" != "root" ]; then
-    _msg "Run this script as root or via sudo, e.g. sudo install.sh"
+if [ "$$(id -un)" != "root" ]; then
+    _msg "Run this script as root or via sudo, e.g. sudo $0 install"
     exit 2
 fi
 
 # Dependency check for both this installation script and host block
-for _dep in getent groupadd whoami install useradd grep mkdir mv cp rm cut; do
+for _dep in groupadd install useradd gpasswd chown tr mkdir cksum curl touch rm sed grep file sort tee cut cp mv chmod find xargs id wc; do
     if ! command -v $_dep >/dev/null 2>&1; then
         _msg "Dependency $_dep missing. Please install."
         exit 3
@@ -83,7 +83,7 @@ install -m444 -g root -o root "$SRCDIR"/systemd/* "$SYSTEMD_DIR"/
 _sudoers_conf_yn="y"
 _msg 'Add the following line via visudo to allow select users other than root to manage hostsblock. Copy and paste this line:
 
-    %hostsblock    ALL    =    (hostsblock)    NOPASSWD:    /usr/bin/hostsblock,/usr/bin/hostsblock-urlcheck
+    %hostsblock    ALL    =    (hostsblock)    NOPASSWD:    $PREFIX/lib/hostsblock.sh
 
 Should I open visudo so that you can paste the above line in? [n/Y]: ' 
 read _sudoers_conf_yn

@@ -10,15 +10,15 @@ _notify() {
 
 # Download individual urls
 _job_download_list() {
-    # $1=$_url
+    # $2=$_url
     _outfile="$cachedir"/$(printf %s "${1#*//}" | tr '/%&+?=' '.')
     [ ! -d "$tmpdir"/downloads ] && mkdir -p $_v -- "$tmpdir"/downloads
     touch "$tmpdir"/downloads/"${_outfile##*/}"
-    [ -f "$_outfile" ] && _old_b2sum=$(b2sum < "$_outfile")
+    [ -f "$_outfile" ] && _old_cksum=$(cksum < "$_outfile")
     if curl $_v_curl --compressed -L --connect-timeout $connect_timeout \
       --retry $retry -z "$_outfile" "$1" -o "$_outfile"; then
-        _new_b2sum=$(b2sum < "$_outfile")
-        if [ "$_old_b2sum" != "$_new_b2sum" ]; then
+        _new_cksum=$(cksum < "$_outfile")
+        if [ "$_old_cksum" != "$_new_cksum" ]; then
             _notify 1 "  Changes found to $1."
             [ ! -d "$tmpdir" ] && mkdir -p $_v -- "$tmpdir"
             touch "$tmpdir"/changed
@@ -54,7 +54,7 @@ _job_extract_from_cachefiles() {
                 _notify 1 "${_cachefile##*/} is a 7z archive, but an extractor is NOT FOUND. Skipping..."
             fi
         else
-            if grep -qE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" "$_cachefile"; then
+            if grep -qE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}[[:space:]]" "$_cachefile"; then
                 _sanitize < "$_cachefile"
             else
                 _sanitize_raw < "$_cachefile"
@@ -173,7 +173,8 @@ _urlcheck_status_url() {
         _urlcheck_status_single_line="$_urlcheck_status_single_line WHITELISTED"
         _urlcheck_is_whitelisted=1
     fi
-    if printf %s "$are_redirected" | grep -q "[[:alnum:]]" && printf %s "$are_not_redirected" | grep -q "[[:alnum:]]"; then
+    if printf %s "$are_redirected" | grep -q "[[:alnum:]]" && \
+      printf %s "$are_not_redirected" | grep -q "[[:alnum:]]"; then
         if printf %s "$are_redirected" | grep -Fqx "$1"; then
             _urlcheck_status_single_line="$_urlcheck_status_single_line REDIRECTED"
             _urlcheck_is_redirected=1
@@ -377,13 +378,15 @@ _urlcheck_inspect() {
         _notify 0 "$_urlcheck_status_single_line"
         _block_yn="n"
         if [ $_urlcheck_is_blocked -eq 0 ]; then
-            read -p "    Block until next update? [y/N]: " _block_yn
+            printf %s "    Block until next update? [y/N]: " 1>&2
+            read _block_yn
             if [ "$_block_yn" = "Y" ] || [ "$_block_yn" = "y" ]; then
                 _urlcheck_to_be_blocked="$_urlcheck_to_be_blocked
 $_urlcheck_inspect_domain"
             fi
         else
-            read -p "    Unblock until next update? [y/N]: " _block_yn
+            printf %s "    Unblock until next update? [y/N]: " 1>&2
+            read _block_yn
             if [ "$_block_yn" = "Y" ] || [ "$_block_yn" = "y" ]; then
                 _urlcheck_to_be_unblocked="$_urlcheck_to_be_unblocked
 $_urlcheck_inspect_domain"
@@ -391,13 +394,15 @@ $_urlcheck_inspect_domain"
         fi
         _blacklist_yn="n"
         if [ $_urlcheck_is_blacklisted -eq 0 ]; then
-            read -p "    Blacklist (Block permanently after next update)? [y/N]: " _blacklist_yn
+            printf %s "    Blacklist (Block permanently after next update)? [y/N]: " 1>&2
+            read _blacklist_yn
             if [ "$_blacklist_yn" = "Y" ] || [ "$_blacklist_yn" = "y" ]; then
                 _urlcheck_to_be_blacklisted="$_urlcheck_to_be_blacklisted
 $_urlcheck_inspect_domain"
             fi
         else
-            read -p "    Remove from blacklist? [y/N]: " _blacklist_yn
+            printf %s "    Remove from blacklist? [y/N]: " 1>&2
+            read _blacklist_yn
             if [ "$_blacklist_yn" = "Y" ] || [ "$_blacklist_yn" = "y" ]; then
                 _urlcheck_to_be_deblacklisted="$_urlcheck_to_be_deblacklisted
 $_urlcheck_inspect_domain"
@@ -405,13 +410,15 @@ $_urlcheck_inspect_domain"
         fi
         _whitelist_yn="n"
         if [ $_urlcheck_is_whitelisted -eq 0 ]; then
-            read -p "    Whitelist (Unblock permanently after next update)? [y/N]: " _whitelist_yn
+            printf %s "    Whitelist (Unblock permanently after next update)? [y/N]: " 1>&2
+            read _whitelist_yn
             if [ "$_whitelist_yn" = "Y" ] || [ "$_whitelist_yn" = "y" ]; then
                 _urlcheck_to_be_whitelisted="$_urlcheck_to_be_whitelisted
 $_urlcheck_inspect_domain"
             fi
         else
-            read -p "    Remove from whitelist? [y/N]: " _whitelist_yn
+            printf %s "    Remove from whitelist? [y/N]: " 1>&2
+            read _whitelist_yn
             if [ "$_whitelist_yn" = "Y" ] || [ "$_whitelist_yn" = "y" ]; then
                 _urlcheck_to_be_dewhitelisted="$_urlcheck_to_be_dewhitelisted
 $_urlcheck_inspect_domain" 
@@ -676,7 +683,6 @@ _job() {
 ################### MAIN PROCESS COMMON TO URLCHECK AND JOB ###################
 
 # VARIABLE DEFAULTS
-HOME="$(getent passwd hostsblock | cut -d':' -f 6)"
 HOME="${HOME:-/var/lib/hostsblock}"
 hostsfile="$HOME/hosts.block"
 redirecturl='127.0.0.1'
@@ -777,15 +783,15 @@ else
 fi
 
 # CHECK FOR CORRECT PRIVILEDGES AND DEPENDENCIES
-if [ $(whoami) != "hostsblock" ]; then
-    _notify 0 "WRONG PERMISSIONS. RUN AS USER hostsblock, EITHER DIRECTLY OR VIA SUDO, E.G. sudo -u hostsblock $0 $@\n\nYou may have to add the following line to the end of sudoers after typing 'sudo visudo':\n %hostsblock  ALL  =  (hostblock)  NOPASSWD:  $0\nAnd then add your current user to the hostsblock group:\nsudo gpasswd -a $(whoami) hostsblock\n\nExiting..."
+if [ "$(id -un)" != "hostsblock" ]; then
+    _notify 0 "WRONG PERMISSIONS. RUN AS USER hostsblock, EITHER DIRECTLY OR VIA SUDO, E.G. sudo -u hostsblock $0 $@\n\nYou may have to add the following line to the end of sudoers after typing 'sudo visudo':\n %hostsblock  ALL  =  (hostblock)  NOPASSWD:  $0\nAnd then add your current user to the hostsblock group:\nsudo gpasswd -a $(id -un) hostsblock\n\nExiting..."
     exit 3
 fi
 
 # SOURCE CONFIG FILE
 if [ $_configfile ] && [ -f "$_configfile" ]; then
     . "$_configfile"
-elif [ $(whoami) = "hostsblock" ] && [ -f ${HOME}/hostsblock.conf ]; then
+elif [ "$(id -un)" = "hostsblock" ] && [ -f ${HOME}/hostsblock.conf ]; then
     . ${HOME}/hostsblock.conf
 elif [ -f /var/lib/hostsblock/hostsblock.conf ]; then
     . /var/lib/hostsblock/hostsblock.conf
@@ -797,7 +803,8 @@ mkdir -p $_v -- "$tmpdir"
 [ $_changed -eq 1 ] && touch "$tmpdir"/changed
 
 # MAKE SURE NECESSARY DEPENDENCIES ARE PRESENT
-for _depends in mv cp rm b2sum curl grep sed tr cut file chmod; do
+for _depends in tr mkdir cksum curl touch rm sed grep file \
+  sort tee cut cp mv sudo chmod find wc id xargs; do
     if ! command -v "$_depends" >/dev/null 2>&1; then
         _notify 0 "MISSING REQUIRED DEPENDENCY $_depends. PLEASE INSTALL. EXITING..."
         exit 5
