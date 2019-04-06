@@ -1,244 +1,763 @@
-#!/bin/bash
+#!/bin/sh
+if [ -n "$ZSH_VERSION" ]; then emulate -L sh; fi
 
-# SUBROUTINES
+################################# SUBROUTINES #################################
 
+# Send notifications to stderr
 _notify() {
-    [ $_verbosity -ge $1 ] && echo "$2"
+    [ $_verbosity -ge $1 ] && printf %s\\n "$2" 1>&2
 }
 
-_count_hosts() {
-    grep -ah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" "$@" | cut -d" " -f1 | sort -u | while read _addr; do
-        _number=$(grep -Fc -- "$_addr " "$@")
-        echo "$@: $_number urls redirected to $_addr."
-    done
-}
-
-_strip_entries() {
-    if which pigz &>/dev/null; then
-        pigz -dc "$2" | grep -v "$1" | pigz $pigz_opt -c - > "$2".tmp
-    else
-        gzip -dc "$2" | grep -v "$1" | gzip $gzip_opt -c - > "$2".tmp
-    fi
-}
-
-_extract_entries() {
-    if [ ! -d "$_cachefile_dir" ]; then
-        if mkdir $_v -p -- "$_cachefile_dir"; then
-            true
-        else
-            _notify 0 "FAILED TO CREATE DIRECTORY $_cachefile_dir. EXITING..."
-            exit 9
+# Download individual urls
+_job_download_list() {
+    # $2=$_url
+    _outfile="$cachedir"/$(printf %s "${1#*//}" | tr '/%&+?=' '.')
+    [ ! -d "$tmpdir"/downloads ] && mkdir -p $_v -- "$tmpdir"/downloads
+    touch "$tmpdir"/downloads/"${_outfile##*/}"
+    [ -f "$_outfile" ] && _old_cksum=$(cksum < "$_outfile")
+    if curl $_v_curl --compressed -L --connect-timeout $connect_timeout \
+      --retry $retry -z "$_outfile" "$1" -o "$_outfile"; then
+        _new_cksum=$(cksum < "$_outfile")
+        if [ "$_old_cksum" != "$_new_cksum" ]; then
+            _notify 1 "  Changes found to $1."
+            [ ! -d "$tmpdir" ] && mkdir -p $_v -- "$tmpdir"
+            touch "$tmpdir"/changed
         fi
+    else
+        _notify 1 "    FAILED to refresh/download blocklist $1"
     fi
-    cd "$_cachefile_dir"
-    case "$_decompresser" in
-        none)
-            _compress_exit=0
-            cp $_v -- "$_cachefile" "$_cachefile_dir"/ || _notify 1 "FAILED to move ${_cachefile##*/} to $_cachefile_dir."
-        ;;
-        unzip)
-            unzip -B -o -j $_v_unzip -- "$_cachefile"
-            _compress_exit=$?
-            [ $_compress_exit -ne 0 ] && _notify 1 "FAILED to unzip ${_cachefile##*/}."
-        ;;
-        7z*)
-            if [ $_verbosity -le 1 ]; then
-                eval $_7zip_available e "$_cachefile" &>/dev/null
-                _compress_exit=$?
+    rm -rf $_v -- "$tmpdir"/downloads/"${_outfile##*/}"
+}
+
+
+# Extract complete domain names from text, zip, and 7zip cache files
+_job_extract_from_cachefiles() {
+    # $1 = $blocklists or $redirectlists, i.e. files listing url files
+    sed "s/#.*//g" "$1" | grep "[[:alnum:]]" | while read _url; do
+        _cachefile="$cachedir"/$(printf %s "${_url#*//}" | tr '/%&+?=' '.')
+        _cachefile_type=$(file -bi "$_cachefile")
+        if printf %s "$_cachefile_type" | grep -Fq 'application/zip'; then
+            if [ $_unzip_available != 0 ]; then
+                if ! _unzip "$_cachefile"; then 
+                    _notify 1 "    Zip-extraction of ${_cachefile##*/} failed."
+                fi
             else
-                eval $_7zip_available e "$_cachefile"
-                _compress_exit=$?
+                _notify 1 "${_cachefile##*/} is a zip archive, but an extractor is NOT FOUND. Skipping..."
             fi
-            [ $_compress_exit -ne 0 ] && _notify 1 "FAILED to un7zip ${_cachefile##*/}."
+        elif printf %s "$_cachefile_type" | \
+          grep -Fq 'application/x-7z-compressed'; then
+            if [ $_un7zip_available != 0 ]; then
+                if ! _un7zip "$_cachefile"; then
+                    _notify 1 "    7zip-extraction of ${_cachefile##*/} failed."
+                fi
+            else
+                _notify 1 "${_cachefile##*/} is a 7z archive, but an extractor is NOT FOUND. Skipping..."
+            fi
+        else
+            if grep -qE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}[[:space:]]" "$_cachefile"; then
+                _sanitize < "$_cachefile"
+            else
+                _sanitize_raw < "$_cachefile"
+            fi
+        fi 
+    done | sort -u | grep -ve " localhost$" -ve " localhost\.localdomain$" -ve " broadcasthost$" -ve ".* .* .*" | \
+      grep -Fvf "$whitelist" >> "$hostsfile".new
+    if [ $? -ne 0 ]; then
+        _notify 0 "FAILED TO COMPILE BLOCK/REDIRECT ENTRIES FROM URLS IN $1 INTO $hostsfile. EXITING..."
+        exit 2
+    fi
+}
+
+## Identify whether a temporary hosts.block file has been created yet
+_urlcheck_get_hostsfile() {
+    #Stdout file to be edited
+    if [ -f "$tmpdir"/"${hostsfile##*/}".tmp ]; then
+        printf %s "$tmpdir"/"${hostsfile##*/}".tmp
+    else
+        printf %s "$hostsfile"
+    fi
+}
+
+## Find urls (and their complete domain names) within a given url
+_urlcheck_scrape_url() {
+    # $1 = url to be scraped, stdout = list of urls,
+    #  stripped to url domain names, contained therein
+    curl -L --location-trusted $_v_curl "$1" | tr ' "{}[]()' '\n' | \
+      tr "'" "\n" | sed "s/http/\nhttp/g" | grep "https*:\/\/" | \
+      sed -e "s/.*https*:\/\///g" -e "s/\/.*$//g" | grep "[[:alnum:]]" | \
+      sort -u
+}
+
+## Get information about a given list of complete domain names
+_urlcheck_status_lines() {
+    # $1 = line break-split list of complete domain names to inspect
+    # $2 = status to inspect, e.g. block, blacklist, whitelist, redirect
+    # Outputs "are_" variables (line break-split list of complete domain
+    #  names) for each parameter
+    case "$2" in
+        block)
+            are_not_blocked="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              sed "s/^/$redirecturl /g" | grep -Fxvf "$(_urlcheck_get_hostsfile)" |\
+              tee "$tmpdir"/are-not-blocked.grep | cut -d' ' -f2)"
+            are_blocked="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              sed "s/^/$redirecturl /g" | \
+              grep -Fxvf "$tmpdir"/are-not-blocked.grep | \
+              cut -d' ' -f2)"
+            rm -f $_v "$tmpdir"/are-not-blocked.grep
+        ;;
+        blacklist)
+            are_not_blacklisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              grep -Fxvf "$blacklist" | \
+              tee -a "$tmpdir"/are-not-blacklisted.grep)"
+            are_blacklisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              grep -Fxvf "$tmpdir"/are-not-blacklisted.grep)"
+            rm -f $_v "$tmpdir"/are-not-blacklisted.grep
+        ;;
+        whitelist)
+            are_not_whitelisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              sed "s/^/ /g" | grep -Fxvf "$whitelist" | \
+              tee -a "$tmpdir"/are-not-whitelisted.grep | cut -d' ' -f2)"
+            are_whitelisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              sed "s/^/ /g" | grep -Fxvf "$tmpdir"/are-not-whitelisted.grep |\
+              cut -d' ' -f2)"
+            rm -f $_v "$tmpdir"/are-not-whitelisted.grep
+        ;;
+        redirect)
+            # separate out just redirections from hostsfile
+            grep -v "^$redirecturl " "$(_urlcheck_get_hostsfile)" \
+              > "$tmpdir"/redirections.grep
+            # create a filter file from the list given via $1
+            printf %s "$1" | grep "[[:alnum:]]" | sed -e "s/^/ /g" \
+              -e "s|$|\$|g" > "$tmpdir"/redirect-filter.grep
+            # $are_redirected includes the ipv4 address as well
+            are_redirected="$(grep -f "$tmpdir"/redirect-filter.grep \
+              "$tmpdir"/redirections.grep)"
+            # strip the ipv4 address before reporting as not redirected
+            printf %s "$are_redirected" | cut -d' ' -f2 \
+              > "$tmpdir"/are-redirected.grep
+            are_not_redirected="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              grep -vf "$tmpdir"/are-redirected.grep)"
+            rm -f $_v "$tmpdir"/redirect-filter.grep \
+              "$tmpdir"/redirections.grep
+        ;;
+        inspect)
+            _urlcheck_status_lines "$1" block
+            _urlcheck_status_lines "$1" blacklist
+            _urlcheck_status_lines "$1" whitelist
+        ;;
+        status)
+            _urlcheck_status_lines "$1" block
+            _urlcheck_status_lines "$1" blacklist
+            _urlcheck_status_lines "$1" whitelist
+            _urlcheck_status_lines "$1" redirect
         ;;
     esac
-    if [ $_compress_exit -eq 0 ]; then
-        _target_hostsfile="$tmpdir/hostsblock/hosts.block.d/${_cachefile##*/}.hosts"
-        _cachefile_url=$(head -n1 "$cachedir"/"${_cachefile##*/}".url)
-        if grep -rah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | tr '\t' ' ' | tr -s ' ' | \
-          sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -Fvf "$whitelist" | \
-          sed "s|$| \! $_cachefile_url|g" > "$_target_hostsfile"; then
-            [ $_verbosity -ge 2 ] && _count_hosts "$_target_hostsfile"
-        else
-            _notify 1 "FAILED to extract any obvious entries from ${_cachefile##*/}."
+}
+
+_urlcheck_status_url() {
+    # $1 = single complete domain name to inspect
+    _urlcheck_is_blocked=0
+    _urlcheck_is_blacklisted=0
+    _urlcheck_is_whitelisted=0
+    _urlcheck_is_redirected=0
+    _urlcheck_status_single_line="$1:"
+    if printf %s "$are_blocked" | grep -Fqx "$1"; then
+        _urlcheck_status_single_line="$_urlcheck_status_single_line BLOCKED"
+        _urlcheck_is_blocked=1
+    fi
+    if printf %s "$are_blacklisted" | grep -Fqx "$1"; then
+        _urlcheck_status_single_line="$_urlcheck_status_single_line BLACKLISTED"
+        _urlcheck_is_blacklisted=1
+    fi
+    if printf %s "$are_whitelisted" | grep -Fqx "$1"; then
+        _urlcheck_status_single_line="$_urlcheck_status_single_line WHITELISTED"
+        _urlcheck_is_whitelisted=1
+    fi
+    if printf %s "$are_redirected" | grep -q "[[:alnum:]]" && \
+      printf %s "$are_not_redirected" | grep -q "[[:alnum:]]"; then
+        if printf %s "$are_redirected" | grep -Fqx "$1"; then
+            _urlcheck_status_single_line="$_urlcheck_status_single_line REDIRECTED"
+            _urlcheck_is_redirected=1
         fi
-        if grep -rahv "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | grep -v -e "^\." -e "\.$" -e "\*" -e "\"" -e "\$" |\
-          grep -P '^(?=.*[[:alpha:]])(?=.*\.)' | sed "s/^/$redirecturl /g" | tr '\t' ' ' | tr -s ' ' | \
-          sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" | sort -u | grep -Fvf "$whitelist" | sed "s|$| \! $_cachefile_url|g" \
-          >> "$_target_hostsfile"; then
-            [ $_verbosity -ge 2 ] && _count_hosts "$_target_hostsfile"
+    fi
+    [ "$_urlcheck_status_single_line" = "$1:" ] && \
+        _urlcheck_status_single_line="$_urlcheck_status_single_line not managed"
+}
+
+## _urlcheck_*_lines: do the selected action (block, blacklist,
+##  whitelist, and their opposites) to a list (in a string)
+##  provided via $1 split by newline
+
+_urlcheck_block_lines() {
+    [ ! -f "$tmpdir"/"${hostsfile##*/}".tmp ] && \
+      cp $_v -- "$hostsfile" "$tmpdir"/"${hostsfile##*/}".tmp
+    printf %s\\n "$1" | grep "[[:alnum:]]" | sed "s/^/$redirecturl /g" \
+      >> "$tmpdir"/"${hostsfile##*/}".tmp
+    _exit=$?
+    [ $_exit -ne 0 ] &&  _return=$(( $_return + 2 ))
+    return $_exit
+}
+
+_urlcheck_unblock_lines() {
+    printf %s "$1" | grep "[[:alnum:]]" | sed -e "s/^/$redirecturl /g" \
+      -e "s|$|\$|g" > "$tmpdir"/deblock-filter.grep
+    grep -vf "$tmpdir"/deblock-filter.grep "$(_urlcheck_get_hostsfile)" \
+      > "$tmpdir"/"${hostsfile##*/}".tmp.tmp && \
+      mv -f $_v -- "$tmpdir"/"${hostsfile##*/}".tmp.tmp \
+      "$tmpdir"/"${hostsfile##*/}".tmp
+    _exit=$?
+    [ $_exit -ne 0 ] && _return=$(( $_return + 2 ))
+    rm -f $_v -- "$tmpdir"/deblock-filter.grep
+    return $_exit
+}
+
+_urlcheck_blacklist_lines() {
+    printf %s\\n "$1" | grep "[[:alnum:]]" >> "$blacklist"
+    _exit=$?
+    [ $_exit -ne 0 ] && _return=$(( $_return + 8 ))
+    return $_exit
+}
+
+_urlcheck_deblacklist_lines() {
+    printf %s "$1" | grep "[[:alnum:]]" > "$tmpdir"/deblacklist-filter.grep
+    grep -Fvxf "$tmpdir"/deblacklist-filter.grep "$blacklist" \
+      > "$blacklist".new && \
+      mv -f $_v "$blacklist".new "$blacklist"
+    _exit=$?
+    [ $_exit -ne 0 ] && _return=$(( $_return + 8 ))
+    rm -f $_v -- "$tmpdir"/deblacklist-filter.grep
+    return $_exit
+}
+
+_urlcheck_whitelist_lines() {
+    printf %s\\n "$1" | grep "[[:alnum:]]" | sed "s/^/ /g" >> "$whitelist"
+    _exit=$?
+    [ $_exit -ne 0 ] && _return=$(( $_return + 32 ))
+    return $_exit
+}
+
+_urlcheck_dewhitelist_lines() {
+    printf %s "$1" | grep "[[:alnum:]]" | sed "s/^/ /g" \
+      > "$tmpdir"/dewhitelist-filter.grep
+    grep -Fvxf "$tmpdir"/dewhitelist-filter.grep "$whitelist" \
+      > "$whitelist".new && \
+      mv -f $_v "$whitelist".new "$whitelist"
+    _exit=$?
+    [ $_exit -ne 0 ] && _return=$(( $_return + 32 ))
+    rm -f $_v -- "$tmpdir"/dewhitelist-filter.grep
+    return $_exit
+}
+
+## _urlcheck_*_dialog: Provides feedback and exit code info
+##  for select actions (block, blacklist, whitelist, and their
+##  opposites). Input is string list, separated by newlines, via $1
+
+_urlcheck_block_dialog() {
+    _urlcheck_status_lines "$1" block
+    if printf %s "$are_not_blocked" | grep -q "[[:alnum:]]"; then
+        _urlcheck_block_lines "$are_not_blocked"
+        if [ $? -eq 0 ]; then
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_not_blocked" | \
+              sed "s|$| blocked|g" 1>&2
         else
-            _notify 1 "FAILED to extract any less-obvious entries from ${_cachefile##*/}."
+            _notify 0 "Blocking failed."
         fi
-        cd "$tmpdir"/hostsblock && rm $_v -r -- "$_cachefile_dir" || _notify 1 "FAILED to delete $_cachefile_dir."
+    fi
+    if [ $_verbosity -ge 1 ] && \
+      printf %s "$are_blocked" | grep -q "[[:alnum:]]"; then
+        printf %s\\n "$are_blocked" | sed  "s|$| already blocked|g" 1>&2
+        _return=$(( $_return + 4 ))
     fi
 }
 
-_check_url() {
-    if which pigz &>/dev/null; then
-        _matches=$(pigz -dc "$annotate" | grep -F " $@ ")
-    else
-        _matches=$(gzip -dc "$annotate" | grep -F " $@ ")
+_urlcheck_unblock_dialog() {
+    _urlcheck_status_lines "$1" block
+    if printf %s "$are_blocked" | grep -q "[[:alnum:]]"; then
+        _urlcheck_unblock_lines "$are_blocked"
+        if [ $? -eq 0 ]; then
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_blocked" | \
+              sed "s|$| unblocked|g" 1>&2
+        else
+            _notify 0 "Unblocking failed."
+        fi
     fi
-    _block_matches=$(echo "$_matches" | grep -- "^$redirecturl" | sed "s/.* \!\(.*\)$/\1/g" | tr '\n' ',' | sed "s/,$//g")
-    _redirect_matches=$(echo "$_matches" | grep -v "^$redirecturl" | \
-      sed "s/^\([0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\) .* \! \(.*\)$/to \1 by blocklist \2/g" | \
-      tr '\n' ',' | sed "s/,$//g")
-    _block_matches_count=$(echo "$_block_matches" | wc -w)
-    _redirect_matches_count=$(echo "$_redirect_matches" | wc -w)
-    if [ $_block_matches_count -gt 0 ] || [ $_redirect_matches_count -gt 0 ]; then
-        [ $_block_matches_count -gt 0 ] && echo -e "\n'$@' \e[1;31mBLOCKED \e[0mby blocklist(s)${_block_matches}"
-        [ $_redirect_matches_count -gt 0 ] && echo -e "\n'$@' \e[1;33mREDIRECTED \e[0m$_redirect_matches"
-        echo -e "\t1) Unblock/unredirect just $@\n\t2) Unblock/unredirect all sites containing url $@\n\t3) Keep blocked/redirected"
-        read -p "1-3 (default: 3): " b
-        if [[ $b == 1 || "$b" == "1" ]]; then
-            echo "Unblocking just $@"
-            echo " $@" >> "$whitelist"
-            _strip_entries " $@ \!" "$annotate"
-            sed -i "/ $@$/d" "$blacklist"
-            sed -i "/ $@$/d" "$hostsfile"
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
-            touch "$tmpdir"/hostsblock/changed
-        elif [[ $b == 2 || "$b" == "2" ]]; then
-            echo "Unblocking all sites containing url $@"
-            echo "$@" >> "$whitelist"
-            _strip_entries "$@" "$annotate"
-            sed -i "/$@/d" "$blacklist"
-            sed -i "/$@/d" "$hostsfile"
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
-            touch "$tmpdir"/hostsblock/changed
-        fi
-    else
-        echo -e "\n'$@' \e[0;32mNOT BLOCKED/REDIRECTED\e[0m\n\t1) Block $@\n\t2) Block $@ and delete all whitelist url entries containing $@\n\t3) Keep unblocked (default)"
-        read -p "1-3 (default: 3): " c
-        if [[ $c == 1 || "$c" == "1" ]]; then
-            echo "Blocking $@"
-            echo "$@" >> "$blacklist"
-            (
-              if which pigz &>/dev/null; then
-                  pigz -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $pigz_opt -c - > "$annotate"
-              else
-                  gzip -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $gzip_opt -c - > "$annotate"
-              fi
-              rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-            ) &
-            sed -i "/^$@$/d" "$whitelist" &
-            echo "$redirecturl $@" >> "$hostsfile" &
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
-            touch "$tmpdir"/hostsblock/changed
-            wait
-        elif [[ $c == 2 || "$c" == "2" ]]; then
-            echo "Blocking $@ and deleting all whitelist url entries containing $@"
-            echo "$@" >> "$blacklist" &
-            (
-              if which pigz &>/dev/null; then
-                  pigz -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $pigz_opt -c - > "$annotate"
-              else
-                  gzip -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $gzip_opt -c - > "$annotate"
-              fi
-              rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-            ) &
-            sed -i "/$@/d" "$whitelist" &
-            echo "$redirecturl $@" >> "$hostsfile" &
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
-            touch "$tmpdir"/hostsblock/changed
-        fi
+    if [ $_verbosity -ge 1 ] && \
+      printf %s "$are_not_blocked" | grep -q "[[:alnum:]]"; then
+        printf %s\\n "$are_not_blocked" | sed "s|$| already unblocked|g" 1>&2
+        _return=$(( $_return + 4 ))
     fi
 }
+
+_urlcheck_blacklist_dialog() {
+    _urlcheck_status_lines "$1" blacklist
+    if printf %s "$are_not_blacklisted" | grep -q "[[:alnum:]]"; then
+        _urlcheck_blacklist_lines "$are_not_blacklisted"
+        if [ $? -eq 0 ]; then
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_not_blacklisted" | \
+              sed "s|$| added to blacklist|g" 1>&2
+        else
+            _notify 0 "Blacklisting failed."
+        fi
+    fi
+    if [ $_verbosity -ge 1 ] && \
+      printf %s "$are_blacklisted" | grep -q "[[:alnum:]]"; then
+        printf %s\\n "$are_blacklisted" | sed "s|$| already in blacklist|g" 1>&2
+        _return=$(( $_return + 16 ))
+    fi
+}
+
+_urlcheck_deblacklist_dialog() {
+    _urlcheck_status_lines "$1" blacklist
+    if printf %s "$are_blacklisted" | grep -q "[[:alnum:]]"; then
+        _urlcheck_deblacklist_lines "$are_blacklisted"
+        if [ $? -eq 0 ]; then
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_blacklisted" | \
+              sed "s|$| removed from blacklist|g" 1>&2
+        else
+            _notify 0 "Deblacklisting failed."
+        fi
+    fi
+    if [ $_verbosity -ge 1 ] && \
+      printf %s "$are_not_blacklisted" | grep -q "[[:alnum:]]"; then
+        printf %s\\n "$are_not_blacklisted" | \
+          sed "s|$| already removed from blacklist|g" 1>&2
+        _return=$(( $_return + 4 ))
+    fi
+}
+
+_urlcheck_whitelist_dialog() {
+    _urlcheck_status_lines "$1" whitelist
+    if printf %s "$are_not_whitelisted" | grep -q "[[:alnum:]]"; then
+        _urlcheck_whitelist_lines "$are_not_whitelisted"
+        if [ $? -eq 0 ]; then
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_not_whitelisted" | \
+              sed "s|$| added to whitelist|g" 1>&2
+        else
+            _notify 0 "Whitelisting failed."
+        fi
+    fi
+    if [ $_verbosity -ge 1 ] && printf %s "$are_whitelisted" | \
+      grep -q "[[:alnum:]]"; then
+        printf %s\\n "$are_whitelisted" | sed "s|$| already in whitelist|g" 1>&2
+        _return=$(( $_return + 16 ))
+    fi
+}
+
+_urlcheck_dewhitelist_dialog() {
+    _urlcheck_status_lines "$1" whitelist
+    if printf %s "$are_whitelisted" | grep -q "[[:alnum:]]"; then
+        _urlcheck_dewhitelist_lines "$are_whitelisted"
+        if [ $? -eq 0 ]; then
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_whitelisted" | \
+              sed "s|$| removed from whitelist|g" 1>&2
+        else
+            _notify 0 "Dewhitelisting failed."
+        fi
+    fi
+    if [ $_verbosity -ge 1 ] && printf %s "$are_not_whitelisted" | \
+      grep -q "[[:alnum:]]"; then
+        printf %s\\n "$are_not_whitelisted" | \
+          sed "s|$| already removed from whitelist|g" 1>&2
+        _return=$(( $_return + 4 ))
+    fi
+}
+
+
+_urlcheck_inspect() {
+    # $1 = list of complete domain names to check
+    # the $are_* variables are available
+    _urlcheck_to_be_blocked=""
+    _urlcheck_to_be_unblocked=""
+    _urlcheck_to_be_blacklisted=""
+    _urlcheck_to_be_deblacklisted=""
+    _urlcheck_to_be_whitelisted=""
+    _urlcheck_to_be_dewhitelisted=""
+    for _urlcheck_inspect_domain in $(printf %s\\n "$1" | tr '\n' ' '); do
+        _urlcheck_status_url "$_urlcheck_inspect_domain"
+        _notify 0 ""
+        _notify 0 "$_urlcheck_status_single_line"
+        _block_yn="n"
+        if [ $_urlcheck_is_blocked -eq 0 ]; then
+            printf %s "    Block until next update? [y/N]: " 1>&2
+            read _block_yn
+            if [ "$_block_yn" = "Y" ] || [ "$_block_yn" = "y" ]; then
+                _urlcheck_to_be_blocked="$_urlcheck_to_be_blocked
+$_urlcheck_inspect_domain"
+            fi
+        else
+            printf %s "    Unblock until next update? [y/N]: " 1>&2
+            read _block_yn
+            if [ "$_block_yn" = "Y" ] || [ "$_block_yn" = "y" ]; then
+                _urlcheck_to_be_unblocked="$_urlcheck_to_be_unblocked
+$_urlcheck_inspect_domain"
+            fi
+        fi
+        _blacklist_yn="n"
+        if [ $_urlcheck_is_blacklisted -eq 0 ]; then
+            printf %s "    Blacklist (Block permanently after next update)? [y/N]: " 1>&2
+            read _blacklist_yn
+            if [ "$_blacklist_yn" = "Y" ] || [ "$_blacklist_yn" = "y" ]; then
+                _urlcheck_to_be_blacklisted="$_urlcheck_to_be_blacklisted
+$_urlcheck_inspect_domain"
+            fi
+        else
+            printf %s "    Remove from blacklist? [y/N]: " 1>&2
+            read _blacklist_yn
+            if [ "$_blacklist_yn" = "Y" ] || [ "$_blacklist_yn" = "y" ]; then
+                _urlcheck_to_be_deblacklisted="$_urlcheck_to_be_deblacklisted
+$_urlcheck_inspect_domain"
+            fi
+        fi
+        _whitelist_yn="n"
+        if [ $_urlcheck_is_whitelisted -eq 0 ]; then
+            printf %s "    Whitelist (Unblock permanently after next update)? [y/N]: " 1>&2
+            read _whitelist_yn
+            if [ "$_whitelist_yn" = "Y" ] || [ "$_whitelist_yn" = "y" ]; then
+                _urlcheck_to_be_whitelisted="$_urlcheck_to_be_whitelisted
+$_urlcheck_inspect_domain"
+            fi
+        else
+            printf %s "    Remove from whitelist? [y/N]: " 1>&2
+            read _whitelist_yn
+            if [ "$_whitelist_yn" = "Y" ] || [ "$_whitelist_yn" = "y" ]; then
+                _urlcheck_to_be_dewhitelisted="$_urlcheck_to_be_dewhitelisted
+$_urlcheck_inspect_domain" 
+            fi
+        fi
+    done
+    printf %s "$_urlcheck_to_be_blocked" | grep -q "[[:alnum:]]" && _urlcheck_block_lines "$_urlcheck_to_be_blocked"
+    printf %s "$_urlcheck_to_be_unblocked" | grep -q "[[:alnum:]]" && _urlcheck_unblock_lines "$_urlcheck_to_be_unblocked"
+    printf %s "$_urlcheck_to_be_blacklisted" | grep -q "[[:alnum:]]" && _urlcheck_blacklist_lines "$_urlcheck_to_be_blacklisted"
+    printf %s "$_urlcheck_to_be_deblacklisted" | grep -q "[[:alnum:]]" && _urlcheck_deblacklist_lines "$_urlcheck_to_be_deblacklisted"
+    printf %s "$_urlcheck_to_be_whitelisted" | grep -q "[[:alnum:]]" && _urlcheck_whitelist_lines "$_urlcheck_to_be_whitelisted"
+    printf %s "$_urlcheck_to_be_dewhitelisted" | grep -q "[[:alnum:]]" && _urlcheck_dewhitelist_lines "$_urlcheck_to_be_dewhitelisted"
+}
+
+_urlcheck() {
+    #$1=command $2=full domain name $3=raw URL
+    case "$1" in
+        status)
+            if [ $_urlcheck_recursive -eq 0 ]; then
+                _urlcheck_status_list="$2"
+                _urlcheck_status_lines "$_urlcheck_status_list" status
+            elif [ $_urlcheck_recursive -eq 1 ]; then
+                _urlcheck_status_list="$2
+$(_urlcheck_scrape_url "$3")"
+                _urlcheck_status_lines "$_urlcheck_status_list" status
+            else
+                _urlcheck_status_lines "$2
+$(_urlcheck_scrape_url "$3")" status
+                _urlcheck_status_list="$are_blocked"
+            fi
+            _urlcheck_status_display=$(printf %s "$_urlcheck_status_list" | \
+              grep "[[:alnum:]]" | \
+              while read _urlcheck_status_check_domain; do
+                _urlcheck_status_url "$_urlcheck_status_check_domain"
+                printf %s\\n "$_urlcheck_status_single_line"
+            done)
+            printf %s\\n "$_urlcheck_status_display"
+        ;;
+        blacklist)
+            if [ $_urlcheck_opposite -eq 0 ]; then
+                if [ $_urlcheck_recursive -eq 0 ]; then
+                    _urlcheck_blacklist_dialog "$2"
+                    [ $_urlcheck_block_01 -eq 1 ] && \
+                      _urlcheck_block_dialog "$2"
+                else
+                    _urlcheck_blacklist_scraped="$2
+$(_urlcheck_scrape_url "$3")"
+                    _urlcheck_blacklist_dialog "$_urlcheck_blacklist_scraped"
+                    [ $_urlcheck_block_01 -eq 1 ] && \
+                      _urlcheck_block_dialog "$_urlcheck_blacklist_scraped"
+                fi
+            else
+                if [ $_urlcheck_recursive -eq 0 ]; then
+                    _urlcheck_deblacklist_dialog "$2"
+                else
+                    _urlcheck_deblacklist_dialog "$2
+$(_urlcheck_scrape_url "$3")"
+                fi
+            fi
+        ;;
+        whitelist)
+            if [ $_urlcheck_opposite -eq 0 ]; then
+                if [ $_urlcheck_recursive -eq 0 ]; then
+                    _urlcheck_whitelist_dialog "$2"
+                    [ $_urlcheck_block_01 -eq 1 ] && \
+                      _urlcheck_unblock_dialog "$2"
+                else
+                    _urlcheck_whitelist_scraped="$2
+$(_urlcheck_scrape_url "$3")"
+                    _urlcheck_whitelist_dialog "$_urlcheck_whitelist_scraped"
+                    [ $_urlcheck_block_01 -eq 1 ] && \
+                      _urlcheck_unblock_dialog "$_urlcheck_whitelist_scraped"
+                fi
+            else
+                if [ $_urlcheck_recursive -eq 0 ]; then
+                    _urlcheck_dewhitelist_dialog "$2"
+                else
+                    _urlcheck_dewhitelist_dialog "$2
+$(_urlcheck_scrape_url "$3")"
+                fi
+            fi
+        ;;
+        inspect)
+            if [ $_urlcheck_recursive -eq 0 ]; then
+                _urlcheck_status_lines "$2" "inspect"
+                _urlcheck_inspect "$2"
+            elif [ $_urlcheck_recursive -eq 1 ]; then
+                _urlcheck_status_scrape="$2
+$(_urlcheck_scrape_url "$3")"
+                _urlcheck_status_lines "$_urlcheck_status_scrape" "inspect"
+                _urlcheck_inspect "$_urlcheck_status_scrape"
+            else
+                _urlcheck_status_lines "$2
+$(_urlcheck_scrape_url "$3")" "inspect"
+                _urlcheck_inspect "$are_blocked"
+            fi
+        ;;
+        *)
+            if [ $_urlcheck_block_01 -eq 1 ] || [ "$1" = "block" ]; then
+                if [ $_urlcheck_opposite -eq 0 ]; then
+                    if [ $_urlcheck_recursive -eq 0 ]; then
+                        _urlcheck_block_dialog "$2"
+                    else
+                        _urlcheck_block_dialog "$2
+$(_urlcheck_scrape_url "$3")"
+                    fi
+                else
+                    if [ $_urlcheck_recursive -eq 0 ]; then
+                        _urlcheck_unblock_dialog "$2"
+                    else
+                        _urlcheck_unblock_dialog "$2
+$(_urlcheck_scrape_url "$3")"
+                    fi
+                fi
+            fi
+        ;;
+    esac
+    if [ -f "$tmpdir"/"${hostsfile##*/}".tmp ]; then
+        mv $_v -- "$tmpdir"/"${hostsfile##*/}".tmp "$hostsfile"
+        chmod 644 "$hostsfile"
+    elif [ -f "$tmpdir"/changed ]; then
+        touch "$hostsfile"
+    fi
+}
+
+_job() {
+    # CHECK FOR OPTIONAL DECOMPRESSION DEPENDENCIES, SET UP FUNCTIONS THEREOF
+    # THAT DUMP TO STDOUT
+    if command -v unzip >/dev/null 2>&1; then
+        _unzip_available=1
+        _unzip() {
+            if unzip -l "$1" | tail -n1 | grep -q "\b1 file\b"; then
+                unzip -c -a $_v_unzip -- "$1" | _sanitize
+            else
+                mkdir -p $_v -- "$tmpdir"/"${1##*/}".d
+                unzip -B -o -j -a -d "$tmpdir"/"${1##*/}".d $_v_unzip -- "$1" && \
+                { find "$tmpdir"/"${1##*/}".d -type f -print0 | \
+                  xargs -0 cat ; } | _sanitize
+                _exit=$?
+                rm -rf $_v -- "$tmpdir"/"${1##*/}".d
+                return $_exit
+            fi
+        }
+    else
+        _notify 1 "Dearchiver for zip NOT FOUND. Optional functions which use this format will be skipped."
+        _unzip_available=0
+    fi
+    if command -v 7zr >/dev/null 2>&1; then
+        _un7zip_available=1
+        _7zip_bin() {
+            7zr "$@"
+        }
+    elif command -v 7za >/dev/null 2>&1; then
+        _un7zip_available=1
+        _7zip_bin() {
+            7za "$@"
+        }
+    elif command -v 7z >/dev/null 2>&1; then
+        _un7zip_available=1
+        _7zip_bin() {
+            7z "$@"
+        }
+    else
+        _notify 1 "Dearchiver for 7z NOT FOUND. Optional functions which use this format will be skipped."
+        _un7zip_available=0
+    fi
+    if [ $_un7zip_available -eq 1 ]; then
+        _un7zip() {
+            if _7zip_bin l "$1" | \
+              grep -A1 "^Scanning the drive for archives:" | \
+              grep -q "^1 file\b"; then
+                _7zip_bin e -so -- "$1" | _sanitize
+            else
+                mkdir -p $_v -- "$tmpdir"/"${1##*/}".d
+                _7zip_bin e -so -o "$tmpdir"/"${1##*/}".d -- "$1" && \
+                { find "$tmpdir"/"${1##*/}".d -type f -print0 | \
+                  xargs -0 cat ; } | _sanitize
+                _exit=$?
+                rm -rf $_v -- "$tmpdir"/"${1##*/}".d
+                return $_exit
+            fi
+        }
+    fi
+
+    # DOWNLOAD BLOCKLISTS AND/OR REDIRECT LISTS
+    _notify 1 "Checking blocklists and/or redirectlists for updates..."
+
+    [ -d "$tmpdir"/downloads/ ] && rm -rf $_v -- "$tmpdir"/downloads/
+    mkdir -p $_v -- "$tmpdir"/downloads/
+    sed "s/#.*//g" $blocklists $redirectlists | grep "[[:alnum:]]" | \
+      while read _url; do
+        if [ $max_simultaneous_downloads -gt 0 ]; then
+            while [ $(find "$tmpdir"/downloads -type f | wc -l) -ge $max_simultaneous_downloads ]; do
+                sleep 0.1
+            done
+        fi
+        _job_download_list "$_url" & 
+    done
+    wait
+    while [ $(find "$tmpdir"/downloads -type f | wc -l) -gt 0 ]; do
+        sleep 0.1
+    done
+    rm -rf $_v -- "$tmpdir"/downloads
+
+    # IF THERE ARE CHANGES...
+    if [ -f "$tmpdir"/changed ]; then
+        _notify 1 "Changes found among blocklists and/or redirectlists. Extracting to $hostsfile.new..."
+
+    # INCLUDE HOSTS.HEAD FILE AS THE BEGINNING OF THE NEW TARGET HOSTS FILE
+        if [ "$hostshead" != "0" ]; then
+            _notify 1 "  Appending $hostshead to $hostsfile.new..."
+            cp $_v -f -- "$hostshead" "$hostsfile".new
+        fi
+
+        # EXTRACT BLOCK ENTRIES DIRECTLY FROM CACHED FILES
+        if [ "$blocklists" ]; then
+            _notify 1 "  Extracting blocklists..."
+            _sanitize() {
+                tr -s '\t\r ' ' ' | sed -e "s/[#;<].*//g" -e "s/^ //g" \
+                  -e "s/ $//g" | grep -hIe "^0\.0\.0\.0 " -e "^127\.0\.0\.1 " \
+                  -e "^0 " -e "^:: " | cut -d' ' -f2 | \
+                  grep -I "^[[:alnum:]]*\.[[:alnum:]]*" | sed "s/^/$redirecturl /g"
+            }
+            _sanitize_raw() {
+                grep -Ih "^[[:alnum:]]*\.[[:alnum:]]*" | tr -s '\t\r ' ' ' | \
+                  sed -e "s/[#;<].*//g" -e "s/^ //g" -e "s/ $//g" | grep -Ihv " " | \
+                  grep -I "^[[:alnum:]]*\.[[:alnum:]]*" | sed "s/^/$redirecturl /g"
+            }
+            _job_extract_from_cachefiles "$blocklists"
+        fi
+    
+        # EXTRACT REDIRECT ENTRIES DIRECTLY FROM CACHED FILES
+        if [ "$redirectlists" ]; then
+            _notify 1 "  Extracting redirectlists..."
+            _sanitize() {
+                grep -IE "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}" | \
+                  tr -s '\t\r ' ' ' | sed -e "s/[#;<].*//g" -e "s/^ //g" -e "s/ $//g" | \
+                  grep -IE "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3} "
+            }
+            _sanitize_raw() {
+                _sanitize
+            }
+            _job_extract_from_cachefiles "$redirectlists"
+        fi
+
+        # APPEND BLACKLIST ENTRIES
+        _notify 1 "  Appending blacklist entries..."
+
+        while read _blacklistline; do
+            grep -Fqx "$redirecturl $_blacklistline" "$hostsfile" || \
+              printf %s\\n "$redirecturl $_blacklistline" >> "$hostsfile".new
+        done < "$blacklist" && \
+        mv $_v -- "$hostsfile".new "$hostsfile" && \
+        chmod 644 "$hostsfile"
+        _notify 1 "$hostsfile successfully compiled. DONE."
+    else
+        _notify 1 "No new changes. DONE."
+    fi
+
+}
+
+################### MAIN PROCESS COMMON TO URLCHECK AND JOB ###################
 
 # VARIABLE DEFAULTS
-HOME="$(getent passwd hostsblock | cut -d':' -f 6)"
-tmpdir="/tmp/hostsblock"
+HOME="${HOME:-/var/lib/hostsblock}"
 hostsfile="$HOME/hosts.block"
-redirecturl="127.0.0.1"
-postprocess() {
-     /bin/true
-}
-blocklists=("http://support.it-mate.co.uk/downloads/HOSTS.txt")
+redirecturl='0.0.0.0'
+blocklists="$HOME/block.urls"
+redirectlists="" # Otherwise "$HOME/redirect.urls"
 blacklist="$HOME/black.list"
 whitelist="$HOME/white.list"
 hostshead="0"
 cachedir="$HOME/cache"
-pigz_opt="-9"
-gzip_opt="-11"
-redirects="0"
 connect_timeout=60
 retry=0
-backup_old=0
-recycle_old=0
-annotate="$HOME/hostsblock.db.gz"
 _verbosity=1
-[ -f "$tmpdir"/hostsblock/changed ] && rm -f "$tmpdir"/hostsblock/changed
 _check=0
-max_simultaneous_downloads=4
+max_simultaneous_downloads=8
+tmpdir="/tmp/hostsblock"
+_changed=0
+_URL=""
+_urlcheck_recursive=0
+_urlcheck_opposite=0
+_urlcheck_block_01=0
+_urlcheck_command="status"
 
 # GET OPTIONS
-while getopts "qvf:huc:" _option; do
+while getopts "f:qvduc:sblwirko" _option; do
     case "$_option" in
         f)  [ "$OPTARG" != "" ] && _configfile="$OPTARG";;
-        v)  _verbosity=2;;
         q)  _verbosity=0;;
-        u)
-            [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
-            touch "$tmpdir"/hostsblock/changed
-        ;;
-        c)
-            _check=1
-            [ "$OPTARG" != "" ] && _URL="$OPTARG"
-        ;;
+        v)  _verbosity=2;;
+        d)  _verbosity=3;;
+        u)  _changed=1;;
+        c)  [ "$OPTARG" != "" ] && _URL="$OPTARG";;
+        s)  _urlcheck_command="status";;
+        b)  _urlcheck_block_01=1;;
+        l)  _urlcheck_command="blacklist";;
+        w)  _urlcheck_command="whitelist";;
+        i)  _urlcheck_command="inspect";;
+        r)  _urlcheck_recursive=1;;
+        k)  _urlcheck_recursive=2;;
+        o)  _urlcheck_opposite=1;;
         *)
-            cat << EOF
+            cat << EOF 1>&2
 Usage:
-  $0 [ OPTIONS ] - generate a HOSTS file with block and redirection lists
-  
-  $0 [ OPTIONS ] -c URL - Check if URL and other urls contained therein are blocked
+  $0 [OPTION...] - download and combine HOSTS files
+
+  $0 [OPTION...] -c URL [COMMANDS...] - Manage how URL is handled
 
 Help Options:
-  -h                            Show help options
+  -h                    Show help options
 
-Application Options:
-  -f CONFIGFILE                 Specify an alternative configuration file (instead of /var/lib/hostsblock/hostsblock.conf)
-  -q                            Only show fatal errors
-  -v                            Be verbose.
-  -u                            Force hostsblock to update its target file, even if no changes to source files are found
-                                (Ignored with '-c' option)
+Options:
+  -f CONFIGFILE         Specify an alternative configuration file
+  -q                    Show only fatal errors
+  -v                    Be verbose
+  -d                    Be very verbose/debug
+  -u                    Force hostsblock to update its target file
+  -c URL COMMAND        urlCheck Mode (see below)
+
+$0 -c URL (urlCheck) Commands:
+  -s [-r -k]            State how hostblock modifies URL
+  -b [-o -r]            Temporarily (un)block URL
+  -l [-o -r -b]         Add/remove URL to/from blacklist
+  -w [-o -r -b]         Add/remove URL to/from whitelist
+  -i [-o -r -k]         Interactively inspect URL
+
+$0 -c URL Command Subcommands:
+  -r                    COMMAND recurses to all domains on URL's page
+  -k                    COMMAND recurses for all BLOCKED domains on page
+  -o                    Perform opposite of COMMAND (e.g UNblock)
+  -b                    With "-l", immediately block URL
+                        With "-w", immediately unblock URL
 EOF
             exit 1
         ;;
     esac
-done
-
-# SOURCE CONFIG FILE
-if [ $_configfile ]; then
-    if [ -f "$_configfile" ]; then
-    . "$_configfile"
-    elif [ $(whoami) != "root" ] && [ -f ${HOME}/.config/hostsblock/hostsblock.conf ]; then
-        _notify 1 "Config file $_configfile missing. Using ${HOME}/.config/hostsblock/hostsblock.conf"
-        . ${HOME}/.config/hostsblock/hostsblock.conf
-    elif [ $(whoami) != "root" ] && [ -f ${HOME}/hostsblock.conf ]; then
-        _notify 1 "Config file $_configfile missing. Using ${HOME}/hostsblock.conf"
-        . ${HOME}/hostsblock.conf
-    elif [ -f /etc/hostsblock/hostsblock.conf ]; then
-        _notify 1 "Config file $_configfile missing. Using /etc/hostsblock/hostsblock.conf"
-        . /etc/hostsblock/hostsblock.conf
-    else
-        _notify 1 "No config files found. Using defaults."
-    fi
-elif [ $(whoami) != "root" ] && [ -f ${HOME}/.config/hostsblock/hostsblock.conf ]; then
-    . ${HOME}/.config/hostsblock/hostsblock.conf
-elif [ $(whoami) != "root" ] && [ -f ${HOME}/hostsblock.conf ]; then
-    . ${HOME}/hostsblock.conf
-elif [ -f /etc/hostsblock/hostsblock.conf ]; then
-    . /etc/hostsblock/hostsblock.conf
-fi
+done 
 
 # SET VERBOSITY FOR SCRIPT AND ITS SUBPROCESSES
 if [ $_verbosity -eq 0 ]; then
@@ -251,263 +770,71 @@ elif [ $_verbosity -eq 1 ]; then
     _v_curl="-s"
     _v_unzip="-qq"
     set +x
+elif [ $_verbosity -eq 2 ]; then
+    _v="-v"
+    _v_curl="-v"
+    _v_unzip="-v"
+    set +x
 else
-   _v="-v"
-   _v_curl="-v"
-   _v_unzip="-v"
-   set -x
+    _v="-v"
+    _v_curl="-v"
+    _v_unzip="-v"
+    set -x
 fi
 
 # CHECK FOR CORRECT PRIVILEDGES AND DEPENDENCIES
-if [ $(whoami) != "hostsblock" ]; then
-    echo -e "WRONG PERMISSIONS. RUN AS USER hostsblock, EITHER DIRECTLY OR VIA SUDO, E.G. sudo -u hostsblock $0 $@\n\nYou may have to add the following line to the end of sudoers after typing 'sudo visudo':\n $(whoami)	ALL	=	(hostblock)	NOPASSWD:	$0\n\nExiting..."
+if [ "$(id -un)" != "hostsblock" ]; then
+    _notify 0 "WRONG PERMISSIONS. RUN AS USER hostsblock, EITHER DIRECTLY OR VIA SUDO, E.G. sudo -u hostsblock $0 $@\n\nYou may have to add the following line to the end of sudoers after typing 'sudo visudo':\n %hostsblock  ALL  =  (hostblock)  NOPASSWD:  $0\nAnd then add your current user to the hostsblock group:\nsudo gpasswd -a $(id -un) hostsblock\n\nExiting..."
     exit 3
 fi
 
+# SOURCE CONFIG FILE
+if [ $_configfile ] && [ -f "$_configfile" ]; then
+    . "$_configfile"
+elif [ "$(id -un)" = "hostsblock" ] && [ -f ${HOME}/hostsblock.conf ]; then
+    . ${HOME}/hostsblock.conf
+elif [ -f /var/lib/hostsblock/hostsblock.conf ]; then
+    . /var/lib/hostsblock/hostsblock.conf
+    _notify 1 "Configuration file not found. Using defaults."
+fi
+TMPDIR="$tmpdir"
+
+mkdir -p $_v -- "$tmpdir"
+[ $_changed -eq 1 ] && touch "$tmpdir"/changed
+
 # MAKE SURE NECESSARY DEPENDENCIES ARE PRESENT
-for _depends in mv cp rm sha1sum curl grep sed tr cut mkdir file; do
-    if which "$_depends" &>/dev/null; then
-        true
-    else
+for _depends in chmod cksum cp curl cut file find grep id mkdir \
+    mv rm sed sort tee touch tr wc xargs; do
+    if ! command -v "$_depends" >/dev/null 2>&1; then
         _notify 0 "MISSING REQUIRED DEPENDENCY $_depends. PLEASE INSTALL. EXITING..."
         exit 5
     fi
 done
 
-# RUN AS URLCHECK IF $_check = 1 or if run from a symlink named "hostsblock-urlcheck"
-if [ $_check -eq 1 ] || [ "${0##*/}" == "hostsblock-urlcheck" ]; then
-    # URLCHECK
-    [ -f "$tmpdir"/hostsblock/changed ] && rm -f "$tmpdir"/hostsblock/changed
-    echo "Checking to see if url is blocked or not..."
-    # If run from symlink "hostsblock-urlcheck" _URL will not be set by getopts
-    [ "$_URL" == "" ] && _URL="$1"
-    _check_url $(echo "$_URL" | sed -e "s/.*https*:\/\///g" -e "s/[\/?'\" :<>\(\)].*//g")
-    if [ -f "$tmpdir"/hostsblock/changed ]; then
-        if [ $_verbosity -ge 1 ]; then
-            postprocess
-        else
-            postprocess &>/dev/null
-        fi
-    fi
-    read -p "Page domain verified. Scan the whole page for other domains for (un)blocking? [y/N] " a
-    if [[ $a == "y" || $a == "Y" ]]; then
-        for LINE in $(curl -L --location-trusted -s "$_URL" | tr ' ' '\n' | grep "https*:\/\/" | sed -e "s/.*https*:\/\/\(.*\)$/\1/g" \
-          -e "s/\//\n/g" | grep "\." | grep -vFe '"' -e ")" -e "(" -e "&" -e "?" -e "<" -e ">" -e "'" -e "_" | \
-          grep -Fv -e "\.php$" -e "\.html*$" | grep "[a-z]$" | sort -u | tr "\n" " "); do
-            _check_url "$LINE"
-        done
-        _notify 1 "Whole-page scan completed."
-    fi
+_return=0
 
-    if [ -f "$tmpdir"/hostsblock/changed ]; then
-        if [ $_verbosity -ge 1 ]; then
-            postprocess
-        else
-            postprocess &>/dev/null
-        fi
+# DECIDE IF RUNNING AS JOB OR AS URLCHECK
+if [ "$_URL" ]; then
+    if [ $_urlcheck_command = "status" ] && [ $_urlcheck_block_01 -eq 1 ]; then
+        _urlcheck_command="block"
     fi
+    _complete_domain_name=$(printf %s "${_URL#*//}" | sed "s/\/.*//g")
+    _urlcheck "$_urlcheck_command" "$_complete_domain_name" "$_URL"
 else
-    # NORMAL PROCESS
-    # CHECK FOR OPTIONAL DECOMPRESSION DEPENDENCIES
-    if which unzip &>/dev/null; then
-        _unzip_available=1
-    else
-        _notify 1 "Dearchiver for zip NOT FOUND. Optional functions which use this format will be skipped."
-        _unzip_available=0
-    fi
-
-    if which 7za &>/dev/null; then
-        _7zip_available="7za"
-    elif which 7z &>/dev/null; then
-        _7zip_available="7z"
-    else
-        _notify 1 "Dearchiver for 7za NOT FOUND. Optional functions which use this format will be skipped."
-        _7zip_available=0
-    fi
-
-    # IDENTIFY WHAT WILL not BE OUR REDIRECTION URL
-    if [ "$redirecturl" == "127.0.0.1" ]; then
-        _notredirect="0.0.0.0"
-    else
-        _notredirect="127.0.0.1"
-    fi
-
-    # CREATE CACHE DIRECTORY IF NOT ALREADY EXISTENT
-    if [ ! -d "$cachedir" ]; then
-        if mkdir $_v -p -- "$cachedir"; then
-            _notify 0 "CACHE DIRECTORY $cachedir COULD NOT BE CREATED. EXITING..."
-            exit 6
-        fi
-    fi
-
-    # DOWNLOAD BLOCKLISTS
-    _notify 1 "Checking blocklists for updates..."
-    for _url in ${blocklists[*]}; do
-        _outfile=$(echo $_url | sed -e "s|http:\/\/||g" -e "s|https:\/\/||g" | tr '/%&+?=' '.')
-        [ -f "$cachedir"/"$_outfile".url ] || echo "$_url" > "$cachedir"/"$_outfile".url
-        [ -f "$cachedir"/"$_outfile" ] && _old_sha1sum=$(sha1sum < "$cachedir"/"$_outfile")
-
-        # Make process wait until the number of curl processes are less than $max_simultaneous_downloads
-        until [ $(pidof curl | wc -w) -lt $max_simultaneous_downloads ]; do
-            sleep $(pidof sleep | wc -w)
-        done
-
-        # Add a User-Agent and referer string when needed
-        if [ "$_url" == "http://adblock.mahakala.is/hosts" ]; then
-            curl -A "Mozilla/5.0 (X11; Linux x86_64; rv:30.0) Gecko/20100101 Firefox/30.0" -e "http://forum.xda-developers.com/" $_v_curl --compressed -L --connect-timeout $connect_timeout --retry $retry -z "$cachedir"/"$_outfile" "$_url" -o "$cachedir"/"$_outfile"
-            _curl_exit=$?
-        else
-            curl $_v_curl --compressed -L --connect-timeout $connect_timeout --retry $retry -z "$cachedir"/"$_outfile" "$_url" -o "$cachedir"/"$_outfile"
-            _curl_exit=$?
-        fi
-        if [ $_curl_exit -eq 0 ]; then
-            _new_sha1sum=$(sha1sum < "$cachedir"/"$_outfile")
-            if [ "$_old_sha1sum" != "$_new_sha1sum" ]; then
-                _notify 1 "Changes found to $_url"
-                [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
-                touch "$tmpdir"/hostsblock/changed
-            fi
-        else
-            _notify 1 "FAILED to refresh/download blocklist $_url"
-        fi
-    done &
-    wait
-
-    # IF THERE ARE CHANGES...
-    if [ -f "$tmpdir"/hostsblock/changed ]; then
-        _notify 1 "Changes found among blocklists. Extracting and preparing cached files to working directory..."
-
-        # CREATE TMPDIR
-        if [ ! -d "$tmpdir"/hostsblock/hosts.block.d ]; then
-            if mkdir $_v -p -- "$tmpdir"/hostsblock/hosts.block.d; then
-                true
-            else
-                _notify 0 "FAILED TO CREATED TEMPORARY DIRECTORY $tmpdir/hostsblock/hosts.block.d. EXITING..."
-                exit 7
-            fi
-        fi
-
-        # EXTRACT CACHED FILES TO HOSTS.BLOCK.D
-        for _cachefile in "$cachedir"/*; do
-            echo "$_cachefile" | grep -q "\.url$" && continue
-            _cachefile_dir="$tmpdir/hostsblock/${_cachefile##*/}.d"
-            case "${_cachefile##*/}" in
-                *.zip)
-                    if [ $_unzip_available != 0 ]; then
-                        _decompresser="unzip"
-                    else
-                        _notify 1 "${_cachefile##*/} is a ZIP archive, but an extractor is NOT FOUND. Skipping..."
-                        continue
-                    fi
-                ;;
-                *.7z)
-                    if [ $_7zip_available != 0 ]; then
-                        _decompresser="7z"
-                    else
-                        _notify 1 "${_cachefile##*/} is a 7z archive, but an extractor is NOT FOUND. Skipping..."
-                        continue
-                    fi
-                ;;
-                *)
-                    _cachefile_type=$(file -bi "$_cachefile")
-                    if [[ "$_cachefile_type" = *'application/zip'* ]]; then
-                        if [ $_unzip_available != 0 ]; then
-                            _decompresser="unzip"
-                        else
-                            _notify 1 "${_cachefile##*/} is a zip archive, but an extractor is NOT FOUND. Skipping..."
-                            continue
-                        fi
-                    elif [[ "$_cachefile_type" = *'application/x-7z-compressed'* ]]; then
-                        if [ $_7zip_available != 0 ]; then
-                            _decompresser="7z"
-                        else
-                            _notify 1 "${_cachefile##*/} is a 7z archive, but an extractor is NOT FOUND. Skipping..."
-                            continue
-                        fi
-                    else
-                        _decompresser="none"
-                    fi
-                ;;
-            esac
-            _extract_entries &
-        done
-        wait
-
-        # RECYCLE OLD HOSTS FILE INTO NEW FILE
-        if [ $recycle_old == 1 ] || [ "$recycle_old" == "1" ] || [ "$recycle_old" == "yes" ] || [ "$recycle_old" == "true" ]; then
-            sort -u "$hostsfile" | sed "s|$| ! $hostsfile.old |g" > "$tmpdir"/hostsblock/hosts.block.d/"${hostsfile##*/}".old || \
-              _notify 1 "FAILED to recycle old $hostsfile into new version."
-        fi
-
-        # BACKUP OLD HOSTS FILE
-        if [ $backup_old == 0 ] || [ "$backup_old" == "0" ] || [ "$backup_old" == "no" ] || [ "$backup_old" == "false" ]; then
-            true
-        else
-            ls "$hostsfile".old* &>/dev/null && rm $_v -- "$hostsfile".old*
-            if which pigz &>/dev/null; then
-                cat "$hostsfile" | pigz $pigz_opt -c - > "$hostsfile".old.gz
-                gzip_exit=$?
-            else
-                cat "$hostsfile" | gzip $gzip_opt -c - > "$hostsfile".old.gz
-                gzip_exit=$?
-            fi
-            cp $_v -f -- "$hostsfile" "$hostsfile".old && \
-            [ $gzip_exit -ne 0 ] && _notify 1 "FAILED to backup and compress $hostsfile."
-        fi
-
-        # INCLUDE HOSTS.HEAD FILE AS THE BEGINNING OF THE NEW TARGET HOSTS FILE
-        if [ "$hostshead" == "0" ]; then
-            rm $_v -- "$hostsfile" || _notify 1 "FAILED to delete existing $hostsfile."
-        else
-            cp $_v -f -- "$hostshead" "$hostsfile" || _notify 1 "FAILED to replace $hostsfile with $hostshead"
-        fi
-
-        # PROCESS AND WRITE BLOCK ENTRIES TO FILE
-        _notify 1 "Compiling into $hostsfile..."
-        if grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$tmpdir"/hostsblock/"${annotate##*/}".tmp | sed "s/ \!.*$//g" |\
-          sort -u | grep -Fvf "$whitelist" >> "$hostsfile"; then
-            true
-        else
-            _notify 0 "FAILED TO COMPILE BLOCK ENTRIES INTO $hostsfile. EXITING..."
-            exit 2
-        fi
-
-        # PROCESS AND WRITE REDIRECT ENTRIES TO FILE
-        if [ $redirects == 1 ] || [ "$redirects" == "1" ]; then
-            grep -ahEv -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* |\
-              grep -ah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" | tee -a "$tmpdir"/hostsblock/"${annotate##*/}".tmp |\
-              sed "s/ \!.*$//g" | sort -u | grep -Fvf "$whitelist"  >> "$hostsfile" || \
-                _notify 1 "FAILED to compile redirect entries into $hostsfile."
-        fi
-
-        # APPEND BLACKLIST ENTRIES
-        while read _blacklistline; do
-            echo "$redirecturl $_blacklistline \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-            grep -Fqx "$_blacklistline" "$hostsfile" || echo "$redirecturl $_blacklistline" >> "$hostsfile"
-        done < "$blacklist" || _notify 1 "FAILED to append blacklisted entries to $hostsfile."
-
-        # SORT AND COMPRESS ANNOTATION FILE.
-        (
-          if which pigz &>/dev/null; then
-              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $pigz_opt -c - > "$annotate"
-          else
-              sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $gzip_opt -c - > "$annotate"
-          fi
-          [ -f "$annotate" ] && rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-        ) &
-
-        # REPORT COUNT OF MODIFIED OR BLOCKED URLS
-        ( [ $_verbosity -ge 1 ] && _count_hosts "$hostsfile" ) &
-
-        # COMMANDS TO BE EXECUTED AFTER PROCESSING
-        _notify 1 "Executing postprocessing..."
-        postprocess || _notify 1 "Postprocessing FAILED."
-
-        wait
-
-        # CLEAN UP
-        rm $_v -r -- "$tmpdir"/hostsblock || _notify 1 "FAILED to clean up $tmpdir/hostsblock."
-    else
-        _notify 1  "No new changes. DONE."
-    fi
+    _job
 fi
+
+# CLEAN UP
+rm -rf $_v -- "$tmpdir"
+
+# EXIT
+exit $_return
+# exit codes for non-interactive commands
+# 0   = no errors
+# +1  any status scans failed
+# +2  block/unblock failed
+# +4  block/unblock not applied because it was already in that state
+# +8  blacklist/deblacklist failed
+# +16 blacklist/deblacklist not applied because it was already in that state
+# +32 whitelist/dewhitelist failed
+# +64 whitelist/dewhitelist not applied because it was already in that state
