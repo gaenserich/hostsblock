@@ -339,7 +339,11 @@ hostsblock -c URL Command Subcommands:
                         With "-w", immediately unblock URL
 ```
 
-Note that the `-o` subcommand turns a blocking command into an UNblocking command, a blacklisting command into a DEblacklisting command, etc.
+Note that the `-o` subcommand turns a blocking command into its oppositive, e.g.
+
+`hostsblock -c URL -b -o` **un**blocks URL
+`hostsblock -c URL -l -o` **removes** URL from the blacklist
+`hostsblock -c URL -w -o` **removes** URL from the whitelist
 
 #### Examples: <a name="examples"></a>
 
