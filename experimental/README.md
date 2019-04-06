@@ -77,9 +77,9 @@ Or use one of the *AUR* packages:
 [hostsblock](https://aur.archlinux.org/packages/hostsblock/),
 [hostsblock-git](https://aur.archlinux.org/packages/hostsblock-git/)
 
-**Don't forget** to *enable* and *start* the systemd timer with:
+**Don't forget** to *enable* and *start* the systemd timer by running this as root:
 ```sh
-systemctl enable --now hostsblock.timer
+$ systemctl enable --now hostsblock.timer
 ```
 
 ### For Other POSIX Flavors and Distros <a name="posixinstall"></a>
@@ -96,14 +96,17 @@ First download the archive [here](https://github.com/gaenserich/hostsblock/archi
 
 Unzip the archive, e.g. `unzip hostsblock-master.zip`
 
-Execute the `install.sh` script, which will guide you through installation.
+Execute the `install.sh` script *as root*, which will guide you through installation.
 
 #### The Complicated Way
 
+Execute the following as root:
+
 ##### Create a 'hostsblock' user and group
 
+
 ```sh
-sudo useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock
+$ useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock
 ```
 
 ##### Install the files
@@ -111,12 +114,12 @@ sudo useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock
 After downloading the archive [here](https://github.com/gaenserich/hostsblock/archive/master.zip) and unzipping, go into the resulting directory and execute the following as root:
 
 ```sh
-install -Dm500 -g hostsblock -o hostsblock src/hostsblock.sh /usr/lib/hostsblock.sh
-sed "s/%PREFIX%/\/usr/g" src/hostsblock-wrapper.sh > /usr/bin/hostsblock
-chown hostsblock:hostsblock /usr/bin/hostsblock
-chmod 550 /usr/bin/hostsblock
-install -Dm600 -g hostsblock -o hostsblock conf/* /var/lib/hostsblock/config.examples/
-install -Dm444 -g root -o root systemd/* /usr/lib/systemd/system/
+$ install -Dm500 -g hostsblock -o hostsblock src/hostsblock.sh /usr/lib/hostsblock.sh
+$ sed "s/%PREFIX%/\/usr/g" src/hostsblock-wrapper.sh > /usr/bin/hostsblock
+$ chown hostsblock:hostsblock /usr/bin/hostsblock
+$ chmod 550 /usr/bin/hostsblock
+$ install -Dm600 -g hostsblock -o hostsblock conf/* /var/lib/hostsblock/config.examples/
+$ install -Dm444 -g root -o root systemd/* /usr/lib/systemd/system/
 ```
 
 ## Configuration <a name="config"></a>
@@ -223,7 +226,7 @@ Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. T
 **Don't forget** to *enable* and *start* the systemd timer with:
 
 ```sh
-systemctl enable --now hostsblock.timer
+$ systemctl enable --now hostsblock.timer
 ```
 
 ### Configure Postprocessing <a name="enablepostprocess"></a>
@@ -246,8 +249,8 @@ addn-hosts=/var/lib/hostsblock/hosts.block
 
 Enable and start `hostsblock-dnsmasq-restart.path`:
 
-```
-systemctl enable --now hostsblock-dnsmasq-restart.path
+```sh
+$ systemctl enable --now hostsblock-dnsmasq-restart.path
 ```
 
 This has systemd watch the target file `/var/lib/hostsblock/hosts.block` for changes and then restart `dnsmasq` whenever they are found.
@@ -264,16 +267,16 @@ hostshead="/var/lib/hostsblock/hosts.head"
 
 Then put your necessary loopback entries in `/var/lib/hostsblock/hosts.head`. For example, you can copy over your existing `/etc/hosts` to this file:
 
-```
-cp /etc/hosts /var/lib/hostsblock/hosts.head
-chown hostsblock:hostsblock /var/lib/hostsblock/hosts.head
-chmod 600 /var/lib/hostsblock/hosts.head
+```sh
+$ cp /etc/hosts /var/lib/hostsblock/hosts.head
+$ chown hostsblock:hostsblock /var/lib/hostsblock/hosts.head
+$ chmod 600 /var/lib/hostsblock/hosts.head
 ```
 
 Enable and start `hostsblock-hosts-clobber.path`:
 
-```
-systemctl enable --now hostsblock-hosts-clobber.path
+```sh
+$ systemctl enable --now hostsblock-hosts-clobber.path
 ```
 
 This has systemd watch the target file `/var/lib/hostsblock/hosts.block` for changes and then copy `/var/lib/hostsblock/hosts.block` to `/etc/hosts`.
@@ -296,7 +299,7 @@ To do so, edit `sudoers` by typing `sudo visudo` and add the following line to t
 Add any users you want to be able to manually execute or use the urlcheck mode to the `hostsblock` group:
 
 ```sh
-gpasswd -a [MY USER NAME] hostsblock
+$ gpasswd -a [MY USER NAME] hostsblock
 ```
 
 The wrapper script installed in your PATH will automatically use sudo to execute the main script as the user `hostsblock`.
@@ -349,28 +352,30 @@ Note that the `-o` subcommand turns a command into its oppositive, e.g.
 
 #### Examples: <a name="examples"></a>
 
+Once you have configured `sudo`, you can execute the following as any user in the `hostsblock` group:
+
 ##### See if "http://github.com/gaenserich/hostsblock" is blocked, blacklisted, whitelisted, or redirected by hostsblock:
 
 ```sh
-hostsblock -c "http://github.com/gaenserich/hostsblock" -s
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -s
 ```
 
 ##### Do the same thing for any of the sites referenced on this page:
 
 ```sh
-hostsblock -c "http://github.com/gaenserich/hostsblock" -s -r
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -s -r
 ```
 
 ##### Do the same thing for any of the sites referenced on this page that are presently blocked:
 
 ```sh
-hostsblock -c "http://github.com/gaenserich/hostsblock" -s -k
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -s -k
 ```
 
 ##### Block the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
 ```sh
-hostsblock -c "http://github.com/gaenserich/hostsblock" -b
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -b
 ```
 
 Note that "blocking" (and "unblocking", i.e. `-b -o`) a domain only works until the next time hostsblock refreshes `/var/lib/hostsfile/hosts.block`, unless you use a blocklist that does include it. To permanently block this domain, use the blacklist (`-l`) command.
@@ -378,7 +383,7 @@ Note that "blocking" (and "unblocking", i.e. `-b -o`) a domain only works until 
 ##### Permanently block (blacklist) the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
 ```sh
-hostsblock -c "http://github.com/gaenserich/hostsblock" -l
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -l
 ```
 
 Note that "blacklisting" on its own will not block the target domain until hostblock refreshes. You can combine both "blocking" and "blacklisting" in one command, however:
@@ -386,19 +391,19 @@ Note that "blacklisting" on its own will not block the target domain until hostb
 ##### Permanently and immediately block the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
 ```sh
-hostsblock -c "http://github.com/gaenserich/hostsblock" -l -b
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -l -b
 ```
 
 ##### Temporarily unblock all blocked domains on "http://github.com/gaenserich/hostsblock" (helpful if the page isn't working quite right):
 
 ```sh
-hostsblock -c "http://github.com/gaenserich/hostsblock" -b -o -k
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -b -o -k
 ```
 
 ##### Interactively scan through "http://github.com/gaenserich/hostsblock", prompting you if you want the domains referenced therein to be blocked, blacklisted, or whitelisted
 
 ```sh
-hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
 ```
 
 ## FAQ <a name="faq"></a>
