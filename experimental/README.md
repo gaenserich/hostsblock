@@ -8,7 +8,7 @@ An **ad-** and **malware-blocking** utility for POSIX systems
 3.   **[Configuration](#config):** [Edit `hostsblock.conf`](#hostblockconf), [Enable Timer](#enabletimer), [Enable Postprocessing](#enablepostprocess)
 4.   **[Usage](#usage):** [Configuring `sudo`](#sudo), [Manual Usage](#manual), [UrlCheck Usage](#urlcheck) ([examples](#examples))
 5.   **[FAQ](#faq)**
-6.   **[News & Bugs](#news)**
+6.   **[News & Bugs](#news):** [Upgrading to 0.999.8](#upgrade09998)
 7.   **[License](#license)**
 
 ## Description <a name="description"></a>
@@ -411,6 +411,7 @@ $ hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
 *   Why isn't it working with Chrome/Chromium?
 
     *   Because they bypass the system's DNS settings and use their own.
+
     To force them to use the system's DNS settings, refer to this
     [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
 
@@ -419,6 +420,60 @@ $ hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
 *   [Issue Tracker](https://github.com/gaenserich/hostsblock/issues)
 *   [Arch Linux AUR](https://aur.archlinux.org/packages/hostsblock/)
 *   [Arch Linux Forum](https://bbs.archlinux.org/viewtopic.php?id=139784)
+
+### Upgrading to 0.999.8 <a name="upgrade09998"></a>
+
+For existing hostsblock users, please note the following changes in version 0.999.8:
+
+#### Changes in `hostsblock.conf`
+
+Due to the shift to POSIX-shell compatibility, the list of blocklists to be downloaded cannot be held in `hostsblock.conf` via the `blocklists=` parameter. Instead, this parameter contains the path to a file that contains the list of urls, e.g. `/var/lib/hostsblock/block.urls`.
+
+The new block.urls file is simply a newline separated list of urls *with no quotations*. Whitespace and text after # are ignored. An example block.urls file could look like this:
+
+```conf
+http://hosts-file.net/download/hosts.zip # General blocking meta-list
+http://winhelp2002.mvps.org/hosts.zip
+
+http://hostsfile.mine.nu/Hosts.zip
+```
+
+See the example `block.urls` in the `/var/lib/hostsblock/config.examples` directory for details.
+
+#### No more postprocessing within script
+
+Due to enhanced security and sandboxing, hostsblock no longer handles postprocessing on its own. Instead, users should use other systemd capabilities to replace the `postprocess() {}` functionality.
+
+Hostsblock comes with systemd service files that replicate the most common scenarios. See the [directions above for instructions on how to enable them](#enablepostprocess)
+
+#### Other Caveats
+*   The `hostsblock-urlcheck` symlink is depreciated. Please use [`hostsblock -c URL`](#urlcheck) instead.
+*   In UrlCheck mode, large hosts files will generate large temporary cache files that will eat up a lot of temporary storage. If you have a machine with little RAM (<6GB) and want to block a lot of domains, consider changing your $tmpdir to an HDD- or SSD-backed filesystem instead of the default tmpfs under `/tmp`.
+*   UrlCheck mode will not be able to provide information on which blocklist blocked which domains anymore (annotation feature removed)
+*   Hostsblock uses 0.0.0.0 as default redirection IP address instead of 127.0.0.1. 0.0.0.0 theoretically offers better performance without the need of a pseudo-server.
+
+#### Other Changes from 0.999.7 to 0.999.8
+**Systemd Job Improvements**
+*   Systemd service now heavily hardened and sandboxed for enhanced security
+*   Fixed simultaneous download feature so that it actually does what it is supposed to
+*   Added processing support for source blocklists that just list domain names to be blocked, e.g. `ads.google.com` instead of `0.0.0.0 ads.google.com`
+*   Added support to read directly from zip and 7z files containing a single file without decompressing to a cache
+*   Optimized filters used to process domains with improved throughput
+*   If run with dash instead of bash, hostsblock has significant performance improvements
+*   Removed annotation feature to reduce dependencies and overall processing demands
+*   Vastly expanded list of potential blocklists (see `block.urls`)
+
+**POSIX-Compatibility Improvements**
+*   Supports POSIX shells (dash, ash, zsh) instead of just bash
+*   Removed GNU-specific utilities, relies only on POSIX options
+*   Should now run on \*BSD and macOS (and perhaps even Android and iOS!) if proper POSIX environments are installed. ***UNTESTED***
+
+**UrlCheck Mode Improvements**
+*   User-facing command now a wrapper script that handles `sudo` execution for the user, reducing configuration demands
+*   Significant performance improvements by moving from incremental to mass handling of domain names
+*   [Added noninteractive commands `-s` (status), `-b` (block), `-l` (blacklist), `-w` (whitelist), `-b -o` (unblock), `-l -o` (deblacklist), `-w -o` (dewhitelist)](#urlcheck)
+*   Interactive and noninteractive commands can now recursively handle urls contained in target page (with `-r` subcommand), and even target just blocked domains (with `-k` subcommand)
+*   To minimize repeated writes, changes to target hosts file now don't write to file until after the whole process completes
 
 ## License <a name="license"></a>
 

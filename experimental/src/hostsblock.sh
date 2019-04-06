@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 if [ -n "$ZSH_VERSION" ]; then emulate -L sh; fi
 
 ################################# SUBROUTINES #################################

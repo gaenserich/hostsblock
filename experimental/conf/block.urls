@@ -1,7 +1,7 @@
 #### An extended version of https://firebog.net/. Please visit that side for
 #### more updates
 
-################################## METALISTS ################################## 
+################################## META-LISTS #################################
    ### Lists that contain multiple other lists from below
 
   ## The following have a moderate likelihood to interfere with browsing
@@ -9,14 +9,14 @@
 #http://hosts-file.net/download/hosts.zip           # Lists contained herein
                                                     #  labelled with "Contained
                                                     #  in hosts-file.net
-                                                    #  metalist"
+                                                    #  meta-list"
 
 ############################## SUSPICIOUS LISTS ###############################
 
   ## The following are the least likely to interfere with browsing
 
 https://hosts-file.net/grm.txt                      # Contained in
-                                                    #  hosts-file.net metalist
+                                                    #  hosts-file.net meta-list
 
 https://hosts-file.net/hphosts-partial.txt          # hpHosts inter-release
 
@@ -122,7 +122,7 @@ https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt
 https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
 
 https://hosts-file.net/ad_servers.txt               # Contained in
-                                                    #  hosts-file.net metalist
+                                                    #  hosts-file.net meta-list
 
 https://v.firebog.net/hosts/Easylist.txt
 
@@ -178,13 +178,13 @@ https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt
 https://mirror1.malwaredomains.com/files/justdomains
 
 https://hosts-file.net/exp.txt                      # Contained in
-                                                    #  hosts-file.net metalist
+                                                    #  hosts-file.net meta-list
 
 https://hosts-file.net/emd.txt                      # Contained in
-                                                    #  hosts-file.net metalist
+                                                    #  hosts-file.net meta-list
 
 https://hosts-file.net/psh.txt                      # Contained in
-                                                    #  hosts-file.net metalist
+                                                    #  hosts-file.net meta-list
 
 https://mirror.cedia.org.ec/malwaredomains/immortal_domains.txt
 
