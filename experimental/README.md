@@ -323,6 +323,8 @@ With the `-c URL` flag option, hostsblock can check and manipulate how it handle
 
 ***Note: The `hostsblock-urlcheck` symlink is now officially depreciated. Use `hostsblock -c` instead.***
 
+In addition to the above options, the following commands and subcommands can be use with `hostsblock -c URL`:
+
 ```conf
 hostsblock -c URL (urlCheck) Commands:
   -s [-r -k]            State how hostblock modifies URL
