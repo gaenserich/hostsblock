@@ -4,7 +4,7 @@ An **ad-** and **malware-blocking** utility for *POSIX*
 
 ### Contents
 1.   [Description](#description)
-   *   [Features](#features)
+   1.   [Features](#features)
 2.   [Installation](#installation)
    1.   [Dependencies](#depends)
    2.   [Arch Linux](#archinstall)
@@ -14,10 +14,10 @@ An **ad-** and **malware-blocking** utility for *POSIX*
    2.   [Enable Timer](#enabletimer)
    3.   [Enable Postprocessing](#enablepostprocess)
 4.   [Usage](#usage)
-   *   [Configuring `sudo`](#sudo)
-   1.   [Manual Usage](#manual)
-   2.   [UrlCheck Usage](#urlcheck)
-      *   [Examples](#examples)
+   1.   [Configuring `sudo`](#sudo)
+   2.   [Manual Usage](#manual)
+   3.   [UrlCheck Usage](#urlcheck)
+      1.   [Examples](#examples)
 5.   [FAQ](#faq)
 6.   [News & Bugs](#news)
 7.   [License](#license)
