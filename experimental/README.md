@@ -1,6 +1,6 @@
 # Hostsblock
 
-An **ad-** and **malware-blocking** utility for *POSIX*
+An **ad-** and **malware-blocking** utility for POSIX systems
 
 ### Contents
 1.   **[Description](#description):** [Features](#features)
