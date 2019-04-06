@@ -685,7 +685,7 @@ _job() {
 # VARIABLE DEFAULTS
 HOME="${HOME:-/var/lib/hostsblock}"
 hostsfile="$HOME/hosts.block"
-redirecturl='127.0.0.1'
+redirecturl='0.0.0.0'
 blocklists="$HOME/block.urls"
 redirectlists="" # Otherwise "$HOME/redirect.urls"
 blacklist="$HOME/black.list"
@@ -803,8 +803,8 @@ mkdir -p $_v -- "$tmpdir"
 [ $_changed -eq 1 ] && touch "$tmpdir"/changed
 
 # MAKE SURE NECESSARY DEPENDENCIES ARE PRESENT
-for _depends in tr mkdir cksum curl touch rm sed grep file \
-  sort tee cut cp mv sudo chmod find wc id xargs; do
+for _depends in chmod cksum cp curl cut file find grep id mkdir \
+    mv rm sed sort tee touch tr wc xargs; do
     if ! command -v "$_depends" >/dev/null 2>&1; then
         _notify 0 "MISSING REQUIRED DEPENDENCY $_depends. PLEASE INSTALL. EXITING..."
         exit 5

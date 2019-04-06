@@ -2,77 +2,85 @@
 
 An **ad-** and **malware-blocking** utility for *POSIX*
 
-## Description
+### Contents
+1. [Description](#description)
+  * [Features](#features)
+2. [Installation](#installation)
+  1. [Dependencies](#depends)
+  2. [Arch Linux](#archinstall)
+  3. [Other POSIX](#posixinstall)
+3. [Configuration](#config)
+  1. [Edit `hostsblock.conf`](#hostblockconf)
+  2. [Enable Timer](#enabletimer)
+  3. [Enable Postprocessing](#enablepostprocess)
+4. [Usage](#usage)
+  * [Configuring `sudo`](#sudo)
+  1. [Manual Usage](#manual)
+  2. [UrlCheck Usage](#urlcheck)
+    * [Examples](#examples)
+5. [FAQ](#faq)
+6. [News & Bugs](#news)
+7. [License](#license)
 
-**`Hostsblock`** is a POSIX-compatible script designed to take advantage of
-[`/etc/hosts`][h] file to provide [**system-wide blocking**][0] of
-**internet advertisements, malicious domains, trackers, and
-other undesirable content**.
+## Description <a name="description"></a>
 
-To do so, it downloads a **configurable** set of blocklists and processes their
-entries into a single [`/etc/hosts`][h] file.
+**Hostsblock** is a POSIX-compatible script designed to take advantage of the [`/etc/hosts`][h] file to provide [**system-wide blocking**][0] of **internet advertisements, malicious domains, trackers, and other undesirable content**.
 
-`Hostsblock` also acts as a command-line utility that
-allows you to block and unblock certain websites and any other domains
-contained in that website.
+To do so, it downloads a **configurable** set of blocklists and processes their entries into a single [HOSTS][h] file.
 
-## Features
+**Hostsblock** also provides a command-line utility that allows you to configure how individual websites and any other domains contained in that website are handled.
 
-*   **Enhanced security** - Runs as an unpriviledged user instead of
-  root. **New:** Includes systemd service files that heavily sandbox the
-  background process.
+### Features <a name="features"></a>
 
-*   **System-wide blocking** - *All non-proxied* connections use the HOSTS
-  file (Proxied connections can be modified to use the HOSTS file)
+*   **Enhanced security** - Runs as an unpriviledged user instead of root. **New:** Includes systemd service files that heavily sandbox the background process.
 
-*   **Compression-friendly** - Can download and process zip- and 7zip-compressed files
-  **automatically**. (Provided that `unzip` and `p7zip` are installed)
+*   **System-wide blocking** - *All non-proxied* connections use the HOSTS file (Proxied connections can be modified to use the HOSTS file)
 
-*   **Non-interactive** - Can be run as a periodic `cronjob` or via a `systemd timer`
-  without needing user interaction.
+*   **Compression-friendly** - Can download and process zip- and 7zip-compressed files **automatically**. (Provided that `unzip` and `p7zip` are installed)
 
-*   **Extensive configurability** - Allows for custom **black & white listing**,
-  **redirection**, ~~**post-processing scripting**~~ (now provided via systemd configuration), *etc.*
+*   **Non-interactive** - Can be run as a periodic `cronjob` or via a `systemd timer` without needing user interaction.
 
-*   **Bandwith-efficient** - *Only* downloads blocklists that have been changed,
-  using *http compression* when available.
+*   **Extensive configurability** - Allows for custom **black & white listing**, **redirection**, ~~**post-processing scripting**~~ (now provided via systemd configuration), *etc.*
 
-*   **Resource-efficient** - *Only* processes blocklists when changes are
-  registered, uses *minimal pipes*.
+*   **Bandwith-efficient** - *Only* downloads blocklists that have been changed, using *http compression* when available.
 
-*   **High performance blocking** - **Only** when using *dns caching* and
-  *pseudo-server* daemons.
+*   **Resource-efficient** - *Only* processes blocklists when changes are registered.
 
-*   **Redirection capability** - **Enchances security** by combating [DNS cache
-  poisoning](https://en.wikipedia.org/wiki/DNS_cache_poisoning).
+*   **High performance blocking** - **Only** when using *dns caching*.
 
-*   **Extensive choice of blocklists included** - Allowing the *user* to
-  **choose** how much or how little is blocked/redirected.
+*   **Redirection capability** - **Enchances security** by combating [DNS cache poisoning](https://en.wikipedia.org/wiki/DNS_cache_poisoning).
 
-## Dependencies
+*   **Extensive choice of blocklists included** - Allowing the *user* to **choose** how much or how little is blocked/redirected.
+
+## Installation <a name="installation"></a>
+
+### Dependencies <a name="depends"></a>
 
 *   [curl](http://curl.haxx.se/)
-*   A POSIX environment (which should already be in place on most Linux, \*BSD, and macOS environments, including the following commands:
-  `sh` (e.g. [bash](http://www.gnu.org/software/bash/bash.html) or [dash](http://gondor.apana.org.au/~herbert/dash/), 
-  `chmod`, `cksum`, `cp`, `cut`, `file`, `find`, `grep`, `id`, `mkdir`, `mv`, `rm`, `sed`, `sort`, `tee`, `touch`, `tr`, `wc`, and `xargs`.
+*   A POSIX environment (which should already be in place on most Linux, \*BSD, and macOS environments, including the following commands: `sh` (e.g. [bash](http://www.gnu.org/software/bash/bash.html) or [dash](http://gondor.apana.org.au/~herbert/dash/), `chmod`, `cksum`, `cp`, `cut`, `file`, `find`, `grep`, `id`, `mkdir`, `mv`, `rm`, `sed`, `sort`, `tee`, `touch`, `tr`, `wc`, and `xargs`.
 
-### Optional dependencies for **additional features**
+#### Optional dependencies for **additional features**
 
 *   [sudo](https://www.sudo.ws/) to enable the user-friendly wrapper script (highly recommended)
 
 **Unarchivers** to use archive blocklists instead of plain text:
 
 *   [unzip][unzip] (for zip archives)
-*   [p7zip][7zip] (for 7z archives) must include either 7z or 7za executables!
+*   [p7zip][7zip] (for 7z archives) must include either `7z`, `7za`, or `7zr` executables!
 
 **A DNS caching daemon** to help *speed up DNS resolutions*:
 
 *   [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html) (recommended)
 *   [pdnsd](http://members.home.nl/p.a.rombouts/pdnsd/) (untested)
 
-## Installation
+If you use 127.0.0.1 as your blocking redirect address (`redirecturl` in `hostsblock.conf`), **a pseudo-server** that serves *blank pages* to remove boilerplate page and speed up page resolution on blocked domains:
 
-### Arch Linux
+*   [kwakd](https://github.com/fetchinson/kwakd/)
+*   [pixelserv](http://proxytunnel.sourceforge.net/pixelserv.php)
+
+Note that the default configuration [gets no benefit from having a pseudo-server](https://www.howtogeek.com/225487/what-is-the-difference-between-127.0.0.1-and-0.0.0.0/)
+
+### Arch Linux <a name="archinstall"></a>
 
 If you have yaourt installed: `yaourt -S hostsblock` or `yaourt -S hostsblock-git`
 
@@ -85,7 +93,7 @@ Or use one of the *AUR* packages:
 systemctl enable --now hostsblock.timer
 ```
 
-### For Other POSIX Flavors and Distros
+### For Other POSIX Flavors and Distros <a name="posixinstall"></a>
 
 #### The Best and Easiest Way
 
@@ -122,29 +130,118 @@ install -Dm600 -g hostsblock -o hostsblock conf/* /var/lib/hostsblock/
 install -Dm444 -g root -o root systemd/* /usr/lib/systemd/system/
 ```
 
-## After Installation
+## Configuration <a name="config"></a>
 
-### Enable the systemd service
+By default, the configuration files are included in the `/var/lib/hostsblock/config.examples/` directory. Copy them over to `/var/lib/hostsblock/` to customize your setup.
+
+### Editing `hostsblock.conf` <a name="hostblockconf"></a>
+
+Most of the **hostsblock** configuration is done in the [`hostsblock.conf`][conf]. This file is commented really well, so please read through it before first use:
+
+```conf
+# CACHE DIRECTORY. Directory where blocklists will be downloaded and stored.
+
+#cachedir="$HOME/cache" # DEFAULT
+
+
+# WORK DIRECTORY. Temporary directory where interim files will be unzipped and
+# # processed. This directory will be deleted after hostsblock completes itself.
+#
+# #tmpdir="/tmp/hostsblock" # DEFAULT
+
+# FINAL HOSTSFILE. Final hosts file that combines together all downloaded blocklists.
+
+#hostsfile="$HOME/hosts.block" # DEFAULT. If not using a dns caching daemon
+
+
+# REDIRECT URL. Url to which blocked hosts will be redirect, either 0.0.0.0 or
+# 127.0.0.1. This replaces any entries to 0.0.0.0 and 127.0.0.1. If you run a
+# pixelserver such as pixelserv or kwakd, it is advisable to use 127.0.0.1.
+
+#redirecturl="0.0.0.0" # DEFAULT
+
+
+# HEAD FILE. File containing hosts file entries which you want at the beginning
+# of the resultant hosts file, e.g. for loopback devices and IPv6 entries. Use
+# your original /etc/hosts file here if you are writing your final blocklist to
+# /etc/hosts so as to preserve your loopback devices. Give hostshead="0" to
+# disable this feature. For those targeting /etc/hosts, it is advisable to copy
+# their old /etc/hosts file to this file so as to preserve existing entries.
+
+#hostshead="0" # DEFAULT
+
+
+# BLACKLISTED SUBDOMAINS. File containing specific subdomains to blacklist which
+# may not be in the downloaded blacklists. Be sure to provide not just the
+# domain, e.g. "google.com", but also the specific subdomain a la
+# "adwords.google.com" without quotations.
+
+#blacklist="$HOME/black.list" # DEFAULT
+
+
+# WHITELIST. File containing the specific subdomains to allow through that may
+# be blocked by the downloaded blocklists. In this file, put a space in front of
+# a string in order to let through that specific site (without quotations), e.g.
+# " www.example.com" will unblock "http://www.example.com" but not
+# "http://subdomain.example.com". Leave no space in front of the entry to
+# unblock all subdomains that contain that string, e.g. ".dropbox.com" will let
+# through "www.dropbox.com", "dl.www.dropbox.com", "foo.dropbox.com",
+# "bar.dropbox.com", etc.
+
+#whitelist="$HOME/white.list"
+
+
+# CONNECT_TIMEOUT. Parameter passed to curl. Determines how long to try to
+# connect to each blocklist url before giving up.
+
+#connect_timeout=60 # DEFAULT
+
+
+# RETRY. Parameter passed to curl. Number of times to retry connecting to
+# each blocklist url before giving up.
+
+#retry=0 # DEFAULT
+
+
+# MAX SIMULTANEOUS DOWNLOADS. Hostsblock can check and download files in parallel.
+# By default, it will attempt to check and download four files at a time.
+
+#max_simultaneous_downloads=4 # DEFAULT
+
+
+# BLOCKLISTS FILE. File containing urls of blocklists to be downloaded,
+# with each url on a separate line. Downloaded files may be
+# either plaintext, zip, gzip, or 7z files. Hostsblock will automatically
+# identify zip, gzip, and 7z.
+
+#blocklists="$HOME/block.urls"
+
+
+# REDIRECTLISTS FILE. File containing urls of redirectlists to be downloaded,
+# with each url on a separate line. Downloaded files may be
+# either plaintext, zip, gzip, or 7z files. Hostsblock will automatically
+# identify zip, gzip, and 7z.
+
+#redirectlists="" # DEFAULT, otherwise "$HOME/redirect.urls"
+
+
+# If you have any additional lists, please post a bug report to
+# https://github.com/gaenserich/hostsblock/issues 
+```
+
+### Enable the systemd service <a name="enabletimer"></a>
 
 **Don't forget** to *enable* and *start* the systemd timer with:
+
 ```sh
 systemctl enable --now hostsblock.timer
 ```
 
-### Configuration
+### Configure Postprocessing <a name="enablepostprocess"></a>
 
-By default, the configuration files are included in the `/var/lib/hostsblock/config.examples/` directory. Copy them over to `/var/lib/hostsblock/` to customize your setup.
+**Hostsblock** does not write to `/etc/hosts` or manipulate any dns caching daemons anymore. Instead, it will just compile a hosts-formatted file to `/var/lib/hostsblock/hosts.block`. To make this file actually do work, you have one of two options:
 
-Most of the `hostsblock` configuration is done in the [`hostsblock.conf`][conf].
-This file is commented really well, so please read through it before first use.
-
-`Hostsblock` does not write to `/etc/hosts` or manipulate any dns caching daemons.
-Instead, it will just compile a hosts-formatted file to `/var/lib/hostsblock/hosts.block`.
-To make this file actually do work, you have one of two options:
-
-***Note: In order to enhance security, `hostsblock` no longer directly manipulates other process or asks for rights to write to `/etc/hosts`. Other services like `systemd` handle such sensitive operations.***
-
-### OPTION 1: Using a DNS Caching Daemon (Here: dnsmasq)
+#### OPTION 1: Using a DNS Caching Daemon (Here: dnsmasq)
 
 Using a DNS caching daemon like `dnsmasq` offers better performance.
 
@@ -166,7 +263,7 @@ systemctl enable --now hostsblock-dnsmasq-restart.path
 
 This has systemd watch the target file `/var/lib/hostsblock/hosts.block` for changes and then restart `dnsmasq` whenever they are found.
 
-### OPTION 2: Copy /var/lib/hostsblock/hosts.block to /etc/hosts
+#### OPTION 2: Copy /var/lib/hostsblock/hosts.block to /etc/hosts
 
 It is possible to have `systemd` copy the generated file over to `/etc/hosts`.
 
@@ -193,13 +290,15 @@ systemctl enable --now hostsblock-hosts-clobber.path
 This has systemd watch the target file `/var/lib/hostsblock/hosts.block` for changes and then copy `/var/lib/hostsblock/hosts.block` to `/etc/hosts`.
 
 
-## Usage
+## Usage <a name="usage"></a>
 
-As a cronjob/systemd-job, `hostsblock` executes as a heavily sandboxed unpriviledged user (instead of root).
+In its normal systemd-job configuration, **hostsblock** requires no interaction from the user aside from the steps above. If, however, you want to manually run the process, or to use the UrlCheck tool (`hostsblock -c URL`), you need to configure `sudo`:
 
-If you need to manually execute it outside of systemd, or if you want to use the urlcheck tool (`hostsblock -c URL`), this means that you must configure sudo, e.g.:
+### Configuring `sudo` <a name="sudo"></a>
 
-To allow other users to manually execute hostsblock (and also hostsblock-urlcheck), edit `sudoers` by typing `sudo visudo` and add the following line to the end:
+Because **hostsblock** executes as a heavily sandboxed unpriviledged user (instead of root), you must configure `sudo` to allow other users to manually execute it.
+
+To do so, edit `sudoers` by typing `sudo visudo` and add the following line to the end:
 
 ```conf
 %hostsblock	ALL	=	(hostsblock)	NOPASSWD:	/usr/lib/hostsblock.sh
@@ -213,7 +312,7 @@ gpasswd -a [MY USER NAME] hostsblock
 
 The wrapper script installed in your PATH will automatically use sudo to execute the main script as the user `hostsblock`.
 
-### hostsblock [OPTION...] - download and combine HOSTS files
+### hostsblock [OPTION...] - download and combine HOSTS files <a name="manual"></a>
 
 Without the `-c URL` option, hostsblock will check to see if its monitored blocklists have changed. If it detects changes in them (or if forced by the `-u` flag), it will download the changed blocklist(s) and recompile the target HOSTS file.
 
@@ -229,7 +328,7 @@ Options:
   -u                    Force hostsblock to update its target file
 ```
 
-### hostsblock [OPTION...] -c URL [COMMANDS...] - Manage how URL is handled
+### hostsblock [OPTION...] -c URL [COMMANDS...] - Manage how URL is handled <a name="urlcheck"></a>
 
 With the `-c URL` flag option, hostsblock can check and manipulate how it handles specific domains.
 
@@ -253,7 +352,7 @@ hostsblock -c URL Command Subcommands:
 
 Note that the `-o` subcommand turns a blocking command into an UNblocking command, a blacklisting command into a DEblacklisting command, etc.
 
-#### Examples:
+#### Examples: <a name="examples"></a>
 
 ##### See if "http://github.com/gaenserich/hostsblock" is blocked, blacklisted, whitelisted, or redirected by `hostsblock`:
 
@@ -307,7 +406,7 @@ hostsblock -c "http://github.com/gaenserich/hostsblock" -b -o -k
 hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
 ```
 
-## FAQ
+## FAQ <a name="faq"></a>
 
 *   Why isn't it working with Chrome/Chromium?
 
@@ -315,13 +414,13 @@ hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
     To force them to use the system's DNS settings, refer to this
     [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
 
-## News & Bugs
+## News & Bugs <a name="news"></a>
 
 *   [Issue Tracker](https://github.com/gaenserich/hostsblock/issues)
 *   [Arch Linux AUR](https://aur.archlinux.org/packages/hostsblock/)
 *   [Arch Linux Forum](https://bbs.archlinux.org/viewtopic.php?id=139784)
 
-## License
+## License <a name="license"></a>
 
 Hostsblock is licensed under [GNU GPL](http://www.gnu.org/licenses/gpl-3.0.txt)
 
