@@ -127,7 +127,7 @@ for _conffile in hostsblock.conf black.list white.list hosts.head block.urls red
     _install "$SRCDIR"/conf/"$_conffile" "$_HOME"/config.examples/"$_conffile" 600 hostsblock:hostsblock
 done
 _mkdir "$SYSTEMD_DIR" 755 root:root
-for _sysdfile in hostsblock.service hostsblock.timerhostsblock-dnsmasq-restart.path hostsblock-dnsmasq-restart.service hostsblock-hosts-clobber.path hostsblock-hosts-clobber.service; do
+for _sysdfile in hostsblock.service hostsblock.timer hostsblock-dnsmasq-restart.path hostsblock-dnsmasq-restart.service hostsblock-hosts-clobber.path hostsblock-hosts-clobber.service; do
     _install "$SRCDIR"/systemd/"$_sysdfile" "$SYSTEMD_DIR"/"$_sysdfile" 444 root:root
 done
 
