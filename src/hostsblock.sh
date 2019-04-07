@@ -1,4 +1,4 @@
-#!/bin/sh
+#!%SHPATH%
 if [ -n "$ZSH_VERSION" ]; then emulate -L sh; fi
 
 ################################# SUBROUTINES #################################

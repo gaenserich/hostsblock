@@ -4,4 +4,4 @@ Conflicts=hostsblock-hosts-clobber.path hostsblock-hosts-clobber.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/systemctl reload-or-restart dnsmasq.service
+ExecStart=%SYSTEMCTLPATH% reload-or-restart dnsmasq.service

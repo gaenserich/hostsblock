@@ -4,4 +4,4 @@ Conflicts=hostsblock-dnsmasq-restart.path hostsblock-dnsmasq-restart.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/bash -l -c "cp -f /var/lib/hostsblock/hosts.block /etc/hosts; chmod 444 /etc/hosts"
+ExecStart=%SHPATH% -l -c "cp -f %_HOME%/hosts.block /etc/hosts; chmod 444 /etc/hosts"

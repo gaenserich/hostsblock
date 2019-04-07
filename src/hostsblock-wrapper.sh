@@ -1,4 +1,4 @@
-#!/bin/sh
+#!%SHPATH%
 _home=$(sudo -u hostsblock -H sh -l -c "cd; pwd")
 pwd=$(pwd)
 if [ "$(id -un)" = "hostsblock" ]; then

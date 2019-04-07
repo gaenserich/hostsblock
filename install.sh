@@ -4,10 +4,61 @@ _msg() {
     printf %s\\n "$1" 1>&2
 }
 
+_mkdir() {
+    # $1 = dir to be made; $2 = chmod hex; $3 = owner:group
+    if [ ! -d "$1" ]; then
+        mkdir -p -m "$2" "$1"
+        chown "$3" "$1"
+    fi
+}
+
+_install() {
+    #$1 = source; $2 = destination; $3 = chmod hex $4 = owner:group
+    sed -e "s/%PREFIX%/$PREFIX/g" -e "s/%SYSTEMCTLPATH%/$SYSTEMCTLPATH/g" -e "s/%SHPATH%/$SHPATH/g" -e "s/%_HOME%/$_HOME/g" "$1" > "$2"
+    chmod "$3" "$2"
+    chown "$4" "$2"
+}
+
 # Parameters
 SRCDIR="${SRCDIR:-./}"                         # Assuming we are running this script from the root directory of our source code
 PREFIX="${PREFIX:-/usr}"                       # Default installation of hostsblock.sh under /usr/bin/
-SYSTEMD_DIR="${SYSTEMD_DIR:-/usr/lib/systemd/system}" #
+
+# If these paths are not asserted via environment variables, autodetect them
+if [ ! -d "$SYSTEMD_DIR" ]; then
+    if [ -d /usr/lib/systemd/system ]; then
+        SYSTEMD_DIR="/usr/lib/systemd/system"
+    elif [ -d /lib/systemd/system ]; then
+        SYSTEMD_DIR="/lib/systemd/system/"
+    elif [ -d /etc/systemd/system ]; then
+        SYSTEMD_DIR="/etc/systemd/system"
+    else
+        SYSTEMD_DIR="$PREFIX"/lib/systemd/system
+    fi
+fi
+if [ ! -x "$SYSTEMCTLPATH" ]; then
+    SYSTEMCTLPATH=$(command -v systemctl)
+    if [ ! -x "$SYSTEMCTLPATH" ]; then
+        if [ -x /usr/bin/systemctl ]; then
+            SYSTEMCTLPATH="/usr/bin/systemctl"
+        elif [ -x /bin/systemctl ]; then
+            SYSTEMCTLPATH="/bin/systemctl"
+        else
+            SYSTEMCTLPATH="$PREFIX"/bin/systemctl
+        fi
+    fi
+fi
+if [ ! -x "$SHPATH" ]; then
+    SHPATH=$(command -v sh)
+    if [ ! -x "$SHPATH" ]; then
+        if [ -x /usr/bin/sh ]; then
+            SHPATH="/usr/bin/sh"
+        elif [ -x /bin/sh ]; then
+            SHPATH="/bin/sh"
+        else
+            SHPATH="$PREFIX"/bin/sh
+        fi
+    fi
+fi
 
 if [ "$1" != "install" ]; then
 # Warning
@@ -24,6 +75,11 @@ Variables effecting installation:
   hostsblock.sh installs
  \$SYSTEMD_DIR (currently $SYSTEMD_DIR): where systemd unit files
   will install
+ \$SYSTEMCTLPATH (currently $SYSTEMCTLPATH): where systemd unit files
+  will look for the systemctl executable
+ \$SHPATH (currently $SHPATH): where hostsblock and its systemd unit
+  files will look for the shell command. (Hint: Point this to dash instead
+  of bash if you want a performance boost)
 
 If you are read to install, execute '$0 install'"
  exit 0
@@ -36,7 +92,7 @@ if [ "$$(id -un)" != "root" ]; then
 fi
 
 # Dependency check for both this installation script and host block
-for _dep in groupadd install useradd gpasswd chown tr mkdir cksum curl touch rm sed grep file sort tee cut cp mv chmod find xargs id wc; do
+for _dep in groupadd useradd gpasswd chown tr mkdir cksum curl touch rm sed grep file sort tee cut cp mv chmod find xargs id wc; do
     if ! command -v $_dep >/dev/null 2>&1; then
         _msg "Dependency $_dep missing. Please install."
         exit 3
@@ -63,22 +119,17 @@ fi
 _HOME=$(getent passwd hostsblock | cut -f6 -d:)
 
 # Install config examples into home directory
-[ -d "$_HOME" ] && mkdir -p -m 755 "$_HOME" || chmod 755 "$_HOME"
-install -Dm500 "$SRCDIR"/src/hostsblock.sh "$PREFIX"/lib/hostsblock.sh
-sed "s/%PREFIX%/$PREFIX/g" "$SRCDIR"/src/hostsblock-wrapper.sh > "$PREFIX"/bin/hostsblock
-chmod 550 "$PREFIX"/hostsblock
-install -Dm600 -g hostsblock -o hostsblock "$SRCDIR"/conf/hostsblock.conf "$_HOME"/config.examples/hostsblock.conf
-install -Dm600 -g hostsblock -o hostsblock "$SRCDIR"/conf/black.list "$_HOME"/config.examples/black.list
-install -Dm600 -g hostsblock -o hostsblock "$SRCDIR"/conf/white.list "$_HOME"/config.examples/white.list
-install -Dm600 -g hostsblock -o hostsblock "$SRCDIR"/conf/hosts.head "$_HOME"/config.examples/hosts.head
-install -Dm600 -g hostsblock -o hostsblock "$SRCDIR"/conf/block.urls "$_HOME"/config.examples/block.urls
-install -Dm600 -g hostsblock -o hostsblock "$SRCDIR"/conf/redirect.urls "$_HOME"/config.examples/block.urls
-install -Dm444 "$SRCDIR"/systemd/hostsblock.service "$SYSTEMD_DIR"/hostsblock.service
-install -Dm444 "$SRCDIR"/systemd/hostsblock.timer "$SYSTEMD_DIR"/hostsblock.timer
-install -Dm444 "$SRCDIR"/systemd/hostsblock-dnsmasq-restart.path "$SYSTEMD_DIR"/hostsblock-dnsmasq-restart.path
-install -Dm444 "$SRCDIR"/systemd/hostsblock-dnsmasq-restart.service "$SYSTEMD_DIR"/hostsblock-dnsmasq-restart.service
-install -Dm444 "$SRCDIR"/systemd/hostsblock-hosts-clobber.path "$SYSTEMD_DIR"/hostsblock-hosts-clobber.path
-install -Dm444 "$SRCDIR"/systemd/hostsblock-hosts-clobber.service "$SYSTEMD_DIR"/hostsblock-hosts-clobber.service
+_mkdir "$_HOME" 755 hostsblock:hostsblock
+_install "$SRCDIR"/src/hostsblock.sh "$PREFIX"/lib/hostsblock.sh 500 hostsblock:hostsblock
+_install "$SRCDIR"/src/hostsblock-wrapper.sh "$PREFIX"/bin/hostsblock 550 hostsblock:hostsblock
+_mkdir "$_HOME"/config.examples 700 hostsblock:hostsblock
+for _conffile in hostsblock.conf black.list white.list hosts.head block.urls redirect.urls; do
+    _install "$SRCDIR"/conf/"$_conffile" "$_HOME"/config.examples/"$_conffile" 600 hostsblock:hostsblock
+done
+_mkdir "$SYSTEMD_DIR" 755 root:root
+for _sysdfile in hostsblock.service hostsblock.timerhostsblock-dnsmasq-restart.path hostsblock-dnsmasq-restart.service hostsblock-hosts-clobber.path hostsblock-hosts-clobber.service; do
+    _install "$SRCDIR"/systemd/"$_sysdfile" "$SYSTEMD_DIR"/"$_sysdfile" 444 root:root
+done
 
 systemctl daemon-reload
 
