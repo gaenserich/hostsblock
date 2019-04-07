@@ -1,5 +1,4 @@
 # Maintainer/Originator: Jake VanderKolk <jakevanderkolk@gmail.com>
-set -x
 pkgname=hostsblock
 pkgver=0.999.8.1
 pkgrel=1
