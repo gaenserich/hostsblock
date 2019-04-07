@@ -391,6 +391,10 @@ $ hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
     To force them to use the system's DNS settings, refer to this
     [superuser.com](https://superuser.com/questions/723703/why-is-chromium-bypassing-etc-hosts-and-dnsmasq) question.
 
+*   Hostsblock's systemd job fails with error "FAILED TO COMPILE BLOCK/REDIRECT ENTRIES FROM [...]" and leaves an empty `hosts.block.new` file.
+
+    *   You may have a blank line with a single space in your whitelist. Hostsblock matches that line with the space in between the IP address and the domain name that every single line has, i.e. it matches every single would-be entry in your target file. Remove the empty line, and hostsblock will function as expected.
+
 ## News & Bugs <a name="news"></a>
 
 *   [Issue Tracker](https://github.com/gaenserich/hostsblock/issues)
