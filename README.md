@@ -21,7 +21,7 @@ Hostsblock also provides a command-line utility that allows you to configure how
 
 ### Features <a name="features"></a>
 
-*   **Enhanced security** - Runs as an unpriviledged user instead of root. **New:** Includes systemd service files that heavily sandbox the background process.
+*   **Enhanced security** - Runs as an unprivileged user instead of root. **New:** Includes systemd service files that heavily sandbox the background process.
 
 *   **System-wide blocking** - *All non-proxied* connections use the HOSTS file (Proxied connections can be modified to use the HOSTS file)
 
@@ -79,7 +79,7 @@ Or use one of the *AUR* packages:
 
 **Don't forget** to *enable* and *start* the systemd timer by running this as root:
 ```sh
-$ systemctl enable --now hostsblock.timer
+$ sudo systemctl enable --now hostsblock.timer
 ```
 
 ### For Other POSIX Flavors and Distros <a name="posixinstall"></a>
@@ -106,7 +106,7 @@ Execute the following as root:
 
 
 ```sh
-$ useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock
+$ sudo useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock
 ```
 
 ##### Install the files
@@ -114,12 +114,12 @@ $ useradd -d /var/lib/hostsblock -c "hostsblock" -m -U hostsblock
 After downloading the archive [here](https://github.com/gaenserich/hostsblock/archive/master.zip) and unzipping, go into the resulting directory and execute the following as root:
 
 ```sh
-$ install -Dm500 -g hostsblock -o hostsblock src/hostsblock.sh /usr/lib/hostsblock.sh
-$ sed "s/%PREFIX%/\/usr/g" src/hostsblock-wrapper.sh > /usr/bin/hostsblock
-$ chown hostsblock:hostsblock /usr/bin/hostsblock
-$ chmod 550 /usr/bin/hostsblock
-$ install -Dm600 -g hostsblock -o hostsblock conf/* /var/lib/hostsblock/config.examples/
-$ install -Dm444 -g root -o root systemd/* /usr/lib/systemd/system/
+$ sudo install -Dm500 -g hostsblock -o hostsblock src/hostsblock.sh /usr/lib/hostsblock.sh
+$ sed "s/%PREFIX%/\/usr/g" src/hostsblock-wrapper.sh | sudo tee /usr/bin/hostsblock
+$ sudo chown hostsblock:hostsblock /usr/bin/hostsblock
+$ sudo chmod 550 /usr/bin/hostsblock
+$ sudo install -Dm600 -g hostsblock -o hostsblock conf/* /var/lib/hostsblock/config.examples/
+$ sudo install -Dm444 -g root -o root systemd/* /usr/lib/systemd/system/
 ```
 
 ## Configuration <a name="config"></a>
@@ -137,16 +137,16 @@ Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. T
 
 
 # WORK DIRECTORY. Temporary directory where interim files will be unzipped and
-# # processed. This directory will be deleted after hostsblock completes itself.
+# # processed. This directory will be deleted after hostsblock completes.
 #
 # #tmpdir="/tmp/hostsblock" # DEFAULT
 
-# FINAL HOSTSFILE. Final hosts file that combines together all downloaded blocklists.
+# FINAL HOSTSFILE. Final hosts file that combines all downloaded blocklists.
 
-#hostsfile="$HOME/hosts.block" # DEFAULT. If not using a dns caching daemon
+#hostsfile="$HOME/hosts.block" # DEFAULT if not using a DNS caching daemon
 
 
-# REDIRECT URL. Url to which blocked hosts will be redirect, either 0.0.0.0 or
+# REDIRECT URL. URL to which blocked hosts will be redirect, either 0.0.0.0 or
 # 127.0.0.1. This replaces any entries to 0.0.0.0 and 127.0.0.1. If you run a
 # pixelserver such as pixelserv or kwakd, it is advisable to use 127.0.0.1.
 
@@ -201,17 +201,17 @@ Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. T
 #max_simultaneous_downloads=4 # DEFAULT
 
 
-# BLOCKLISTS FILE. File containing urls of blocklists to be downloaded,
-# with each url on a separate line. Downloaded files may be
-# either plaintext, zip, gzip, or 7z files. Hostsblock will automatically
+# BLOCKLISTS FILE. File containing URLs of blocklists to be downloaded,
+# each on a separate line. Downloaded files may be either
+# plaintext, zip, gzip, or 7z files. Hostsblock will automatically
 # identify zip, gzip, and 7z.
 
 #blocklists="$HOME/block.urls"
 
 
-# REDIRECTLISTS FILE. File containing urls of redirectlists to be downloaded,
-# with each url on a separate line. Downloaded files may be
-# either plaintext, zip, gzip, or 7z files. Hostsblock will automatically
+# REDIRECTLISTS FILE. File containing URLs of redirectlists to be downloaded,
+# each on a separate line. Downloaded files may be either
+# plaintext, zip, gzip, or 7z files. Hostsblock will automatically
 # identify zip, gzip, and 7z.
 
 #redirectlists="" # DEFAULT, otherwise "$HOME/redirect.urls"
@@ -226,12 +226,12 @@ Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. T
 **Don't forget** to *enable* and *start* the systemd timer with:
 
 ```sh
-$ systemctl enable --now hostsblock.timer
+$ sudo systemctl enable --now hostsblock.timer
 ```
 
 ### Configure Postprocessing <a name="enablepostprocess"></a>
 
-**Hostsblock** does not write to `/etc/hosts` or manipulate any dns caching daemons anymore. Instead, it will just compile a hosts-formatted file to `/var/lib/hostsblock/hosts.block`. To make this file actually do work, you have one of two options:
+**Hostsblock** does not write to `/etc/hosts` or manipulate any DNS caching daemons anymore. Instead, it will just compile a hosts-formatted file to `/var/lib/hostsblock/hosts.block`. To make this file actually do work, you have one of two options:
 
 #### OPTION 1: Using a DNS Caching Daemon (Here: dnsmasq)
 
@@ -250,14 +250,14 @@ addn-hosts=/var/lib/hostsblock/hosts.block
 Enable and start `hostsblock-dnsmasq-restart.path`:
 
 ```sh
-$ systemctl enable --now hostsblock-dnsmasq-restart.path
+$ sudo systemctl enable --now hostsblock-dnsmasq-restart.path
 ```
 
 This has systemd watch the target file `/var/lib/hostsblock/hosts.block` for changes and then restart `dnsmasq` whenever they are found.
 
 #### OPTION 2: Copy /var/lib/hostsblock/hosts.block to /etc/hosts
 
-It is possible to have `systemd` copy the generated file over to `/etc/hosts`.
+It is possible to have `systemd` copy over the generated file to `/etc/hosts`.
 
 Configure `hostshead=` in `hostsblock.conf` to make sure you don't remove the default system loopback address(es), e.g.:
 
@@ -268,15 +268,15 @@ hostshead="/var/lib/hostsblock/hosts.head"
 Then put your necessary loopback entries in `/var/lib/hostsblock/hosts.head`. For example, you can copy over your existing `/etc/hosts` to this file:
 
 ```sh
-$ cp /etc/hosts /var/lib/hostsblock/hosts.head
-$ chown hostsblock:hostsblock /var/lib/hostsblock/hosts.head
-$ chmod 600 /var/lib/hostsblock/hosts.head
+$ sudo cp /etc/hosts /var/lib/hostsblock/hosts.head
+$ sudo chown hostsblock:hostsblock /var/lib/hostsblock/hosts.head
+$ sudo chmod 600 /var/lib/hostsblock/hosts.head
 ```
 
 Enable and start `hostsblock-hosts-clobber.path`:
 
 ```sh
-$ systemctl enable --now hostsblock-hosts-clobber.path
+$ sudo systemctl enable --now hostsblock-hosts-clobber.path
 ```
 
 This has systemd watch the target file `/var/lib/hostsblock/hosts.block` for changes and then copy `/var/lib/hostsblock/hosts.block` to `/etc/hosts`.
@@ -299,14 +299,14 @@ To do so, edit `sudoers` by typing `sudo visudo` and add the following line to t
 Add any users you want to be able to manually execute or use the urlcheck mode to the `hostsblock` group:
 
 ```sh
-$ gpasswd -a [MY USER NAME] hostsblock
+$ sudo gpasswd -a [MY USER NAME] hostsblock
 ```
 
 The wrapper script installed in your PATH will automatically use sudo to execute the main script as the user `hostsblock`.
 
 ### hostsblock [OPTION...] - download and combine HOSTS files <a name="manual"></a>
 
-Without the `-c URL` option, hostsblock will check to see if its monitored blocklists have changed. If it detects changes in them (or if forced by the `-u` flag), it will download the changed blocklist(s) and recompile the target HOSTS file.
+Without the `-c URL` option, hostsblock will check to see if its monitored blocklists have changed. If it detects changes (or if forced by the `-u` flag), it will download the changed blocklist(s) and recompile the target HOSTS file.
 
 ```conf
 Help Options:
@@ -326,7 +326,7 @@ With the `-c URL` flag option, hostsblock can check and manipulate how it handle
 
 ***Note: The `hostsblock-urlcheck` symlink is now officially depreciated. Use `hostsblock -c` instead.***
 
-In addition to the above options, the following commands and subcommands can be use with `hostsblock -c URL`:
+In addition to the above options, the following commands and subcommands can be used with `hostsblock -c URL`:
 
 ```conf
 hostsblock -c URL (urlCheck) Commands:
@@ -344,7 +344,7 @@ hostsblock -c URL Command Subcommands:
                         With "-w", immediately unblock URL
 ```
 
-Note that the `-o` subcommand turns a command into its oppositive, e.g.
+Note that the `-o` subcommand turns a command into its opposite, e.g.
 
 -   `hostsblock -c URL -b -o` **un**blocks URL
 -   `hostsblock -c URL -l -o` **removes** URL from the blacklist
@@ -427,9 +427,9 @@ For existing hostsblock users, please note the following changes in version 0.99
 
 #### Changes in `hostsblock.conf`
 
-Due to the shift to POSIX-shell compatibility, the list of blocklists to be downloaded cannot be held in `hostsblock.conf` via the `blocklists=` parameter. Instead, this parameter contains the path to a file that contains the list of urls, e.g. `/var/lib/hostsblock/block.urls`.
+Due to the shift to POSIX-shell compatibility, the list of blocklists to be downloaded cannot be held in `hostsblock.conf` via the `blocklists=` parameter. Instead, this parameter contains the path to a file that contains the list of URLs, e.g. `/var/lib/hostsblock/block.urls`.
 
-The new block.urls file is simply a newline separated list of urls *with no quotations*. Whitespace and text after # are ignored. An example block.urls file could look like this:
+The new block.urls file is simply a newline separated list of URLs *without quotations*. Whitespace and text after # are ignored. An example block.urls file could look like this:
 
 ```conf
 http://hosts-file.net/download/hosts.zip # General blocking meta-list
@@ -476,7 +476,7 @@ Hostsblock comes with systemd service files that replicate the most common scena
 *   User-facing command now a wrapper script that handles `sudo` execution for the user, reducing configuration demands
 *   Significant performance improvements by moving from incremental to mass handling of domain names
 *   [Added noninteractive commands `-s` (status), `-b` (block), `-l` (blacklist), `-w` (whitelist), `-b -o` (unblock), `-l -o` (deblacklist), `-w -o` (dewhitelist)](#urlcheck)
-*   Interactive and noninteractive commands can now recursively handle urls contained in target page (with `-r` subcommand), and even target just blocked domains (with `-k` subcommand)
+*   Interactive and noninteractive commands can now recursively handle URLs contained in target page (with `-r` subcommand), and even target just blocked domains (with `-k` subcommand)
 *   To minimize repeated writes, changes to target hosts file now don't write to file until after the whole process completes
 
 ## License <a name="license"></a>
