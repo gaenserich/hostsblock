@@ -28,6 +28,8 @@ https://raw.githubusercontent.com/StevenBlack/hosts/master/data/add.Spam/hosts
 
 https://v.firebog.net/hosts/static/w3kbl.txt
 
+https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt
+
   ## The following have a moderate likelihood to interfere with browsing
 
 #https://v.firebog.net/hosts/BillStearns.txt
