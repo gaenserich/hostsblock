@@ -683,6 +683,7 @@ _job() {
 ################### MAIN PROCESS COMMON TO URLCHECK AND JOB ###################
 
 # VARIABLE DEFAULTS
+command -v getent >/dev/null 2>&1 && HOME="$(getent passwd hostsblock | cut -d: -f6)"
 HOME="${HOME:-/var/lib/hostsblock}"
 hostsfile="$HOME/hosts.block"
 redirecturl='0.0.0.0'

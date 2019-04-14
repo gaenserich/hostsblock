@@ -14,7 +14,7 @@ _mkdir() {
 
 _install() {
     #$1 = source; $2 = destination; $3 = chmod hex $4 = owner:group
-    sed -e "s/%PREFIX%/$PREFIX/g" -e "s/%SYSTEMCTLPATH%/$SYSTEMCTLPATH/g" -e "s/%SHPATH%/$SHPATH/g" -e "s/%_HOME%/$_HOME/g" "$1" > "$2"
+    sed -e "s|%PREFIX%|$PREFIX|g" -e "s|%SYSTEMCTLPATH%|$SYSTEMCTLPATH|g" -e "s|%SHPATH%|$SHPATH|g" -e "s|%_HOME%|$_HOME|g" "$1" > "$2"
     chmod "$3" "$2"
     chown "$4" "$2"
 }
@@ -59,6 +59,12 @@ if [ ! -x "$SHPATH" ]; then
         fi
     fi
 fi
+_getent_home=$(getent passwd hostsblock | cut -f6 -d:)
+if printf %s "$_getent_home" | grep -q "[[:alnum:]]"; then
+    _HOME="${_HOME:-$_getent_home}"
+else
+    _HOME="${_HOME:-/var/lib/hostsblock}"
+fi
 
 if [ "$1" != "install" ]; then
 # Warning
@@ -80,13 +86,17 @@ Variables effecting installation:
  \$SHPATH (currently $SHPATH): where hostsblock and its systemd unit
   files will look for the shell command. (Hint: Point this to dash instead
   of bash if you want a performance boost)
+ \$_HOME (currently $_HOME): the home folder for user hostsblock. If a
+  hostsblock user already exists with a different home directory, the
+  new directory will be created designated as the hostsblock user's
+  home directory, abandoning the previous directory
 
 If you are read to install, execute '$0 install'"
  exit 0
 fi
 
 # Check if this script is running as root.
-if [ "$$(id -un)" != "root" ]; then
+if [ "$(id -un)" != "root" ]; then
     _msg "Run this script as root or via sudo, e.g. sudo $0 install"
     exit 2
 fi
@@ -108,15 +118,21 @@ if ! ( command -v 7zr >/dev/null 2>&1 || command -v 7za >/dev/null 2>&1 || comma
 fi
 
 # Check for/create hostsblock user
-if ! getent user hostsblock >/dev/null 2>&1 && ! getent group hostsblock >/dev/null 2>&1; then
-    useradd -m -d /var/lib/hostsblock -s /bin/sh -U hostsblock
-elif ! getent user hostsblock >/dev/null 2>&1; then
-    useradd -m -d /var/lib/hostsblock -s /bin/sh -G hostsblock hostsblock
+if ! getent passwd hostsblock >/dev/null 2>&1 && ! getent group hostsblock >/dev/null 2>&1; then
+    useradd -m -d "$_HOME" -s /bin/sh -U hostsblock
+elif ! getent passwd hostsblock >/dev/null 2>&1; then
+    useradd -m -d "$_HOME" -s /bin/sh -G hostsblock hostsblock
 elif ! getent group hostsblock >/dev/null 2>&1; then
     groupadd hostsblock
+fi
+
+if ! getent group hostsblock | cut -d: -f4 | grep -q "\bhostsblock\b"; then
     gpasswd -a hostsblock hostsblock
 fi
-_HOME=$(getent passwd hostsblock | cut -f6 -d:)
+
+if [ "$(getent passwd hostsblock | cut -d: -f6 )" != "$_HOME" ]; then
+    usermod -d "$_HOME" hostsblock
+fi
 
 # Install config examples into home directory
 _mkdir "$_HOME" 755 hostsblock:hostsblock
