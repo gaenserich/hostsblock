@@ -547,7 +547,12 @@ $(_urlcheck_scrape_url "$3")"
 _job() {
     # CHECK FOR OPTIONAL DECOMPRESSION DEPENDENCIES, SET UP FUNCTIONS THEREOF
     # THAT DUMP TO STDOUT
-    if command -v unzip >/dev/null 2>&1; then
+    if command -v bsdtar >/dev/null 2>&1; then
+        _unzip_available=1
+        _unzip() {
+            bsdtar $_v_bsdtar -Oxf "$1" -- | _sanitize
+        }
+    elif command -v unzip >/dev/null 2>&1; then
         _unzip_available=1
         _unzip() {
             if unzip -l "$1" | tail -n1 | grep -q "\b1 file\b"; then
@@ -566,6 +571,11 @@ _job() {
         _notify 1 "Dearchiver for zip NOT FOUND. Optional functions which use this format will be skipped."
         _unzip_available=0
     fi
+    if command -v bsdtar >/dev/null 2>&1; then
+        _un7zip_available=1
+        _un7zip() {
+            bsdtar $_v_bsdtar -Oxf "$1" -- | _sanitize
+        }
     if command -v 7zr >/dev/null 2>&1; then
         _un7zip_available=1
         _7zip_bin() {
@@ -618,10 +628,9 @@ _job() {
         _job_download_list "$_url" & 
     done
     wait
-    while [ $(find "$tmpdir"/downloads -type f | wc -l) -gt 0 ]; do
+    while [ $(find "$tmpdir"/downloads -type f | wc -l) -ne 0 ]; do
         sleep 0.1
     done
-    rm -rf $_v -- "$tmpdir"/downloads
 
     # IF THERE ARE CHANGES...
     if [ -f "$tmpdir"/changed ]; then
@@ -764,16 +773,19 @@ done
 if [ $_verbosity -eq 0 ]; then
     _v=""
     _v_curl="-s"
+    _v_bsdtar=""
     _v_unzip="-qq"
     set +x
 elif [ $_verbosity -eq 1 ]; then
     _v=""
     _v_curl="-s"
+    _v_bsdtar=""
     _v_unzip="-qq"
     set +x
 elif [ $_verbosity -eq 2 ]; then
     _v="-v"
     _v_curl="-v"
+    _v_bsdtar="-v"
     _v_unzip="-v"
     set +x
 else
