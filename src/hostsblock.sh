@@ -576,43 +576,44 @@ _job() {
         _un7zip() {
             bsdtar $_v_bsdtar -Oxf "$1" -- | _sanitize
         }
-    if command -v 7zr >/dev/null 2>&1; then
-        _un7zip_available=1
-        _7zip_bin() {
-            7zr "$@"
-        }
-    elif command -v 7za >/dev/null 2>&1; then
-        _un7zip_available=1
-        _7zip_bin() {
-            7za "$@"
-        }
-    elif command -v 7z >/dev/null 2>&1; then
-        _un7zip_available=1
-        _7zip_bin() {
-            7z "$@"
-        }
     else
-        _notify 1 "Dearchiver for 7z NOT FOUND. Optional functions which use this format will be skipped."
-        _un7zip_available=0
+        if command -v 7zr >/dev/null 2>&1; then
+            _un7zip_available=1
+            _7zip_bin() {
+                7zr "$@"
+            }
+        elif command -v 7za >/dev/null 2>&1; then
+            _un7zip_available=1
+            _7zip_bin() {
+                7za "$@"
+            }
+        elif command -v 7z >/dev/null 2>&1; then
+            _un7zip_available=1
+            _7zip_bin() {
+                7z "$@"
+            }
+        else
+            _notify 1 "Dearchiver for 7z NOT FOUND. Optional functions which use this format will be skipped."
+            _un7zip_available=0
+        fi
+        if [ $_un7zip_available -eq 1 ]; then
+            _un7zip() {
+                if _7zip_bin l "$1" | \
+                  grep -A1 "^Scanning the drive for archives:" | \
+                  grep -q "^1 file\b"; then
+                    _7zip_bin e -so -- "$1" | _sanitize
+                else
+                    mkdir -p $_v -- "$tmpdir"/"${1##*/}".d
+                    _7zip_bin e -so -o "$tmpdir"/"${1##*/}".d -- "$1" && \
+                    { find "$tmpdir"/"${1##*/}".d -type f -print0 | \
+                      xargs -0 cat ; } | _sanitize
+                    _exit=$?
+                    rm -rf $_v -- "$tmpdir"/"${1##*/}".d
+                    return $_exit
+                fi
+            }
+        fi
     fi
-    if [ $_un7zip_available -eq 1 ]; then
-        _un7zip() {
-            if _7zip_bin l "$1" | \
-              grep -A1 "^Scanning the drive for archives:" | \
-              grep -q "^1 file\b"; then
-                _7zip_bin e -so -- "$1" | _sanitize
-            else
-                mkdir -p $_v -- "$tmpdir"/"${1##*/}".d
-                _7zip_bin e -so -o "$tmpdir"/"${1##*/}".d -- "$1" && \
-                { find "$tmpdir"/"${1##*/}".d -type f -print0 | \
-                  xargs -0 cat ; } | _sanitize
-                _exit=$?
-                rm -rf $_v -- "$tmpdir"/"${1##*/}".d
-                return $_exit
-            fi
-        }
-    fi
-
     # DOWNLOAD BLOCKLISTS AND/OR REDIRECT LISTS
     _notify 1 "Checking blocklists and/or redirectlists for updates..."
 
@@ -677,7 +678,7 @@ _job() {
         _notify 1 "  Appending blacklist entries..."
 
         while read _blacklistline; do
-            grep -Fqx "$redirecturl $_blacklistline" "$hostsfile" || \
+            grep -Fqx "$redirecturl $_blacklistline" "$hostsfile".new || \
               printf %s\\n "$redirecturl $_blacklistline" >> "$hostsfile".new
         done < "$blacklist" && \
         mv $_v -- "$hostsfile".new "$hostsfile" && \
