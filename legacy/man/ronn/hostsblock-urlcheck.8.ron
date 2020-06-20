@@ -10,7 +10,7 @@ Hostsblock-urlcheck is a command-line utility, written in bash, that
 allows you to block and unblock certain websites and any other domains contained
 in that website.
 
-E.g. An script to manage your Hostsblock black and whitlist.
+E.g. An script to manage your Hostsblock deny and allowlist.
 ## OPTIONS
 
 *   `-h`,:

@@ -29,7 +29,7 @@ Hostsblock also provides a command-line utility that allows you to configure how
 
 *   **Non-interactive** - Can be run as a periodic background job without needing user interaction.
 
-*   **Extensive configurability** - Allows for custom **black & white listing**, **redirection**, ~~**post-processing scripting**~~ (now provided via systemd configuration), *etc.*
+*   **Extensive configurability** - Allows for custom **deny & allow listing**, **redirection**, ~~**post-processing scripting**~~ (now provided via systemd configuration), *etc.*
 
 *   **Bandwith-efficient** - *Only* downloads blocklists that have been changed, using *http compression* when available.
 
