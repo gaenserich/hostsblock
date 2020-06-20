@@ -166,11 +166,11 @@ _urlcheck_status_url() {
         _urlcheck_is_blocked=1
     fi
     if printf %s "$are_denylisted" | grep -Fqx "$1"; then
-        _urlcheck_status_single_line="$_urlcheck_status_single_line BLACKLISTED"
+        _urlcheck_status_single_line="$_urlcheck_status_single_line DENYLISTED"
         _urlcheck_is_denylisted=1
     fi
     if printf %s "$are_allowlisted" | grep -Fqx "$1"; then
-        _urlcheck_status_single_line="$_urlcheck_status_single_line WHITELISTED"
+        _urlcheck_status_single_line="$_urlcheck_status_single_line ALLOWLISTED"
         _urlcheck_is_allowlisted=1
     fi
     if printf %s "$are_redirected" | grep -q "[[:alnum:]]" && \
@@ -674,7 +674,7 @@ _job() {
             _job_extract_from_cachefiles "$redirectlists"
         fi
 
-        # APPEND BLACKLIST ENTRIES
+        # APPEND DENYLIST ENTRIES
         _notify 1 "  Appending denylist entries..."
 
         while read _denylistline; do

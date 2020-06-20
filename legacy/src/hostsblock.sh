@@ -480,7 +480,7 @@ else
                 _notify 1 "FAILED to compile redirect entries into $hostsfile."
         fi
 
-        # APPEND BLACKLIST ENTRIES
+        # APPEND DENYLIST ENTRIES
         while read _denylistline; do
             echo "$redirecturl $_denylistline \! $denylist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
             grep -Fqx "$_denylistline" "$hostsfile" || echo "$redirecturl $_denylistline" >> "$hostsfile"
