@@ -308,23 +308,23 @@ In addition to the above options, the following commands and subcommands can be 
 hostsblock -c URL (urlCheck) Commands:
   -s [-r -k]            State how hostblock modifies URL
   -b [-o -r]            Temporarily (un)block URL
-  -l [-o -r -b]         Add/remove URL to/from denylist
-  -w [-o -r -b]         Add/remove URL to/from allowlist
+  -e [-o -r -b]         Add/remove URL to/from denylist
+  -a [-o -r -b]         Add/remove URL to/from allowlist
   -i [-o -r -k]         Interactively inspect URL
 
 hostsblock -c URL Command Subcommands:
   -r                    COMMAND recurses to all domains on URL's page
   -k                    COMMAND recurses for all BLOCKED domains on page
   -o                    Perform opposite of COMMAND (e.g UNblock)
-  -b                    With "-l", immediately block URL
-                        With "-w", immediately unblock URL
+  -b                    With "-e", immediately block URL
+                        With "-a", immediately unblock URL
 ```
 
 Note that the `-o` subcommand turns a command into its opposite, e.g.
 
 -   `hostsblock -c URL -b -o` **un**blocks URL
--   `hostsblock -c URL -l -o` **removes** URL from the denylist
--   `hostsblock -c URL -w -o` **removes** URL from the allowlist
+-   `hostsblock -c URL -e -o` **removes** URL from the denylist
+-   `hostsblock -c URL -a -o` **removes** URL from the allowlist
 
 #### Examples: <a name="examples"></a>
 
@@ -354,12 +354,12 @@ $ hostsblock -c "http://github.com/gaenserich/hostsblock" -s -k
 $ hostsblock -c "http://github.com/gaenserich/hostsblock" -b
 ```
 
-Note that "blocking" (and "unblocking", i.e. `-b -o`) a domain only works until the next time hostsblock refreshes `/var/lib/hostsfile/hosts.block`, unless you use a blocklist that does include it. To permanently block this domain, use the denylist (`-l`) command.
+Note that "blocking" (and "unblocking", i.e. `-b -o`) a domain only works until the next time hostsblock refreshes `/var/lib/hostsfile/hosts.block`, unless you use a blocklist that does include it. To permanently block this domain, use the denylist (`-e`) command.
 
 ##### Permanently block (denylist) the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
 ```sh
-$ hostsblock -c "http://github.com/gaenserich/hostsblock" -l
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -e
 ```
 
 Note that "denylisting" on its own will not block the target domain until hostblock refreshes. You can combine both "blocking" and "denylisting" in one command, however:
@@ -367,7 +367,7 @@ Note that "denylisting" on its own will not block the target domain until hostbl
 ##### Permanently and immediately block the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
 ```sh
-$ hostsblock -c "http://github.com/gaenserich/hostsblock" -l -b
+$ hostsblock -c "http://github.com/gaenserich/hostsblock" -e -b
 ```
 
 ##### Temporarily unblock all blocked domains on "http://github.com/gaenserich/hostsblock" (helpful if the page isn't working quite right):
@@ -455,7 +455,7 @@ Hostsblock comes with systemd service files that replicate the most common scena
 ##### UrlCheck Mode Improvements
 *   User-facing command now a wrapper script that handles `sudo` execution for the user, reducing configuration demands
 *   Significant performance improvements by moving from incremental to mass handling of domain names
-*   [Added noninteractive commands `-s` (status), `-b` (block), `-l` (denylist), `-w` (allowlist), `-b -o` (unblock), `-l -o` (dedenylist), `-w -o` (deallowlist)](#urlcheck)
+*   [Added noninteractive commands `-s` (status), `-b` (block), `-e` (denylist), `-a` (allowlist), `-b -o` (unblock), `-e -o` (dedenylist), `-a -o` (deallowlist)](#urlcheck)
 *   Interactive and noninteractive commands can now recursively handle URLs contained in target page (with `-r` subcommand), and even target just blocked domains (with `-k` subcommand)
 *   To minimize repeated writes, changes to target hosts file now don't write to file until after the whole process completes
 

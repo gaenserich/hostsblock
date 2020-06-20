@@ -717,7 +717,7 @@ _urlcheck_block_01=0
 _urlcheck_command="status"
 
 # GET OPTIONS
-while getopts "f:qvduc:sblwirko" _option; do
+while getopts "f:qvduc:sbeairko" _option; do
     case "$_option" in
         f)  [ "$OPTARG" != "" ] && _configfile="$OPTARG";;
         q)  _verbosity=0;;
@@ -727,8 +727,8 @@ while getopts "f:qvduc:sblwirko" _option; do
         c)  [ "$OPTARG" != "" ] && _URL="$OPTARG";;
         s)  _urlcheck_command="status";;
         b)  _urlcheck_block_01=1;;
-        l)  _urlcheck_command="denylist";;
-        w)  _urlcheck_command="allowlist";;
+        e)  _urlcheck_command="denylist";;
+        a)  _urlcheck_command="allowlist";;
         i)  _urlcheck_command="inspect";;
         r)  _urlcheck_recursive=1;;
         k)  _urlcheck_recursive=2;;
@@ -754,16 +754,16 @@ Options:
 $0 -c URL (urlCheck) Commands:
   -s [-r -k]            State how hostblock modifies URL
   -b [-o -r]            Temporarily (un)block URL
-  -l [-o -r -b]         Add/remove URL to/from denylist
-  -w [-o -r -b]         Add/remove URL to/from allowlist
+  -e [-o -r -b]         Add/remove URL to/from denylist
+  -a [-o -r -b]         Add/remove URL to/from allowlist
   -i [-o -r -k]         Interactively inspect URL
 
 $0 -c URL Command Subcommands:
   -r                    COMMAND recurses to all domains on URL's page
   -k                    COMMAND recurses for all BLOCKED domains on page
   -o                    Perform opposite of COMMAND (e.g UNblock)
-  -b                    With "-l", immediately block URL
-                        With "-w", immediately unblock URL
+  -b                    With "-e", immediately block URL
+                        With "-a", immediately unblock URL
 EOF
             exit 1
         ;;
