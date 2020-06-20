@@ -163,8 +163,8 @@ postprocess() {
      /bin/true
 }
 blocklists=("http://support.it-mate.co.uk/downloads/HOSTS.txt")
-denylist="$HOME/black.list"
-allowlist="$HOME/white.list"
+denylist="$HOME/deny.list"
+allowlist="$HOME/allow.list"
 hostshead="0"
 cachedir="$HOME/cache"
 pigz_opt="-9"

@@ -144,7 +144,7 @@ Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. T
 # domain, e.g. "google.com", but also the specific subdomain a la
 # "adwords.google.com" without quotations.
 
-#denylist="$HOME/black.list" # DEFAULT
+#denylist="$HOME/deny.list" # DEFAULT
 
 
 # ALLOWLIST. File containing the specific subdomains to allow through that may
@@ -156,7 +156,7 @@ Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. T
 # through "www.dropbox.com", "dl.www.dropbox.com", "foo.dropbox.com",
 # "bar.dropbox.com", etc.
 
-#allowlist="$HOME/white.list"
+#allowlist="$HOME/allow.list"
 
 
 # CONNECT_TIMEOUT. Parameter passed to curl. Determines how long to try to
