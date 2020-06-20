@@ -139,12 +139,12 @@ Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. T
 #hostshead="0" # DEFAULT
 
 
-# BLACKLISTED SUBDOMAINS. File containing specific subdomains to blacklist which
-# may not be in the downloaded blacklists. Be sure to provide not just the
+# BLACKLISTED SUBDOMAINS. File containing specific subdomains to denylist which
+# may not be in the downloaded denylists. Be sure to provide not just the
 # domain, e.g. "google.com", but also the specific subdomain a la
 # "adwords.google.com" without quotations.
 
-#blacklist="$HOME/black.list" # DEFAULT
+#denylist="$HOME/black.list" # DEFAULT
 
 
 # WHITELIST. File containing the specific subdomains to allow through that may
@@ -156,7 +156,7 @@ Most of the hostsblock configuration is done in the [`hostsblock.conf`][conf]. T
 # through "www.dropbox.com", "dl.www.dropbox.com", "foo.dropbox.com",
 # "bar.dropbox.com", etc.
 
-#whitelist="$HOME/white.list"
+#allowlist="$HOME/white.list"
 
 
 # CONNECT_TIMEOUT. Parameter passed to curl. Determines how long to try to
@@ -308,8 +308,8 @@ In addition to the above options, the following commands and subcommands can be 
 hostsblock -c URL (urlCheck) Commands:
   -s [-r -k]            State how hostblock modifies URL
   -b [-o -r]            Temporarily (un)block URL
-  -l [-o -r -b]         Add/remove URL to/from blacklist
-  -w [-o -r -b]         Add/remove URL to/from whitelist
+  -l [-o -r -b]         Add/remove URL to/from denylist
+  -w [-o -r -b]         Add/remove URL to/from allowlist
   -i [-o -r -k]         Interactively inspect URL
 
 hostsblock -c URL Command Subcommands:
@@ -323,14 +323,14 @@ hostsblock -c URL Command Subcommands:
 Note that the `-o` subcommand turns a command into its opposite, e.g.
 
 -   `hostsblock -c URL -b -o` **un**blocks URL
--   `hostsblock -c URL -l -o` **removes** URL from the blacklist
--   `hostsblock -c URL -w -o` **removes** URL from the whitelist
+-   `hostsblock -c URL -l -o` **removes** URL from the denylist
+-   `hostsblock -c URL -w -o` **removes** URL from the allowlist
 
 #### Examples: <a name="examples"></a>
 
 Once you have configured `sudo`, you can execute the following as any user in the `hostsblock` group:
 
-##### See if "http://github.com/gaenserich/hostsblock" is blocked, blacklisted, whitelisted, or redirected by hostsblock:
+##### See if "http://github.com/gaenserich/hostsblock" is blocked, denylisted, allowlisted, or redirected by hostsblock:
 
 ```sh
 $ hostsblock -c "http://github.com/gaenserich/hostsblock" -s
@@ -354,15 +354,15 @@ $ hostsblock -c "http://github.com/gaenserich/hostsblock" -s -k
 $ hostsblock -c "http://github.com/gaenserich/hostsblock" -b
 ```
 
-Note that "blocking" (and "unblocking", i.e. `-b -o`) a domain only works until the next time hostsblock refreshes `/var/lib/hostsfile/hosts.block`, unless you use a blocklist that does include it. To permanently block this domain, use the blacklist (`-l`) command.
+Note that "blocking" (and "unblocking", i.e. `-b -o`) a domain only works until the next time hostsblock refreshes `/var/lib/hostsfile/hosts.block`, unless you use a blocklist that does include it. To permanently block this domain, use the denylist (`-l`) command.
 
-##### Permanently block (blacklist) the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
+##### Permanently block (denylist) the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
 ```sh
 $ hostsblock -c "http://github.com/gaenserich/hostsblock" -l
 ```
 
-Note that "blacklisting" on its own will not block the target domain until hostblock refreshes. You can combine both "blocking" and "blacklisting" in one command, however:
+Note that "denylisting" on its own will not block the target domain until hostblock refreshes. You can combine both "blocking" and "denylisting" in one command, however:
 
 ##### Permanently and immediately block the domain containing "http://github.com/gaenserich/hostsblock" (that is, "github.com"):
 
@@ -376,7 +376,7 @@ $ hostsblock -c "http://github.com/gaenserich/hostsblock" -l -b
 $ hostsblock -c "http://github.com/gaenserich/hostsblock" -b -o -k
 ```
 
-##### Interactively scan through "http://github.com/gaenserich/hostsblock", prompting you if you want the domains referenced therein to be blocked, blacklisted, or whitelisted
+##### Interactively scan through "http://github.com/gaenserich/hostsblock", prompting you if you want the domains referenced therein to be blocked, denylisted, or allowlisted
 
 ```sh
 $ hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
@@ -393,7 +393,7 @@ $ hostsblock -c "http://github.com/gaenserich/hostsblock" -i -r
 
 *   Hostsblock's systemd job fails with error "FAILED TO COMPILE BLOCK/REDIRECT ENTRIES FROM [...]" and leaves an empty `hosts.block.new` file.
 
-    *   You may have a blank line with a single space in your whitelist. Hostsblock matches that line with the space in between the IP address and the domain name that every single line has, i.e. it matches every single would-be entry in your target file. Remove the empty line, and hostsblock will function as expected.
+    *   You may have a blank line with a single space in your allowlist. Hostsblock matches that line with the space in between the IP address and the domain name that every single line has, i.e. it matches every single would-be entry in your target file. Remove the empty line, and hostsblock will function as expected.
 
 ## News & Bugs <a name="news"></a>
 
@@ -455,7 +455,7 @@ Hostsblock comes with systemd service files that replicate the most common scena
 ##### UrlCheck Mode Improvements
 *   User-facing command now a wrapper script that handles `sudo` execution for the user, reducing configuration demands
 *   Significant performance improvements by moving from incremental to mass handling of domain names
-*   [Added noninteractive commands `-s` (status), `-b` (block), `-l` (blacklist), `-w` (whitelist), `-b -o` (unblock), `-l -o` (deblacklist), `-w -o` (dewhitelist)](#urlcheck)
+*   [Added noninteractive commands `-s` (status), `-b` (block), `-l` (denylist), `-w` (allowlist), `-b -o` (unblock), `-l -o` (dedenylist), `-w -o` (deallowlist)](#urlcheck)
 *   Interactive and noninteractive commands can now recursively handle URLs contained in target page (with `-r` subcommand), and even target just blocked domains (with `-k` subcommand)
 *   To minimize repeated writes, changes to target hosts file now don't write to file until after the whole process completes
 

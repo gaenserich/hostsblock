@@ -61,7 +61,7 @@ _job_extract_from_cachefiles() {
             fi
         fi 
     done | sort -u | grep -ve " localhost$" -ve " localhost\.localdomain$" -ve " broadcasthost$" -ve ".* .* .*" | \
-      grep -Fvf "$whitelist" >> "$hostsfile".new
+      grep -Fvf "$allowlist" >> "$hostsfile".new
     if [ $? -ne 0 ]; then
         _notify 0 "FAILED TO COMPILE BLOCK/REDIRECT ENTRIES FROM URLS IN $1 INTO $hostsfile. EXITING..."
         exit 2
@@ -91,7 +91,7 @@ _urlcheck_scrape_url() {
 ## Get information about a given list of complete domain names
 _urlcheck_status_lines() {
     # $1 = line break-split list of complete domain names to inspect
-    # $2 = status to inspect, e.g. block, blacklist, whitelist, redirect
+    # $2 = status to inspect, e.g. block, denylist, allowlist, redirect
     # Outputs "are_" variables (line break-split list of complete domain
     #  names) for each parameter
     case "$2" in
@@ -105,22 +105,22 @@ _urlcheck_status_lines() {
               cut -d' ' -f2)"
             rm -f $_v "$tmpdir"/are-not-blocked.grep
         ;;
-        blacklist)
-            are_not_blacklisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
-              grep -Fxvf "$blacklist" | \
-              tee -a "$tmpdir"/are-not-blacklisted.grep)"
-            are_blacklisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
-              grep -Fxvf "$tmpdir"/are-not-blacklisted.grep)"
-            rm -f $_v "$tmpdir"/are-not-blacklisted.grep
+        denylist)
+            are_not_denylisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              grep -Fxvf "$denylist" | \
+              tee -a "$tmpdir"/are-not-denylisted.grep)"
+            are_denylisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              grep -Fxvf "$tmpdir"/are-not-denylisted.grep)"
+            rm -f $_v "$tmpdir"/are-not-denylisted.grep
         ;;
-        whitelist)
-            are_not_whitelisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
-              sed "s/^/ /g" | grep -Fxvf "$whitelist" | \
-              tee -a "$tmpdir"/are-not-whitelisted.grep | cut -d' ' -f2)"
-            are_whitelisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
-              sed "s/^/ /g" | grep -Fxvf "$tmpdir"/are-not-whitelisted.grep |\
+        allowlist)
+            are_not_allowlisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              sed "s/^/ /g" | grep -Fxvf "$allowlist" | \
+              tee -a "$tmpdir"/are-not-allowlisted.grep | cut -d' ' -f2)"
+            are_allowlisted="$(printf %s "$1" | grep "[[:alnum:]]" | \
+              sed "s/^/ /g" | grep -Fxvf "$tmpdir"/are-not-allowlisted.grep |\
               cut -d' ' -f2)"
-            rm -f $_v "$tmpdir"/are-not-whitelisted.grep
+            rm -f $_v "$tmpdir"/are-not-allowlisted.grep
         ;;
         redirect)
             # separate out just redirections from hostsfile
@@ -142,13 +142,13 @@ _urlcheck_status_lines() {
         ;;
         inspect)
             _urlcheck_status_lines "$1" block
-            _urlcheck_status_lines "$1" blacklist
-            _urlcheck_status_lines "$1" whitelist
+            _urlcheck_status_lines "$1" denylist
+            _urlcheck_status_lines "$1" allowlist
         ;;
         status)
             _urlcheck_status_lines "$1" block
-            _urlcheck_status_lines "$1" blacklist
-            _urlcheck_status_lines "$1" whitelist
+            _urlcheck_status_lines "$1" denylist
+            _urlcheck_status_lines "$1" allowlist
             _urlcheck_status_lines "$1" redirect
         ;;
     esac
@@ -157,21 +157,21 @@ _urlcheck_status_lines() {
 _urlcheck_status_url() {
     # $1 = single complete domain name to inspect
     _urlcheck_is_blocked=0
-    _urlcheck_is_blacklisted=0
-    _urlcheck_is_whitelisted=0
+    _urlcheck_is_denylisted=0
+    _urlcheck_is_allowlisted=0
     _urlcheck_is_redirected=0
     _urlcheck_status_single_line="$1:"
     if printf %s "$are_blocked" | grep -Fqx "$1"; then
         _urlcheck_status_single_line="$_urlcheck_status_single_line BLOCKED"
         _urlcheck_is_blocked=1
     fi
-    if printf %s "$are_blacklisted" | grep -Fqx "$1"; then
+    if printf %s "$are_denylisted" | grep -Fqx "$1"; then
         _urlcheck_status_single_line="$_urlcheck_status_single_line BLACKLISTED"
-        _urlcheck_is_blacklisted=1
+        _urlcheck_is_denylisted=1
     fi
-    if printf %s "$are_whitelisted" | grep -Fqx "$1"; then
+    if printf %s "$are_allowlisted" | grep -Fqx "$1"; then
         _urlcheck_status_single_line="$_urlcheck_status_single_line WHITELISTED"
-        _urlcheck_is_whitelisted=1
+        _urlcheck_is_allowlisted=1
     fi
     if printf %s "$are_redirected" | grep -q "[[:alnum:]]" && \
       printf %s "$are_not_redirected" | grep -q "[[:alnum:]]"; then
@@ -184,8 +184,8 @@ _urlcheck_status_url() {
         _urlcheck_status_single_line="$_urlcheck_status_single_line not managed"
 }
 
-## _urlcheck_*_lines: do the selected action (block, blacklist,
-##  whitelist, and their opposites) to a list (in a string)
+## _urlcheck_*_lines: do the selected action (block, denylist,
+##  allowlist, and their opposites) to a list (in a string)
 ##  provided via $1 split by newline
 
 _urlcheck_block_lines() {
@@ -211,45 +211,45 @@ _urlcheck_unblock_lines() {
     return $_exit
 }
 
-_urlcheck_blacklist_lines() {
-    printf %s\\n "$1" | grep "[[:alnum:]]" >> "$blacklist"
+_urlcheck_denylist_lines() {
+    printf %s\\n "$1" | grep "[[:alnum:]]" >> "$denylist"
     _exit=$?
     [ $_exit -ne 0 ] && _return=$(( $_return + 8 ))
     return $_exit
 }
 
-_urlcheck_deblacklist_lines() {
-    printf %s "$1" | grep "[[:alnum:]]" > "$tmpdir"/deblacklist-filter.grep
-    grep -Fvxf "$tmpdir"/deblacklist-filter.grep "$blacklist" \
-      > "$blacklist".new && \
-      mv -f $_v "$blacklist".new "$blacklist"
+_urlcheck_dedenylist_lines() {
+    printf %s "$1" | grep "[[:alnum:]]" > "$tmpdir"/dedenylist-filter.grep
+    grep -Fvxf "$tmpdir"/dedenylist-filter.grep "$denylist" \
+      > "$denylist".new && \
+      mv -f $_v "$denylist".new "$denylist"
     _exit=$?
     [ $_exit -ne 0 ] && _return=$(( $_return + 8 ))
-    rm -f $_v -- "$tmpdir"/deblacklist-filter.grep
+    rm -f $_v -- "$tmpdir"/dedenylist-filter.grep
     return $_exit
 }
 
-_urlcheck_whitelist_lines() {
-    printf %s\\n "$1" | grep "[[:alnum:]]" | sed "s/^/ /g" >> "$whitelist"
+_urlcheck_allowlist_lines() {
+    printf %s\\n "$1" | grep "[[:alnum:]]" | sed "s/^/ /g" >> "$allowlist"
     _exit=$?
     [ $_exit -ne 0 ] && _return=$(( $_return + 32 ))
     return $_exit
 }
 
-_urlcheck_dewhitelist_lines() {
+_urlcheck_deallowlist_lines() {
     printf %s "$1" | grep "[[:alnum:]]" | sed "s/^/ /g" \
-      > "$tmpdir"/dewhitelist-filter.grep
-    grep -Fvxf "$tmpdir"/dewhitelist-filter.grep "$whitelist" \
-      > "$whitelist".new && \
-      mv -f $_v "$whitelist".new "$whitelist"
+      > "$tmpdir"/deallowlist-filter.grep
+    grep -Fvxf "$tmpdir"/deallowlist-filter.grep "$allowlist" \
+      > "$allowlist".new && \
+      mv -f $_v "$allowlist".new "$allowlist"
     _exit=$?
     [ $_exit -ne 0 ] && _return=$(( $_return + 32 ))
-    rm -f $_v -- "$tmpdir"/dewhitelist-filter.grep
+    rm -f $_v -- "$tmpdir"/deallowlist-filter.grep
     return $_exit
 }
 
 ## _urlcheck_*_dialog: Provides feedback and exit code info
-##  for select actions (block, blacklist, whitelist, and their
+##  for select actions (block, denylist, allowlist, and their
 ##  opposites). Input is string list, separated by newlines, via $1
 
 _urlcheck_block_dialog() {
@@ -288,76 +288,76 @@ _urlcheck_unblock_dialog() {
     fi
 }
 
-_urlcheck_blacklist_dialog() {
-    _urlcheck_status_lines "$1" blacklist
-    if printf %s "$are_not_blacklisted" | grep -q "[[:alnum:]]"; then
-        _urlcheck_blacklist_lines "$are_not_blacklisted"
+_urlcheck_denylist_dialog() {
+    _urlcheck_status_lines "$1" denylist
+    if printf %s "$are_not_denylisted" | grep -q "[[:alnum:]]"; then
+        _urlcheck_denylist_lines "$are_not_denylisted"
         if [ $? -eq 0 ]; then
-            [ $_verbosity -ge 1 ] && printf %s\\n "$are_not_blacklisted" | \
-              sed "s|$| added to blacklist|g" 1>&2
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_not_denylisted" | \
+              sed "s|$| added to denylist|g" 1>&2
         else
-            _notify 0 "Blacklisting failed."
+            _notify 0 "Denylisting failed."
         fi
     fi
     if [ $_verbosity -ge 1 ] && \
-      printf %s "$are_blacklisted" | grep -q "[[:alnum:]]"; then
-        printf %s\\n "$are_blacklisted" | sed "s|$| already in blacklist|g" 1>&2
+      printf %s "$are_denylisted" | grep -q "[[:alnum:]]"; then
+        printf %s\\n "$are_denylisted" | sed "s|$| already in denylist|g" 1>&2
         _return=$(( $_return + 16 ))
     fi
 }
 
-_urlcheck_deblacklist_dialog() {
-    _urlcheck_status_lines "$1" blacklist
-    if printf %s "$are_blacklisted" | grep -q "[[:alnum:]]"; then
-        _urlcheck_deblacklist_lines "$are_blacklisted"
+_urlcheck_dedenylist_dialog() {
+    _urlcheck_status_lines "$1" denylist
+    if printf %s "$are_denylisted" | grep -q "[[:alnum:]]"; then
+        _urlcheck_dedenylist_lines "$are_denylisted"
         if [ $? -eq 0 ]; then
-            [ $_verbosity -ge 1 ] && printf %s\\n "$are_blacklisted" | \
-              sed "s|$| removed from blacklist|g" 1>&2
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_denylisted" | \
+              sed "s|$| removed from denylist|g" 1>&2
         else
-            _notify 0 "Deblacklisting failed."
+            _notify 0 "Dedenylisting failed."
         fi
     fi
     if [ $_verbosity -ge 1 ] && \
-      printf %s "$are_not_blacklisted" | grep -q "[[:alnum:]]"; then
-        printf %s\\n "$are_not_blacklisted" | \
-          sed "s|$| already removed from blacklist|g" 1>&2
+      printf %s "$are_not_denylisted" | grep -q "[[:alnum:]]"; then
+        printf %s\\n "$are_not_denylisted" | \
+          sed "s|$| already removed from denylist|g" 1>&2
         _return=$(( $_return + 4 ))
     fi
 }
 
-_urlcheck_whitelist_dialog() {
-    _urlcheck_status_lines "$1" whitelist
-    if printf %s "$are_not_whitelisted" | grep -q "[[:alnum:]]"; then
-        _urlcheck_whitelist_lines "$are_not_whitelisted"
+_urlcheck_allowlist_dialog() {
+    _urlcheck_status_lines "$1" allowlist
+    if printf %s "$are_not_allowlisted" | grep -q "[[:alnum:]]"; then
+        _urlcheck_allowlist_lines "$are_not_allowlisted"
         if [ $? -eq 0 ]; then
-            [ $_verbosity -ge 1 ] && printf %s\\n "$are_not_whitelisted" | \
-              sed "s|$| added to whitelist|g" 1>&2
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_not_allowlisted" | \
+              sed "s|$| added to allowlist|g" 1>&2
         else
-            _notify 0 "Whitelisting failed."
+            _notify 0 "Allowlisting failed."
         fi
     fi
-    if [ $_verbosity -ge 1 ] && printf %s "$are_whitelisted" | \
+    if [ $_verbosity -ge 1 ] && printf %s "$are_allowlisted" | \
       grep -q "[[:alnum:]]"; then
-        printf %s\\n "$are_whitelisted" | sed "s|$| already in whitelist|g" 1>&2
+        printf %s\\n "$are_allowlisted" | sed "s|$| already in allowlist|g" 1>&2
         _return=$(( $_return + 16 ))
     fi
 }
 
-_urlcheck_dewhitelist_dialog() {
-    _urlcheck_status_lines "$1" whitelist
-    if printf %s "$are_whitelisted" | grep -q "[[:alnum:]]"; then
-        _urlcheck_dewhitelist_lines "$are_whitelisted"
+_urlcheck_deallowlist_dialog() {
+    _urlcheck_status_lines "$1" allowlist
+    if printf %s "$are_allowlisted" | grep -q "[[:alnum:]]"; then
+        _urlcheck_deallowlist_lines "$are_allowlisted"
         if [ $? -eq 0 ]; then
-            [ $_verbosity -ge 1 ] && printf %s\\n "$are_whitelisted" | \
-              sed "s|$| removed from whitelist|g" 1>&2
+            [ $_verbosity -ge 1 ] && printf %s\\n "$are_allowlisted" | \
+              sed "s|$| removed from allowlist|g" 1>&2
         else
-            _notify 0 "Dewhitelisting failed."
+            _notify 0 "Deallowlisting failed."
         fi
     fi
-    if [ $_verbosity -ge 1 ] && printf %s "$are_not_whitelisted" | \
+    if [ $_verbosity -ge 1 ] && printf %s "$are_not_allowlisted" | \
       grep -q "[[:alnum:]]"; then
-        printf %s\\n "$are_not_whitelisted" | \
-          sed "s|$| already removed from whitelist|g" 1>&2
+        printf %s\\n "$are_not_allowlisted" | \
+          sed "s|$| already removed from allowlist|g" 1>&2
         _return=$(( $_return + 4 ))
     fi
 }
@@ -368,10 +368,10 @@ _urlcheck_inspect() {
     # the $are_* variables are available
     _urlcheck_to_be_blocked=""
     _urlcheck_to_be_unblocked=""
-    _urlcheck_to_be_blacklisted=""
-    _urlcheck_to_be_deblacklisted=""
-    _urlcheck_to_be_whitelisted=""
-    _urlcheck_to_be_dewhitelisted=""
+    _urlcheck_to_be_denylisted=""
+    _urlcheck_to_be_dedenylisted=""
+    _urlcheck_to_be_allowlisted=""
+    _urlcheck_to_be_deallowlisted=""
     for _urlcheck_inspect_domain in $(printf %s\\n "$1" | tr '\n' ' '); do
         _urlcheck_status_url "$_urlcheck_inspect_domain"
         _notify 0 ""
@@ -392,45 +392,45 @@ $_urlcheck_inspect_domain"
 $_urlcheck_inspect_domain"
             fi
         fi
-        _blacklist_yn="n"
-        if [ $_urlcheck_is_blacklisted -eq 0 ]; then
-            printf %s "    Blacklist (Block permanently after next update)? [y/N]: " 1>&2
-            read _blacklist_yn
-            if [ "$_blacklist_yn" = "Y" ] || [ "$_blacklist_yn" = "y" ]; then
-                _urlcheck_to_be_blacklisted="$_urlcheck_to_be_blacklisted
+        _denylist_yn="n"
+        if [ $_urlcheck_is_denylisted -eq 0 ]; then
+            printf %s "    Denylist (Block permanently after next update)? [y/N]: " 1>&2
+            read _denylist_yn
+            if [ "$_denylist_yn" = "Y" ] || [ "$_denylist_yn" = "y" ]; then
+                _urlcheck_to_be_denylisted="$_urlcheck_to_be_denylisted
 $_urlcheck_inspect_domain"
             fi
         else
-            printf %s "    Remove from blacklist? [y/N]: " 1>&2
-            read _blacklist_yn
-            if [ "$_blacklist_yn" = "Y" ] || [ "$_blacklist_yn" = "y" ]; then
-                _urlcheck_to_be_deblacklisted="$_urlcheck_to_be_deblacklisted
+            printf %s "    Remove from denylist? [y/N]: " 1>&2
+            read _denylist_yn
+            if [ "$_denylist_yn" = "Y" ] || [ "$_denylist_yn" = "y" ]; then
+                _urlcheck_to_be_dedenylisted="$_urlcheck_to_be_dedenylisted
 $_urlcheck_inspect_domain"
             fi
         fi
-        _whitelist_yn="n"
-        if [ $_urlcheck_is_whitelisted -eq 0 ]; then
-            printf %s "    Whitelist (Unblock permanently after next update)? [y/N]: " 1>&2
-            read _whitelist_yn
-            if [ "$_whitelist_yn" = "Y" ] || [ "$_whitelist_yn" = "y" ]; then
-                _urlcheck_to_be_whitelisted="$_urlcheck_to_be_whitelisted
+        _allowlist_yn="n"
+        if [ $_urlcheck_is_allowlisted -eq 0 ]; then
+            printf %s "    Allowlist (Unblock permanently after next update)? [y/N]: " 1>&2
+            read _allowlist_yn
+            if [ "$_allowlist_yn" = "Y" ] || [ "$_allowlist_yn" = "y" ]; then
+                _urlcheck_to_be_allowlisted="$_urlcheck_to_be_allowlisted
 $_urlcheck_inspect_domain"
             fi
         else
-            printf %s "    Remove from whitelist? [y/N]: " 1>&2
-            read _whitelist_yn
-            if [ "$_whitelist_yn" = "Y" ] || [ "$_whitelist_yn" = "y" ]; then
-                _urlcheck_to_be_dewhitelisted="$_urlcheck_to_be_dewhitelisted
+            printf %s "    Remove from allowlist? [y/N]: " 1>&2
+            read _allowlist_yn
+            if [ "$_allowlist_yn" = "Y" ] || [ "$_allowlist_yn" = "y" ]; then
+                _urlcheck_to_be_deallowlisted="$_urlcheck_to_be_deallowlisted
 $_urlcheck_inspect_domain" 
             fi
         fi
     done
     printf %s "$_urlcheck_to_be_blocked" | grep -q "[[:alnum:]]" && _urlcheck_block_lines "$_urlcheck_to_be_blocked"
     printf %s "$_urlcheck_to_be_unblocked" | grep -q "[[:alnum:]]" && _urlcheck_unblock_lines "$_urlcheck_to_be_unblocked"
-    printf %s "$_urlcheck_to_be_blacklisted" | grep -q "[[:alnum:]]" && _urlcheck_blacklist_lines "$_urlcheck_to_be_blacklisted"
-    printf %s "$_urlcheck_to_be_deblacklisted" | grep -q "[[:alnum:]]" && _urlcheck_deblacklist_lines "$_urlcheck_to_be_deblacklisted"
-    printf %s "$_urlcheck_to_be_whitelisted" | grep -q "[[:alnum:]]" && _urlcheck_whitelist_lines "$_urlcheck_to_be_whitelisted"
-    printf %s "$_urlcheck_to_be_dewhitelisted" | grep -q "[[:alnum:]]" && _urlcheck_dewhitelist_lines "$_urlcheck_to_be_dewhitelisted"
+    printf %s "$_urlcheck_to_be_denylisted" | grep -q "[[:alnum:]]" && _urlcheck_denylist_lines "$_urlcheck_to_be_denylisted"
+    printf %s "$_urlcheck_to_be_dedenylisted" | grep -q "[[:alnum:]]" && _urlcheck_dedenylist_lines "$_urlcheck_to_be_dedenylisted"
+    printf %s "$_urlcheck_to_be_allowlisted" | grep -q "[[:alnum:]]" && _urlcheck_allowlist_lines "$_urlcheck_to_be_allowlisted"
+    printf %s "$_urlcheck_to_be_deallowlisted" | grep -q "[[:alnum:]]" && _urlcheck_deallowlist_lines "$_urlcheck_to_be_deallowlisted"
 }
 
 _urlcheck() {
@@ -457,46 +457,46 @@ $(_urlcheck_scrape_url "$3")" status
             done)
             printf %s\\n "$_urlcheck_status_display"
         ;;
-        blacklist)
+        denylist)
             if [ $_urlcheck_opposite -eq 0 ]; then
                 if [ $_urlcheck_recursive -eq 0 ]; then
-                    _urlcheck_blacklist_dialog "$2"
+                    _urlcheck_denylist_dialog "$2"
                     [ $_urlcheck_block_01 -eq 1 ] && \
                       _urlcheck_block_dialog "$2"
                 else
-                    _urlcheck_blacklist_scraped="$2
+                    _urlcheck_denylist_scraped="$2
 $(_urlcheck_scrape_url "$3")"
-                    _urlcheck_blacklist_dialog "$_urlcheck_blacklist_scraped"
+                    _urlcheck_denylist_dialog "$_urlcheck_denylist_scraped"
                     [ $_urlcheck_block_01 -eq 1 ] && \
-                      _urlcheck_block_dialog "$_urlcheck_blacklist_scraped"
+                      _urlcheck_block_dialog "$_urlcheck_denylist_scraped"
                 fi
             else
                 if [ $_urlcheck_recursive -eq 0 ]; then
-                    _urlcheck_deblacklist_dialog "$2"
+                    _urlcheck_dedenylist_dialog "$2"
                 else
-                    _urlcheck_deblacklist_dialog "$2
+                    _urlcheck_dedenylist_dialog "$2
 $(_urlcheck_scrape_url "$3")"
                 fi
             fi
         ;;
-        whitelist)
+        allowlist)
             if [ $_urlcheck_opposite -eq 0 ]; then
                 if [ $_urlcheck_recursive -eq 0 ]; then
-                    _urlcheck_whitelist_dialog "$2"
+                    _urlcheck_allowlist_dialog "$2"
                     [ $_urlcheck_block_01 -eq 1 ] && \
                       _urlcheck_unblock_dialog "$2"
                 else
-                    _urlcheck_whitelist_scraped="$2
+                    _urlcheck_allowlist_scraped="$2
 $(_urlcheck_scrape_url "$3")"
-                    _urlcheck_whitelist_dialog "$_urlcheck_whitelist_scraped"
+                    _urlcheck_allowlist_dialog "$_urlcheck_allowlist_scraped"
                     [ $_urlcheck_block_01 -eq 1 ] && \
-                      _urlcheck_unblock_dialog "$_urlcheck_whitelist_scraped"
+                      _urlcheck_unblock_dialog "$_urlcheck_allowlist_scraped"
                 fi
             else
                 if [ $_urlcheck_recursive -eq 0 ]; then
-                    _urlcheck_dewhitelist_dialog "$2"
+                    _urlcheck_deallowlist_dialog "$2"
                 else
-                    _urlcheck_dewhitelist_dialog "$2
+                    _urlcheck_deallowlist_dialog "$2
 $(_urlcheck_scrape_url "$3")"
                 fi
             fi
@@ -675,12 +675,12 @@ _job() {
         fi
 
         # APPEND BLACKLIST ENTRIES
-        _notify 1 "  Appending blacklist entries..."
+        _notify 1 "  Appending denylist entries..."
 
-        while read _blacklistline; do
-            grep -Fqx "$redirecturl $_blacklistline" "$hostsfile".new || \
-              printf %s\\n "$redirecturl $_blacklistline" >> "$hostsfile".new
-        done < "$blacklist" && \
+        while read _denylistline; do
+            grep -Fqx "$redirecturl $_denylistline" "$hostsfile".new || \
+              printf %s\\n "$redirecturl $_denylistline" >> "$hostsfile".new
+        done < "$denylist" && \
         mv $_v -- "$hostsfile".new "$hostsfile" && \
         chmod 644 "$hostsfile"
         _notify 1 "$hostsfile successfully compiled. DONE."
@@ -699,8 +699,8 @@ hostsfile="$HOME/hosts.block"
 redirecturl='0.0.0.0'
 blocklists="$HOME/block.urls"
 redirectlists="" # Otherwise "$HOME/redirect.urls"
-blacklist="$HOME/black.list"
-whitelist="$HOME/white.list"
+denylist="$HOME/black.list"
+allowlist="$HOME/white.list"
 hostshead="0"
 cachedir="$HOME/cache"
 connect_timeout=60
@@ -727,8 +727,8 @@ while getopts "f:qvduc:sblwirko" _option; do
         c)  [ "$OPTARG" != "" ] && _URL="$OPTARG";;
         s)  _urlcheck_command="status";;
         b)  _urlcheck_block_01=1;;
-        l)  _urlcheck_command="blacklist";;
-        w)  _urlcheck_command="whitelist";;
+        l)  _urlcheck_command="denylist";;
+        w)  _urlcheck_command="allowlist";;
         i)  _urlcheck_command="inspect";;
         r)  _urlcheck_recursive=1;;
         k)  _urlcheck_recursive=2;;
@@ -754,8 +754,8 @@ Options:
 $0 -c URL (urlCheck) Commands:
   -s [-r -k]            State how hostblock modifies URL
   -b [-o -r]            Temporarily (un)block URL
-  -l [-o -r -b]         Add/remove URL to/from blacklist
-  -w [-o -r -b]         Add/remove URL to/from whitelist
+  -l [-o -r -b]         Add/remove URL to/from denylist
+  -w [-o -r -b]         Add/remove URL to/from allowlist
   -i [-o -r -k]         Interactively inspect URL
 
 $0 -c URL Command Subcommands:
@@ -848,7 +848,7 @@ exit $_return
 # +1  any status scans failed
 # +2  block/unblock failed
 # +4  block/unblock not applied because it was already in that state
-# +8  blacklist/deblacklist failed
-# +16 blacklist/deblacklist not applied because it was already in that state
-# +32 whitelist/dewhitelist failed
-# +64 whitelist/dewhitelist not applied because it was already in that state
+# +8  denylist/dedenylist failed
+# +16 denylist/dedenylist not applied because it was already in that state
+# +32 allowlist/deallowlist failed
+# +64 allowlist/deallowlist not applied because it was already in that state

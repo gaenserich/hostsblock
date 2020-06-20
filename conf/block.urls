@@ -48,7 +48,7 @@ https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.t
 
 #https://www.joewein.net/dl/bl/dom-bl-base.txt
 
-#https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt
+#https://raw.githubusercontent.com/matomo-org/referrer-spam-denylist/master/spammers.txt
 
 #http://hostsfile.org/Downloads/BadHosts.unx.zip    # Or use the following list
                                                     #  if you don't have unzip
@@ -61,7 +61,7 @@ https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.t
                                                     #  someonewhocares.org list
                                                     #  (https://nauscopio.wordpress.com/category/filtrado/)
 
-#https://raw.githubusercontent.com/Dawsey21/Lists/master/main-blacklist.txt
+#https://raw.githubusercontent.com/Dawsey21/Lists/master/main-denylist.txt
 
 #https://raw.githubusercontent.com/vokins/yhosts/master/hosts
 
@@ -119,7 +119,7 @@ https://adaway.org/hosts.txt
 
 https://v.firebog.net/hosts/AdguardDNS.txt
 
-https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt
+https://raw.githubusercontent.com/anudeepND/denylist/master/adservers.txt
 
 https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
 
@@ -132,7 +132,7 @@ http://pgl.yoyo.org/as/serverlist.php?hostformat=hosts&mimetype=plaintext
 
 https://raw.githubusercontent.com/StevenBlack/hosts/master/data/UncheckyAds/hosts
 
-https://www.squidblacklist.org/downloads/dg-ads.acl
+https://www.squiddenylist.org/downloads/dg-ads.acl
 
   ## The following block multiple useful sites
 
@@ -192,7 +192,7 @@ https://mirror.cedia.org.ec/malwaredomains/immortal_domains.txt
 
 https://www.malwaredomainlist.com/hostslist/hosts.txt
 
-https://bitbucket.org/ethanr/dns-blacklists/raw/8575c9f96e5b4a1308f2f12394abd86d0927a4a0/bad_lists/Mandiant_APT1_Report_Appendix_D.txt
+https://bitbucket.org/ethanr/dns-denylists/raw/8575c9f96e5b4a1308f2f12394abd86d0927a4a0/bad_lists/Mandiant_APT1_Report_Appendix_D.txt
 
 https://v.firebog.net/hosts/Prigent-Malware.txt
 
@@ -218,7 +218,7 @@ https://v.firebog.net/hosts/Shalla-mal.txt
 
 https://raw.githubusercontent.com/StevenBlack/hosts/master/data/add.Risk/hosts
 
-https://www.squidblacklist.org/downloads/dg-malicious.acl
+https://www.squiddenylist.org/downloads/dg-malicious.acl
 
   ## The following have a moderate likelihood to interfere with browsing
 
@@ -253,7 +253,7 @@ https://zerodot1.gitlab.io/CoinBlockerLists/hosts
 
 #http://hosts-file.net/download/yahoo_servers.zip   # Block yahoo adservers
 
-#https://raw.githubusercontent.com/anudeepND/blacklist/master/facebook.txt
+#https://raw.githubusercontent.com/anudeepND/denylist/master/facebook.txt
 
 #https://raw.githubusercontent.com/jmdugan/blocklists/master/corporations/facebook/all
                                                     # Block Facebook completely

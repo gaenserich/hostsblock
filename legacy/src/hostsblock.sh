@@ -56,7 +56,7 @@ _extract_entries() {
         _target_hostsfile="$tmpdir/hostsblock/hosts.block.d/${_cachefile##*/}.hosts"
         _cachefile_url=$(head -n1 "$cachedir"/"${_cachefile##*/}".url)
         if grep -rah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | tr '\t' ' ' | tr -s ' ' | \
-          sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -Fvf "$whitelist" | \
+          sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" -e "s/$_notredirect/$redirecturl/g" | sort -u | grep -Fvf "$allowlist" | \
           sed "s|$| \! $_cachefile_url|g" > "$_target_hostsfile"; then
             [ $_verbosity -ge 2 ] && _count_hosts "$_target_hostsfile"
         else
@@ -64,7 +64,7 @@ _extract_entries() {
         fi
         if grep -rahv "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" ./* | grep -v -e "^\." -e "\.$" -e "\*" -e "\"" -e "\$" |\
           grep -P '^(?=.*[[:alpha:]])(?=.*\.)' | sed "s/^/$redirecturl /g" | tr '\t' ' ' | tr -s ' ' | \
-          sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" | sort -u | grep -Fvf "$whitelist" | sed "s|$| \! $_cachefile_url|g" \
+          sed -e "s/\#.*//g" -e "s/[[:space:]]$//g" | sort -u | grep -Fvf "$allowlist" | sed "s|$| \! $_cachefile_url|g" \
           >> "$_target_hostsfile"; then
             [ $_verbosity -ge 2 ] && _count_hosts "$_target_hostsfile"
         else
@@ -93,60 +93,60 @@ _check_url() {
         read -p "1-3 (default: 3): " b
         if [[ $b == 1 || "$b" == "1" ]]; then
             echo "Unblocking just $@"
-            echo " $@" >> "$whitelist"
+            echo " $@" >> "$allowlist"
             _strip_entries " $@ \!" "$annotate"
-            sed -i "/ $@$/d" "$blacklist"
+            sed -i "/ $@$/d" "$denylist"
             sed -i "/ $@$/d" "$hostsfile"
             [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
         elif [[ $b == 2 || "$b" == "2" ]]; then
             echo "Unblocking all sites containing url $@"
-            echo "$@" >> "$whitelist"
+            echo "$@" >> "$allowlist"
             _strip_entries "$@" "$annotate"
-            sed -i "/$@/d" "$blacklist"
+            sed -i "/$@/d" "$denylist"
             sed -i "/$@/d" "$hostsfile"
             [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
         fi
     else
-        echo -e "\n'$@' \e[0;32mNOT BLOCKED/REDIRECTED\e[0m\n\t1) Block $@\n\t2) Block $@ and delete all whitelist url entries containing $@\n\t3) Keep unblocked (default)"
+        echo -e "\n'$@' \e[0;32mNOT BLOCKED/REDIRECTED\e[0m\n\t1) Block $@\n\t2) Block $@ and delete all allowlist url entries containing $@\n\t3) Keep unblocked (default)"
         read -p "1-3 (default: 3): " c
         if [[ $c == 1 || "$c" == "1" ]]; then
             echo "Blocking $@"
-            echo "$@" >> "$blacklist"
+            echo "$@" >> "$denylist"
             (
               if which pigz &>/dev/null; then
                   pigz -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
+                  echo "$redirecturl $@ \! $denylist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
                   sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $pigz_opt -c - > "$annotate"
               else
                   gzip -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
+                  echo "$redirecturl $@ \! $denylist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
                   sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $gzip_opt -c - > "$annotate"
               fi
               rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
             ) &
-            sed -i "/^$@$/d" "$whitelist" &
+            sed -i "/^$@$/d" "$allowlist" &
             echo "$redirecturl $@" >> "$hostsfile" &
             [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
             wait
         elif [[ $c == 2 || "$c" == "2" ]]; then
-            echo "Blocking $@ and deleting all whitelist url entries containing $@"
-            echo "$@" >> "$blacklist" &
+            echo "Blocking $@ and deleting all allowlist url entries containing $@"
+            echo "$@" >> "$denylist" &
             (
               if which pigz &>/dev/null; then
                   pigz -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
+                  echo "$redirecturl $@ \! $denylist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
                   sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | pigz $pigz_opt -c - > "$annotate"
               else
                   gzip -dc "$annotate" > "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-                  echo "$redirecturl $@ \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
+                  echo "$redirecturl $@ \! $denylist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
                   sort -u "$tmpdir"/hostsblock/"${annotate##*/}".tmp | gzip $gzip_opt -c - > "$annotate"
               fi
               rm -f "$_v" -- "$tmpdir"/hostsblock/"${annotate##*/}".tmp
             ) &
-            sed -i "/$@/d" "$whitelist" &
+            sed -i "/$@/d" "$allowlist" &
             echo "$redirecturl $@" >> "$hostsfile" &
             [ ! -d "$tmpdir"/hostsblock ] && mkdir $_v -p "$tmpdir"/hostsblock
             touch "$tmpdir"/hostsblock/changed
@@ -163,8 +163,8 @@ postprocess() {
      /bin/true
 }
 blocklists=("http://support.it-mate.co.uk/downloads/HOSTS.txt")
-blacklist="$HOME/black.list"
-whitelist="$HOME/white.list"
+denylist="$HOME/black.list"
+allowlist="$HOME/white.list"
 hostshead="0"
 cachedir="$HOME/cache"
 pigz_opt="-9"
@@ -465,7 +465,7 @@ else
         # PROCESS AND WRITE BLOCK ENTRIES TO FILE
         _notify 1 "Compiling into $hostsfile..."
         if grep -ahE -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* | tee "$tmpdir"/hostsblock/"${annotate##*/}".tmp | sed "s/ \!.*$//g" |\
-          sort -u | grep -Fvf "$whitelist" >> "$hostsfile"; then
+          sort -u | grep -Fvf "$allowlist" >> "$hostsfile"; then
             true
         else
             _notify 0 "FAILED TO COMPILE BLOCK ENTRIES INTO $hostsfile. EXITING..."
@@ -476,15 +476,15 @@ else
         if [ $redirects == 1 ] || [ "$redirects" == "1" ]; then
             grep -ahEv -- "^$redirecturl" "$tmpdir"/hostsblock/hosts.block.d/* |\
               grep -ah -- "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" | tee -a "$tmpdir"/hostsblock/"${annotate##*/}".tmp |\
-              sed "s/ \!.*$//g" | sort -u | grep -Fvf "$whitelist"  >> "$hostsfile" || \
+              sed "s/ \!.*$//g" | sort -u | grep -Fvf "$allowlist"  >> "$hostsfile" || \
                 _notify 1 "FAILED to compile redirect entries into $hostsfile."
         fi
 
         # APPEND BLACKLIST ENTRIES
-        while read _blacklistline; do
-            echo "$redirecturl $_blacklistline \! $blacklist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
-            grep -Fqx "$_blacklistline" "$hostsfile" || echo "$redirecturl $_blacklistline" >> "$hostsfile"
-        done < "$blacklist" || _notify 1 "FAILED to append blacklisted entries to $hostsfile."
+        while read _denylistline; do
+            echo "$redirecturl $_denylistline \! $denylist" >> "$tmpdir"/hostsblock/"${annotate##*/}".tmp
+            grep -Fqx "$_denylistline" "$hostsfile" || echo "$redirecturl $_denylistline" >> "$hostsfile"
+        done < "$denylist" || _notify 1 "FAILED to append denylisted entries to $hostsfile."
 
         # SORT AND COMPRESS ANNOTATION FILE.
         (

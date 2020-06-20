@@ -253,7 +253,7 @@ sudo -u hostsblock hostsblock -c "http://www.example.com"
 
 This will check to see if "http://www.example.com" is blocked by hostsblock. If it is, it will tell the user which blocklist is responsible, and prompt as to whether it should continue blocking it or unblock it.
 If "http://www.example.com" is NOT blocked, hostsblock will ask if it should block it.
-Should the user decide to change the status of "http://www.example.com", it will place entries into either its whitelist or blacklist and then recompile the target HOSTS file, executing any postprocessing routines laid out in `hostsblock.conf`.
+Should the user decide to change the status of "http://www.example.com", it will place entries into either its allowlist or denylist and then recompile the target HOSTS file, executing any postprocessing routines laid out in `hostsblock.conf`.
 
 ## FAQ
 
