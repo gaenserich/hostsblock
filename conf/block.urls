@@ -123,9 +123,6 @@ https://raw.githubusercontent.com/anudeepND/denylist/master/adservers.txt
 
 https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
 
-https://hosts-file.net/ad_servers.txt               # Contained in
-                                                    #  hosts-file.net meta-list
-
 https://v.firebog.net/hosts/Easylist.txt
 
 http://pgl.yoyo.org/as/serverlist.php?hostformat=hosts&mimetype=plaintext
@@ -201,8 +198,6 @@ https://v.firebog.net/hosts/Prigent-Phishing.txt
 https://phishing.army/download/phishing_army_blocklist_extended.txt
 
 https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-malware.txt
-
-https://ransomwaretracker.abuse.ch/downloads/RW_DOMBL.txt
 
 https://ransomwaretracker.abuse.ch/downloads/CW_C2_DOMBL.txt
 
