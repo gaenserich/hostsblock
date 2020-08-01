@@ -811,6 +811,7 @@ elif [ -f /var/lib/hostsblock/hostsblock.conf ]; then
     . /var/lib/hostsblock/hostsblock.conf
     _notify 1 "Configuration file not found. Using defaults."
 fi
+[ -d $cachedir ] ||  mkdir -p $_v -- "$cachedir"
 TMPDIR="$tmpdir"
 
 mkdir -p $_v -- "$tmpdir"
