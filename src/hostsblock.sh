@@ -816,6 +816,9 @@ TMPDIR="$tmpdir"
 mkdir -p $_v -- "$tmpdir"
 [ $_changed -eq 1 ] && touch "$tmpdir"/changed
 
+[ -f "$whitelist" ] || touch "$whitelist"
+[ -f "$blacklist" ] || touch "$blacklist"
+
 # MAKE SURE NECESSARY DEPENDENCIES ARE PRESENT
 for _depends in chmod cksum cp curl cut file find grep id mkdir \
     mv rm sed sort tee touch tr wc xargs; do
